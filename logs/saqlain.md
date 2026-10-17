@@ -178,12 +178,12 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-14
 
-- Updated: 2026-10-17T17:52:42+05:30
+- Updated: 2026-10-17T17:53:29+05:30
 - Human / agent: Saqlain / Codex
-- Status: in-progress
+- Status: completed
 - Branch / scope: `codex/saqlain/logic-core`; root README and Saqlain/master logs.
 - Objective and success criteria: give contributors an exact browser-smoke recipe that works while FalkorDB is offline and clearly states the harness is synthetic, in-memory, and non-persistent.
 - Actions and decisions: document only the command sequence actually exercised with the committed build and Chrome; do not conflate it with the hosted database restart gate.
-- Validation: the sequence already passed locally: deterministic API harness, Vite preview, and Chrome CDP E2E query returned a verified `release_ready` result.
+- Validation: the documented sequence passed locally: deterministic API harness, Vite preview, and Chrome CDP E2E query returned a verified `release_ready` result. The readme explicitly excludes FalkorDB persistence/restart and correction walkthrough claims.
 - Handoff: local smoke is repeatable; retain actual FalkorDB persistence and correction-flow rehearsal as separate release gates.
-- Publication: planned-work log commit pending; no PR.
+- Publication: README and completion-log publication pending; no PR.

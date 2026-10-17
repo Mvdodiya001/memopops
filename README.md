@@ -16,6 +16,27 @@ Use the locked Python 3.12 environment with `uv sync --frozen --group dev`, then
 
 The live API exposes `GET /api/v1/workspaces/{workspace_id}/memory`, `GET /api/v1/workspaces/{workspace_id}/revisions`, `POST /api/v1/workspaces/{workspace_id}/revisions`, `GET /api/v1/workspaces/{workspace_id}/impact?revision={revision_id}`, revision-bound query endpoints, and verified certificate export. Impact pages list historical queries whose checked support, or conservative full-snapshot dependency for unverified results, includes an assertion removed by the selected revision. Every new query result records its premise links atomically with the result receipt. `model_proposed` submissions and proposal inspection are not yet available.
 
+## Local browser smoke without FalkorDB
+
+For frontend development while the database is unavailable, the browser test uses a deliberately synthetic in-memory API. It verifies the live connection form, memory/history reads, and a certificate-verified `release_ready` query. It does not test graph persistence, database restart, accepted revision writes, or the correction walkthrough, and its results must not be described as FalkorDB evidence.
+
+Build the frontend once, then run these in separate terminals from the repository root:
+
+```powershell
+npm --prefix apps/web run build
+uv run --locked python apps/web/e2e/harness.py
+```
+
+In another terminal, start the built frontend with `npm --prefix apps/web run preview`. In a third terminal, run the browser check (set `CHROME_PATH` if Chrome is not on `PATH`):
+
+```powershell
+$env:CHROME_PATH = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+Set-Location apps/web
+node e2e/live-query.mjs
+```
+
+The harness uses workspace `workspace_demo`, revision `rev_001`, and a local reader token defined by the harness. Keep this fixture out of hosted configuration.
+
 ## Start here
 
 - [Detailed implementation plan and parallel work](docs/IMPLEMENTATION_PLAN.md)
