@@ -425,7 +425,8 @@ class FalkorSnapshotStore:
             "WITH r, used_assertions, prior "
             "WHERE r IS NOT NULL AND prior IS NULL AND size(used_assertions) = size($uses_premise_ids) "
             "CREATE (q:QueryResult {id: $query_id, workspace_id: $workspace_id, "
-            "revision_id: $revision_id, request_hash: $request_hash, result_json: $result_json}) "
+            "revision_id: $revision_id, actor_id: $actor_id, created_at: $created_at, "
+            "request_hash: $request_hash, result_json: $result_json}) "
             "CREATE (q)-[:AT_REVISION]->(r) "
             "FOREACH (a IN used_assertions | CREATE (q)-[:USES_PREMISE]->(a)) "
             "CREATE (receipt:RequestReceipt {key: $key, payload_hash: $request_hash, "
@@ -440,6 +441,8 @@ class FalkorSnapshotStore:
                 "request_hash": request_hash,
                 "result_json": serialized,
                 "uses_premise_ids": uses_premise_ids,
+                "actor_id": result_payload.get("actor_id"),
+                "created_at": result_payload.get("created_at"),
             },
         ).result_set
         if created:
