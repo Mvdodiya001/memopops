@@ -1,0 +1,458 @@
+{
+  "development_fixture": true,
+  "notice": "Development fixture. Not a live service response.",
+  "explanation": "Release readiness follows from the accepted deployment and test results.",
+  "steps": [
+    {
+      "clause_id": 14,
+      "text": "API v2 is accepted in this revision."
+    },
+    {
+      "clause_id": 17,
+      "text": "The integration tests passed."
+    },
+    {
+      "clause_id": 16,
+      "text": "The readiness rule says those two facts imply release readiness."
+    },
+    {
+      "clause_id": 23,
+      "text": "Resolving those premises leaves no alternative, so release readiness follows. The failure rule is not used."
+    }
+  ],
+  "bundle": {
+    "certificate_version": "resolution-v1",
+    "semantics_version": "boolean-v1",
+    "workspace_id": "workspace_demo",
+    "revision_id": "rev_001",
+    "knowledge_hash": "631f4e77f61c30ba293e831d38a558a7aaae250689971a7af60c041e3da78965",
+    "query_hash": "66b74ac434fc38bac8e5c96bd142b00eea1a3a41baecd066db8fe7a1db05e8dd",
+    "result": "PROVED",
+    "assertions": [
+      {
+        "id": "as_api_v2",
+        "formula": {
+          "op": "atom",
+          "id": "api_v2"
+        },
+        "evidence_ids": [
+          "ev_api"
+        ]
+      },
+      {
+        "id": "as_block_rule",
+        "formula": {
+          "op": "implies",
+          "args": [
+            {
+              "op": "not",
+              "arg": {
+                "op": "atom",
+                "id": "tests_pass"
+              }
+            },
+            {
+              "op": "not",
+              "arg": {
+                "op": "atom",
+                "id": "release_ready"
+              }
+            }
+          ]
+        },
+        "evidence_ids": [
+          "ev_block"
+        ]
+      },
+      {
+        "id": "as_ready_rule",
+        "formula": {
+          "op": "implies",
+          "args": [
+            {
+              "op": "and",
+              "args": [
+                {
+                  "op": "atom",
+                  "id": "api_v2"
+                },
+                {
+                  "op": "atom",
+                  "id": "tests_pass"
+                }
+              ]
+            },
+            {
+              "op": "atom",
+              "id": "release_ready"
+            }
+          ]
+        },
+        "evidence_ids": [
+          "ev_ready"
+        ]
+      },
+      {
+        "id": "as_tests_pass",
+        "formula": {
+          "op": "atom",
+          "id": "tests_pass"
+        },
+        "evidence_ids": [
+          "ev_tests"
+        ]
+      }
+    ],
+    "query": {
+      "op": "atom",
+      "id": "release_ready"
+    },
+    "atom_variables": [
+      {
+        "atom_id": "api_v2",
+        "variable": 1
+      },
+      {
+        "atom_id": "release_ready",
+        "variable": 2
+      },
+      {
+        "atom_id": "tests_pass",
+        "variable": 3
+      }
+    ],
+    "definitions": [
+      {
+        "variable": 4,
+        "op": "not",
+        "operands": [
+          3
+        ],
+        "formula_hash": "8d4feb46e5dfaf26f9b0bf3020d08751f766e6656ec519cae144998b3abb372f"
+      },
+      {
+        "variable": 5,
+        "op": "not",
+        "operands": [
+          2
+        ],
+        "formula_hash": "195b5ec0106851b3b2f0c2a407fae28509a68d1216dca84bca910d16827972fa"
+      },
+      {
+        "variable": 6,
+        "op": "implies",
+        "operands": [
+          4,
+          5
+        ],
+        "formula_hash": "573fdcfcdada2e90372ee0ea5f75a927d72cef02ce6124ce332da885b6c37f79"
+      },
+      {
+        "variable": 7,
+        "op": "and",
+        "operands": [
+          1,
+          3
+        ],
+        "formula_hash": "30681a66afe9a26b0ab16ba4889c3e4a40a9dbf0fc73cb771a4867d346150b4f"
+      },
+      {
+        "variable": 8,
+        "op": "implies",
+        "operands": [
+          7,
+          2
+        ],
+        "formula_hash": "ed2529a619449f22acda4157f04972f309baf1d6cd52134b2a2f1fe0c7aae210"
+      }
+    ],
+    "roots": [
+      {
+        "assertion_id": "as_api_v2",
+        "variable": 1
+      },
+      {
+        "assertion_id": "as_block_rule",
+        "variable": 6
+      },
+      {
+        "assertion_id": "as_ready_rule",
+        "variable": 8
+      },
+      {
+        "assertion_id": "as_tests_pass",
+        "variable": 3
+      }
+    ],
+    "query_root": 2,
+    "knowledge_witness": {
+      "api_v2": true,
+      "release_ready": true,
+      "tests_pass": true
+    },
+    "clauses": [
+      {
+        "id": 1,
+        "literals": [
+          -4,
+          -3
+        ],
+        "origin": "definition",
+        "definition_variable": 4
+      },
+      {
+        "id": 2,
+        "literals": [
+          3,
+          4
+        ],
+        "origin": "definition",
+        "definition_variable": 4
+      },
+      {
+        "id": 3,
+        "literals": [
+          -5,
+          -2
+        ],
+        "origin": "definition",
+        "definition_variable": 5
+      },
+      {
+        "id": 4,
+        "literals": [
+          2,
+          5
+        ],
+        "origin": "definition",
+        "definition_variable": 5
+      },
+      {
+        "id": 5,
+        "literals": [
+          -6,
+          -4,
+          5
+        ],
+        "origin": "definition",
+        "definition_variable": 6
+      },
+      {
+        "id": 6,
+        "literals": [
+          4,
+          6
+        ],
+        "origin": "definition",
+        "definition_variable": 6
+      },
+      {
+        "id": 7,
+        "literals": [
+          -5,
+          6
+        ],
+        "origin": "definition",
+        "definition_variable": 6
+      },
+      {
+        "id": 8,
+        "literals": [
+          -7,
+          1
+        ],
+        "origin": "definition",
+        "definition_variable": 7
+      },
+      {
+        "id": 9,
+        "literals": [
+          -7,
+          3
+        ],
+        "origin": "definition",
+        "definition_variable": 7
+      },
+      {
+        "id": 10,
+        "literals": [
+          -3,
+          -1,
+          7
+        ],
+        "origin": "definition",
+        "definition_variable": 7
+      },
+      {
+        "id": 11,
+        "literals": [
+          -8,
+          -7,
+          2
+        ],
+        "origin": "definition",
+        "definition_variable": 8
+      },
+      {
+        "id": 12,
+        "literals": [
+          7,
+          8
+        ],
+        "origin": "definition",
+        "definition_variable": 8
+      },
+      {
+        "id": 13,
+        "literals": [
+          -2,
+          8
+        ],
+        "origin": "definition",
+        "definition_variable": 8
+      },
+      {
+        "id": 14,
+        "literals": [
+          1
+        ],
+        "origin": "premise",
+        "assertion_id": "as_api_v2"
+      },
+      {
+        "id": 15,
+        "literals": [
+          6
+        ],
+        "origin": "premise",
+        "assertion_id": "as_block_rule"
+      },
+      {
+        "id": 16,
+        "literals": [
+          8
+        ],
+        "origin": "premise",
+        "assertion_id": "as_ready_rule"
+      },
+      {
+        "id": 17,
+        "literals": [
+          3
+        ],
+        "origin": "premise",
+        "assertion_id": "as_tests_pass"
+      },
+      {
+        "id": 18,
+        "literals": [
+          -2
+        ],
+        "origin": "query_assumption"
+      },
+      {
+        "id": 19,
+        "literals": [
+          -3,
+          7
+        ],
+        "origin": "resolution",
+        "parents": [
+          14,
+          10
+        ],
+        "pivot": 1
+      },
+      {
+        "id": 20,
+        "literals": [
+          7
+        ],
+        "origin": "resolution",
+        "parents": [
+          19,
+          17
+        ],
+        "pivot": 3
+      },
+      {
+        "id": 21,
+        "literals": [
+          -8,
+          2
+        ],
+        "origin": "resolution",
+        "parents": [
+          20,
+          11
+        ],
+        "pivot": 7
+      },
+      {
+        "id": 22,
+        "literals": [
+          2
+        ],
+        "origin": "resolution",
+        "parents": [
+          21,
+          16
+        ],
+        "pivot": 8
+      },
+      {
+        "id": 23,
+        "literals": [],
+        "origin": "resolution",
+        "parents": [
+          22,
+          18
+        ],
+        "pivot": 2
+      }
+    ],
+    "empty_clause_id": 23,
+    "support_assertion_ids": [
+      "as_api_v2",
+      "as_ready_rule",
+      "as_tests_pass"
+    ]
+  },
+  "expected_context": {
+    "workspace_id": "workspace_demo",
+    "revision_id": "rev_001",
+    "semantics_version": "boolean-v1",
+    "knowledge_hash": "631f4e77f61c30ba293e831d38a558a7aaae250689971a7af60c041e3da78965",
+    "query_hash": "66b74ac434fc38bac8e5c96bd142b00eea1a3a41baecd066db8fe7a1db05e8dd",
+    "assertions": [
+      {
+        "id": "as_api_v2",
+        "formula_hash": "e6fdb69ab198f99153174057bda9577ef15a784dd3529a03328dda68efd9c0ee",
+        "evidence_ids": [
+          "ev_api"
+        ]
+      },
+      {
+        "id": "as_block_rule",
+        "formula_hash": "573fdcfcdada2e90372ee0ea5f75a927d72cef02ce6124ce332da885b6c37f79",
+        "evidence_ids": [
+          "ev_block"
+        ]
+      },
+      {
+        "id": "as_ready_rule",
+        "formula_hash": "ed2529a619449f22acda4157f04972f309baf1d6cd52134b2a2f1fe0c7aae210",
+        "evidence_ids": [
+          "ev_ready"
+        ]
+      },
+      {
+        "id": "as_tests_pass",
+        "formula_hash": "2cb2af2b755bc7489816bb1a3ad9058a488ddbc2c68ae63674593f6471547604",
+        "evidence_ids": [
+          "ev_tests"
+        ]
+      }
+    ]
+  }
+}
