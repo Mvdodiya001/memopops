@@ -3,6 +3,8 @@ import { useEffect, useState } from "react"
 
 import {
   ApiError,
+  buildCertificateQuery,
+  getCertificate,
   getHealthReady,
   getHistory,
   getMemory,
@@ -18,36 +20,91 @@ import { presentResult, revisionLabel, sameRevision } from "../model/copy"
 import { assertionTitle, formatTimestamp, prettyFormula } from "../model/formula"
 import { hrefFor, type AppLocation, type Section } from "../model/location"
 
+type Session = {
+  workspaceId: string
+  token: string
+  canWrite: boolean
+}
+
 export function LiveApp(props: {
   location: AppLocation
   navigate: (href: string, replace?: boolean) => void
 }) {
-  if (!props.location.workspaceId) return <WorkspaceGate navigate={props.navigate} />
-  return <WorkspaceScreen location={{ ...props.location, workspaceId: props.location.workspaceId }} navigate={props.navigate} />
+  const [session, setSession] = useState<Session | null>(null)
+  if (!session || session.workspaceId !== props.location.workspaceId) {
+    return <ConnectForm location={props.location} navigate={props.navigate} onConnect={setSession} />
+  }
+  return (
+    <WorkspaceScreen
+      location={{ ...props.location, workspaceId: session.workspaceId }}
+      navigate={props.navigate}
+      token={session.token}
+      canWrite={session.canWrite}
+    />
+  )
 }
 
-function WorkspaceGate(props: { navigate: (href: string, replace?: boolean) => void }) {
-  const workspaces = useQuery({ queryKey: ["workspaces"], queryFn: ({ signal }) => listWorkspaces(signal) })
-  if (workspaces.isPending) return <Loading label="Loading workspaces" />
-  if (workspaces.isError) return <Failure error={workspaces.error} onRetry={() => void workspaces.refetch()} />
-  const items = workspaces.data
-  if (items.length === 1) {
-    const only = items[0]
-    return <Redirect note="Opening the authorized workspace." href={hrefFor(new URL(window.location.href), { workspaceId: only.workspace_id, section: "memory" })} navigate={props.navigate} />
-  }
+function ConnectForm(props: {
+  location: AppLocation
+  navigate: (href: string, replace?: boolean) => void
+  onConnect: (session: Session) => void
+}) {
+  const [workspaceId, setWorkspaceId] = useState(props.location.workspaceId ?? "workspace_demo")
+  const [revisionId, setRevisionId] = useState(props.location.revisionId ?? "rev_001")
+  const [token, setToken] = useState("")
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState("")
   return (
     <main className="main" id="content">
       <h1 className="page-title">memopops</h1>
       <p>Shared memory, with reasons.</p>
-      {items.length === 0 ? <p className="callout">No workspace is authorized for this session.</p> : (
-        <ul className="memory-list">
-          {items.map((item) => (
-            <li key={item.workspace_id}>
-              <a href={hrefFor(new URL(window.location.href), { workspaceId: item.workspace_id, section: "memory" })}>{item.label}</a>
-            </li>
-          ))}
-        </ul>
-      )}
+      <form
+        className="panel"
+        onSubmit={(event) => {
+          event.preventDefault()
+          setPending(true)
+          setError("")
+          void listWorkspaces({ token }).then(async (workspaces) => {
+            const match = workspaces.find((item) => item.workspace_id === workspaceId) ?? workspaces[0]
+            if (!match) {
+              setError("This token is not authorized for a workspace.")
+              return
+            }
+            const details = await getWorkspace(match.workspace_id, { token })
+            props.onConnect({
+              workspaceId: details.workspace_id,
+              token,
+              canWrite: details.capabilities?.can_write_memory === true,
+            })
+            props.navigate(hrefFor(new URL(window.location.href), {
+              workspaceId: details.workspace_id,
+              revisionId: revisionId || details.head_revision_id,
+              section: props.location.section,
+              source: "api",
+              preview: null,
+            }))
+          }).catch((caught: unknown) => {
+            setError(caught instanceof ApiError ? caught.message : "The memory service could not be reached.")
+          }).finally(() => setPending(false))
+        }}
+      >
+        <h2 className="section-title">Connect to the memory service</h2>
+        <p className="meta">The bearer token stays in this page only. Development fixtures are not used if this request fails.</p>
+        <label className="revision-control">
+          <span>Workspace</span>
+          <input type="text" value={workspaceId} onChange={(event) => setWorkspaceId(event.target.value)} required />
+        </label>
+        <label className="revision-control">
+          <span>Revision</span>
+          <input type="text" value={revisionId} onChange={(event) => setRevisionId(event.target.value)} required />
+        </label>
+        <label className="revision-control">
+          <span>Bearer token</span>
+          <input type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" required />
+        </label>
+        {error ? <p className="callout" role="alert">{error}</p> : null}
+        <button className="primary" type="submit" disabled={pending}>{pending ? "Connecting…" : "Connect"}</button>
+      </form>
     </main>
   )
 }
@@ -55,55 +112,52 @@ function WorkspaceGate(props: { navigate: (href: string, replace?: boolean) => v
 function WorkspaceScreen(props: {
   location: AppLocation & { workspaceId: string }
   navigate: (href: string, replace?: boolean) => void
+  token: string
+  canWrite: boolean
 }) {
   const workspaceId = props.location.workspaceId
+  const token = props.token
   const health = useQuery({
     queryKey: ["health", "ready"],
-    queryFn: ({ signal }) => getHealthReady(signal),
+    queryFn: ({ signal }) => getHealthReady({ signal }),
     refetchInterval: () => (document.visibilityState === "visible" ? 3000 : false),
   })
-  const workspace = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: ({ signal }) => getWorkspace(workspaceId, signal),
-  })
-  const revisionId = props.location.revisionId ?? workspace.data?.head_revision_id ?? null
+  const revisionId = props.location.revisionId
   const memory = useQuery({
     queryKey: ["memory", workspaceId, revisionId],
-    queryFn: ({ signal }) => getMemory(workspaceId, revisionId ?? "", signal),
+    queryFn: ({ signal }) => getMemory(workspaceId, revisionId ?? "", { signal, token }),
     enabled: Boolean(revisionId),
   })
   const history = useQuery({
     queryKey: ["history", workspaceId],
-    queryFn: ({ signal }) => getHistory(workspaceId, signal),
+    queryFn: ({ signal }) => getHistory(workspaceId, { signal, token }),
   })
-
-  useEffect(() => {
-    if (!props.location.revisionId && workspace.data?.head_revision_id) {
-      props.navigate(hrefFor(new URL(window.location.href), { revisionId: workspace.data.head_revision_id }), true)
-    }
-  }, [props, workspace.data?.head_revision_id])
 
   function go(patch: Partial<AppLocation>) {
     props.navigate(hrefFor(new URL(window.location.href), { ...props.location, source: "api", preview: null, ...patch }))
   }
 
-  if (workspace.isPending) {
-    return <Loading label="Loading workspace" />
-  }
-  if (workspace.isError) return <Failure error={workspace.error} onRetry={() => void workspace.refetch()} />
-  const current = workspace.data
-  const historical = Boolean(revisionId && current.head_revision_id && revisionId !== current.head_revision_id)
+  const workspace = useQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: ({ signal }) => getWorkspace(workspaceId, { signal, token }),
+  })
+  const headRevisionId = workspace.data?.head_revision_id
+  const historical = Boolean(revisionId && headRevisionId && revisionId !== headRevisionId)
   const visibleMemory = memory.data && sameRevision(memory.data.revision_id, revisionId) ? memory.data : null
   const connectionTone = health.isError ? "bad" : health.isSuccess ? "ok" : "pending"
   const connectionLabel = health.isError ? "Unavailable" : health.isSuccess ? "Connected" : "Checking connection"
+  const revisionChoices = (history.data?.revisions ?? []).map((item) => ({ id: item.revision_id, label: revisionLabel(item.revision_id) }))
+  if (revisionId && !revisionChoices.some((item) => item.id === revisionId)) {
+    revisionChoices.unshift({ id: revisionId, label: revisionLabel(revisionId) })
+  }
 
   return (
     <Shell
-      workspaceLabel={current.label}
-      subtitle={historical ? "Read-only earlier revision" : "Shared memory, with reasons."}
+      workspaceLabel={workspaceId}
+      subtitle="Shared memory, with reasons."
       section={props.location.section}
       revisionId={revisionId}
-      revisions={(history.data?.revisions ?? []).map((item) => ({ id: item.revision_id, label: revisionLabel(item.revision_id) }))}
+      revisions={revisionChoices}
       onRevision={(next) => go({ revisionId: next, selectedId: null })}
       historical={historical}
       connectionLabel={connectionLabel}
@@ -112,13 +166,13 @@ function WorkspaceScreen(props: {
       onNavigate={props.navigate}
       main={
         props.location.section === "queries" ? (
-          <LiveQuery location={props.location} revisionId={revisionId} canAsk={Boolean(revisionId)} onCurrent={() => go({ revisionId: current.head_revision_id, section: "queries" })} />
+          <LiveQuery location={props.location} revisionId={revisionId} token={token} canAsk={Boolean(revisionId && token)} onCurrent={() => go({ section: "queries" })} />
         ) : props.location.section === "history" ? (
           <LiveHistory
             pending={history.isPending}
             error={history.error}
             onRetry={() => void history.refetch()}
-            revisions={history.data?.revisions ?? []}
+            revisions={(history.data?.revisions ?? []).map((item) => ({ ...item, committed_at: item.committed_at ?? "" }))}
             selected={revisionId}
             onSelect={(next) => go({ revisionId: next, section: "history" })}
           />
@@ -132,9 +186,10 @@ function WorkspaceScreen(props: {
             selectedId={props.location.selectedId}
             onSelect={(id) => go({ selectedId: id })}
             waiting={Boolean(memory.data && !visibleMemory)}
-            canWrite={current.capabilities?.can_write_memory === true && !historical}
+            canWrite={props.canWrite && !historical}
             workspaceId={workspaceId}
             revisionId={revisionId}
+            token={token}
             onCommitted={(next) => go({ revisionId: next, section: "memory" })}
           />
         )
@@ -162,6 +217,7 @@ function LiveMemory(props: {
   canWrite: boolean
   workspaceId: string
   revisionId: string | null
+  token: string
   onCommitted: (revisionId: string) => void
 }) {
   if (props.pending) return <Loading label="Loading memory" />
@@ -174,7 +230,7 @@ function LiveMemory(props: {
         <h2 className="page-title">{props.assertions.length === 0 ? "No accepted memory" : `${props.assertions.length} accepted`}</h2>
       </div>
       {props.canWrite && props.revisionId ? (
-        <AddMemory workspaceId={props.workspaceId} revisionId={props.revisionId} atoms={props.atoms} onCommitted={props.onCommitted} />
+        <AddMemory workspaceId={props.workspaceId} revisionId={props.revisionId} token={props.token} atoms={props.atoms} onCommitted={props.onCommitted} />
       ) : null}
       <ul className="memory-list">
         {props.assertions.map((assertion) => (
@@ -194,6 +250,7 @@ function LiveMemory(props: {
 function AddMemory(props: {
   workspaceId: string
   revisionId: string
+  token: string
   atoms: { id: string; label: string }[]
   onCommitted: (revisionId: string) => void
 }) {
@@ -220,7 +277,7 @@ function AddMemory(props: {
           evidence: [],
         },
       }],
-    }),
+    }, { token: props.token }),
     onSuccess: async (result) => {
       if (result.status === 201 && result.body.revision_id) {
         await client.invalidateQueries()
@@ -232,7 +289,9 @@ function AddMemory(props: {
       setNotice(result.body.reason || "The service accepted the request without changing the current revision.")
     },
     onError: (error) => {
-      setNotice(error instanceof ApiError ? error.message : "The memory service could not save this.")
+      const message = error instanceof ApiError ? error.message : "The memory service could not save this."
+      setNotice(error instanceof ApiError && error.status === 409 ? `${message} Review the revision, then submit again.` : message)
+      if (error instanceof ApiError && error.status === 409) setIdempotencyKey(crypto.randomUUID())
     },
   })
   return (
@@ -258,6 +317,7 @@ function AddMemory(props: {
 function LiveQuery(props: {
   location: AppLocation & { workspaceId: string }
   revisionId: string | null
+  token: string
   canAsk: boolean
   onCurrent: () => void
 }) {
@@ -271,12 +331,11 @@ function LiveQuery(props: {
   }, [atomId, negated, props.revisionId])
   const visible = result && sameRevision(result.revision_id, props.revisionId) ? result : null
   const mutation = useMutation({
-    mutationFn: (formula: Formula) => postQuery(props.location.workspaceId, {
+    mutationFn: (formula: Formula) => postQuery(props.location.workspaceId, buildCertificateQuery({
       revision_id: props.revisionId ?? "",
       idempotency_key: idempotencyKey,
       query: formula,
-      proof_mode: "certificate",
-    }),
+    }), { token: props.token }),
     onSuccess: (response) => {
       setError("")
       setResult(response)
@@ -284,7 +343,9 @@ function LiveQuery(props: {
     },
     onError: (caught) => {
       setResult(null)
-      setError(caught instanceof ApiError ? caught.message : "The memory service could not check this query.")
+      const message = caught instanceof ApiError ? caught.message : "The memory service could not check this query."
+      setError(caught instanceof ApiError && caught.status === 409 ? `${message} The question was kept. Review it, then check again.` : message)
+      if (caught instanceof ApiError && caught.status === 409) setIdempotencyKey(crypto.randomUUID())
     },
   })
   const formula: Formula = negated ? { op: "not", arg: { op: "atom", id: atomId } } : { op: "atom", id: atomId }
@@ -317,9 +378,46 @@ function LiveQuery(props: {
       </form>
       {result && !visible ? <p className="callout" role="status">A result arrived for a different revision and was not shown.</p> : null}
       {presentation && visible ? (
-        <ResultCard presentation={presentation} formulaText={prettyFormula(visible.query)} onCheckCurrent={props.onCurrent} />
+        <ResultCard presentation={presentation} formulaText={prettyFormula(formula)} onCheckCurrent={props.onCurrent}>
+          {visible.proof_status === "VERIFIED" && visible.query_id ? (
+            <CertificateDownload workspaceId={props.location.workspaceId} queryId={visible.query_id} token={props.token} />
+          ) : null}
+        </ResultCard>
       ) : null}
     </>
+  )
+}
+
+function CertificateDownload(props: { workspaceId: string; queryId: string; token: string }) {
+  const [note, setNote] = useState("")
+  const [error, setError] = useState("")
+  return (
+    <div className="cluster">
+      <button
+        className="secondary"
+        type="button"
+        onClick={() => {
+          void getCertificate(props.workspaceId, props.queryId, { token: props.token }).then((bundle) => {
+            const blob = new Blob([`${JSON.stringify(bundle, null, 2)}\n`], { type: "application/json" })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement("a")
+            link.href = url
+            link.download = `certificate-${props.queryId}.json`
+            link.click()
+            URL.revokeObjectURL(url)
+            setError("")
+            setNote("Certificate file downloaded.")
+          }, (caught: unknown) => {
+            setNote("")
+            setError(caught instanceof ApiError ? caught.message : "The certificate could not be downloaded.")
+          })
+        }}
+      >
+        Download certificate
+      </button>
+      {note ? <span role="status">{note}</span> : null}
+      {error ? <span role="alert">{error}</span> : null}
+    </div>
   )
 }
 
@@ -400,9 +498,3 @@ function Failure(props: { error: unknown; onRetry: () => void }) {
   )
 }
 
-function Redirect(props: { href: string; note: string; navigate: (href: string, replace?: boolean) => void }) {
-  useEffect(() => {
-    props.navigate(props.href, true)
-  }, [props])
-  return <p className="main">{props.note}</p>
-}

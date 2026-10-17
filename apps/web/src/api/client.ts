@@ -1,5 +1,6 @@
 import type {
   ErrorBody,
+  AtomRecord,
   HistoryDocument,
   MemoryDocument,
   MutationReceipt,
@@ -7,6 +8,7 @@ import type {
   ProposalDocument,
   QueryRequest,
   QueryResponse,
+  RevisionRecord,
   WorkspaceDocument,
   WorkspaceSummary,
 } from "./types"
@@ -40,88 +42,146 @@ export class ApiError extends Error {
   }
 }
 
+export type RequestOptions = {
+  signal?: AbortSignal
+  token?: string | null
+}
+
 export function apiOrigin(): string {
   return (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "")
+}
+
+type ApiMemory = {
+  workspace_id: string
+  revision_id: string
+  knowledge_hash: string
+  atom_ids: string[]
+  assertions: Array<{
+    id: string
+    formula: MemoryDocument["assertions"][number]["formula"]
+    evidence: MemoryDocument["assertions"][number]["evidence"]
+    actor_id?: string
+  }>
+}
+
+function normalizeMemory(payload: ApiMemory): MemoryDocument {
+  const atoms: AtomRecord[] = payload.atom_ids.map((id) => ({ id, label: id, meaning: id, scope: payload.workspace_id }))
+  return {
+    workspace_id: payload.workspace_id,
+    revision_id: payload.revision_id,
+    knowledge_hash: payload.knowledge_hash,
+    semantics_version: "boolean-v1",
+    atoms,
+    assertions: payload.assertions.map((item) => ({
+      id: item.id,
+      formula: item.formula,
+      evidence: item.evidence,
+      actor_label: item.actor_id,
+      accepted_at_revision: payload.revision_id,
+    })),
+  }
+}
+
+export function buildCertificateQuery(input: Omit<QueryRequest, "proof_mode">): QueryRequest {
+  return { ...input, proof_mode: "certificate" }
 }
 
 export function workspacePath(workspaceId: string, suffix: string): string {
   return `${API_PREFIX}/workspaces/${encodeURIComponent(workspaceId)}${suffix}`
 }
 
-export async function getHealthReady(signal?: AbortSignal): Promise<{ status: string }> {
-  return request("/api/v1/health/ready", { signal })
+export async function getHealthReady(options?: RequestOptions): Promise<{ status: string }> {
+  return request("/api/v1/health/ready", { signal: options?.signal })
 }
 
-export async function listWorkspaces(signal?: AbortSignal): Promise<WorkspaceSummary[]> {
-  const body = await request<WorkspaceSummary[] | { workspaces: WorkspaceSummary[] }>("/api/v1/workspaces", { signal })
+export async function listWorkspaces(options?: RequestOptions): Promise<WorkspaceSummary[]> {
+  const body = await request<WorkspaceSummary[] | { workspaces: WorkspaceSummary[] }>("/api/v1/workspaces", options)
   return Array.isArray(body) ? body : body.workspaces
 }
 
-export function getWorkspace(workspaceId: string, signal?: AbortSignal): Promise<WorkspaceDocument> {
-  return request(workspacePath(workspaceId, ""), { signal })
+export function getWorkspace(workspaceId: string, options?: RequestOptions): Promise<WorkspaceDocument> {
+  return request(workspacePath(workspaceId, ""), options)
 }
 
-export function getMemory(workspaceId: string, revisionId: string, signal?: AbortSignal): Promise<MemoryDocument> {
-  const query = new URLSearchParams({ revision: revisionId })
-  return request(workspacePath(workspaceId, `/memory?${query}`), { signal })
+export async function getMemory(workspaceId: string, revisionId: string, options?: RequestOptions): Promise<MemoryDocument> {
+  const query = new URLSearchParams({ revision_id: revisionId })
+  const payload = await request<ApiMemory>(workspacePath(workspaceId, `/memory?${query}`), options)
+  return normalizeMemory(payload)
 }
 
-export function getHistory(workspaceId: string, signal?: AbortSignal): Promise<HistoryDocument> {
-  return request(workspacePath(workspaceId, "/revisions"), { signal })
-}
-
-export function getProposals(workspaceId: string, signal?: AbortSignal): Promise<ProposalDocument[]> {
-  const body = awaitRequest<ProposalDocument[] | { proposals: ProposalDocument[] }>(
-    workspacePath(workspaceId, "/proposals?status=QUARANTINED"),
-    { signal },
+export async function getHistory(workspaceId: string, options?: RequestOptions): Promise<HistoryDocument> {
+  const payload = await request<{ items?: RevisionRecord[]; revisions?: RevisionRecord[]; next_cursor?: number | string | null }>(
+    workspacePath(workspaceId, "/revisions"),
+    options,
   )
-  return body.then((value) => (Array.isArray(value) ? value : value.proposals))
+  const items = payload.items ?? payload.revisions ?? []
+  return {
+    revisions: items.map((item) => ({
+      ...item,
+      committed_at: item.created_at ?? item.committed_at ?? "",
+      actor_label: item.actor_id ?? item.actor_label,
+    })),
+    next_cursor: payload.next_cursor == null ? null : String(payload.next_cursor),
+  }
 }
 
-export function postQuery(workspaceId: string, body: QueryRequest, signal?: AbortSignal): Promise<QueryResponse> {
+export function getCertificate(workspaceId: string, queryId: string, options?: RequestOptions): Promise<unknown> {
+  return request(workspacePath(workspaceId, `/queries/${encodeURIComponent(queryId)}/certificate`), options)
+}
+
+export function getProposals(workspaceId: string, options?: RequestOptions): Promise<ProposalDocument[]> {
+  return request<ProposalDocument[] | { proposals: ProposalDocument[] }>(
+    workspacePath(workspaceId, "/proposals?status=QUARANTINED"),
+    options,
+  ).then((value) => (Array.isArray(value) ? value : value.proposals))
+}
+
+export function postQuery(workspaceId: string, body: QueryRequest, options?: RequestOptions): Promise<QueryResponse> {
   return request(workspacePath(workspaceId, "/queries"), {
     method: "POST",
     body: JSON.stringify(body),
-    signal,
+    signal: options?.signal,
+    token: options?.token,
   })
 }
 
 export function postRevision(
   workspaceId: string,
   body: MutationRequest,
-  signal?: AbortSignal,
+  options?: RequestOptions,
 ): Promise<{ status: number; body: MutationReceipt }> {
   return requestStatus(workspacePath(workspaceId, "/revisions"), {
     method: "POST",
     body: JSON.stringify(body),
-    signal,
+    signal: options?.signal,
+    token: options?.token,
   })
 }
 
-async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await send(path, init)
+async function request<T>(path: string, options?: RequestOptions & RequestInit): Promise<T> {
+  const response = await send(path, options)
   if (!response.ok) throw await toError(response)
   return response.json() as Promise<T>
 }
 
-function awaitRequest<T>(path: string, init: RequestInit): Promise<T> {
-  return request<T>(path, init)
-}
-
-async function requestStatus(path: string, init: RequestInit): Promise<{ status: number; body: MutationReceipt }> {
-  const response = await send(path, init)
+async function requestStatus(path: string, options?: RequestOptions & RequestInit): Promise<{ status: number; body: MutationReceipt }> {
+  const response = await send(path, options)
   if (!response.ok) throw await toError(response)
   const body = (await response.json()) as MutationReceipt
   return { status: response.status, body }
 }
 
-async function send(path: string, init: RequestInit): Promise<Response> {
+async function send(path: string, options?: RequestOptions & RequestInit): Promise<Response> {
+  const init: RequestInit & { token?: string | null } = { ...(options ?? {}) }
+  const token = init.token
+  delete init.token
   try {
     return await fetch(`${apiOrigin()}${path}`, {
       ...init,
       headers: {
         Accept: "application/json",
         ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...init.headers,
       },
     })
@@ -136,6 +196,34 @@ async function send(path: string, init: RequestInit): Promise<Response> {
   }
 }
 
+export function messageFromPayload(payload: ErrorBody | null, status: number): { message: string; code: string; retryable: boolean; requestId: string | null; details: Record<string, unknown> | null } {
+  const envelope = payload?.error
+  if (envelope?.message) {
+    return {
+      message: envelope.message,
+      code: envelope.code || "HTTP_ERROR",
+      retryable: envelope.retryable ?? status >= 500,
+      requestId: envelope.request_id ?? null,
+      details: envelope.details ?? null,
+    }
+  }
+  if (typeof payload?.detail === "string" && payload.detail) {
+    return { message: payload.detail, code: status === 409 ? "CONFLICT" : "HTTP_ERROR", retryable: status >= 500, requestId: null, details: null }
+  }
+  if (payload?.detail && typeof payload.detail === "object" && !Array.isArray(payload.detail)) {
+    const actual = payload.detail.actual_revision
+    const message = actual
+      ? `Memory changed. Review revision ${actual} before retrying.`
+      : "Memory changed. Review the latest revision before retrying."
+    return { message, code: payload.detail.code || "REVISION_CONFLICT", retryable: false, requestId: null, details: payload.detail }
+  }
+  if (Array.isArray(payload?.detail)) {
+    const message = payload.detail.map((item) => item.msg).filter((item): item is string => Boolean(item)).join(" ")
+    if (message) return { message, code: "VALIDATION", retryable: false, requestId: null, details: null }
+  }
+  return { message: `The memory service returned status ${status}.`, code: "HTTP_ERROR", retryable: status >= 500, requestId: null, details: null }
+}
+
 async function toError(response: Response): Promise<ApiError> {
   let payload: ErrorBody | null = null
   try {
@@ -143,13 +231,6 @@ async function toError(response: Response): Promise<ApiError> {
   } catch {
     payload = null
   }
-  const envelope = payload?.error
-  const message = envelope?.message || `The memory service returned status ${response.status}.`
-  return new ApiError(message, {
-    status: response.status,
-    code: envelope?.code || "HTTP_ERROR",
-    retryable: envelope?.retryable ?? response.status >= 500,
-    requestId: envelope?.request_id ?? null,
-    details: envelope?.details ?? null,
-  })
+  const parsed = messageFromPayload(payload, response.status)
+  return new ApiError(parsed.message, { status: response.status, ...parsed })
 }

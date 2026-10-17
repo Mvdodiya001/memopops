@@ -250,7 +250,7 @@ function QuerySection(props: {
         <p className="meta">Checking uses the stored development result for this revision. It does not call the API and does not invent a proof.</p>
       </form>
       {presentation && response ? (
-        <ResultCard presentation={presentation} formulaText={prettyFormula(response.query)} onCheckCurrent={props.onCurrent}>
+        <ResultCard presentation={presentation} formulaText={response.query ? prettyFormula(response.query) : undefined} onCheckCurrent={props.onCurrent}>
           {props.stored?.steps.length ? (
             <ol className="steps">
               {props.stored.steps.map((step) => <li key={step.clause_id}>{step.text}</li>)}
@@ -357,7 +357,7 @@ function HistorySection(props: {
             <button className="history-row" type="button" aria-current={props.selectedRevision === revision.revision_id} onClick={() => props.onSelect(revision.revision_id)}>
               <strong>{revisionLabel(revision.revision_id)} · {revision.actor_label}</strong>
               <span>{revision.reason}</span>
-              <span className="meta">{formatTimestamp(revision.committed_at)} · {revision.acceptance === "trusted_fixture" ? "Trusted fixture" : "Human confirmed"}</span>
+              <span className="meta">{formatTimestamp(revision.committed_at ?? revision.created_at ?? "")} · {revision.acceptance === "trusted_fixture" ? "Trusted fixture" : "Human confirmed"}</span>
             </button>
           </li>
         ))}

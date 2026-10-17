@@ -75,7 +75,7 @@ export type QueryResponse = {
   certificate_id: string | null
   support_assertion_ids: string[]
   explanation: string
-  query: Formula
+  query?: Formula
   solver?: { name: string; version: string; reason_unknown: string | null }
   timings_ms?: { load: number; solve: number; certificate: number; check: number }
   witnesses?: {
@@ -90,9 +90,11 @@ export type RevisionRecord = {
   parent_revision_id: string | null
   sequence: number
   knowledge_hash: string
-  committed_at: string
+  committed_at?: string
+  created_at?: string
   reason: string
   actor_label?: string
+  actor_id?: string
   acceptance?: "human_confirmed" | "trusted_fixture" | "model_proposed"
 }
 
@@ -157,4 +159,5 @@ export type ErrorBody = {
     retryable?: boolean
     details?: Record<string, unknown>
   }
+  detail?: string | Array<{ msg?: string }> | { code?: string; expected_revision?: string; actual_revision?: string }
 }
