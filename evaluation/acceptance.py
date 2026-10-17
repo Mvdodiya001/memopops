@@ -108,8 +108,11 @@ def run_acceptance(output_dir: Path) -> dict[str, Any]:
                 "passed": ablation_result["result"] == "REFUTED",
             },
         ],
-        "sessions": {"r1": first, "r2": second},
     }
+    (output_dir / "sessions.json").write_text(
+        json.dumps({"r1": first, "r2": second}, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     (output_dir / "report.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

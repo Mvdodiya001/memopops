@@ -37,6 +37,19 @@ node e2e/live-query.mjs
 
 The harness uses workspace `workspace_demo`, revision `rev_001`, and a local reader token defined by the harness. Keep this fixture out of hosted configuration.
 
+## Agent clients and evaluation
+
+Scripted reader/writer sessions live in `agents/` and call the same published routes as the web app, including `POST /decisions` for revision-bound `PROCEED`/`BLOCK` receipts. Run the acceptance suite without FalkorDB:
+
+```bash
+uv run --locked python -m evaluation.run --suite acceptance --output docs/evaluation/acceptance-run
+uv run --locked python scripts/run_agent_demo.py --mode lab --output .artifacts/agent-demo
+```
+
+See [docs/evaluation/README.md](docs/evaluation/README.md). Live model adapters stay disabled unless `MEMOPOPS_MODEL_API_KEY` and `MEMOPOPS_MODEL_BASE_URL` are set.
+
+The live web inspector can list quarantined proposals (`GET /proposals`) and record reader decisions after a verified query at the current head.
+
 ## Start here
 
 - [Detailed implementation plan and parallel work](docs/IMPLEMENTATION_PLAN.md)

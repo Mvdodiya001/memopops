@@ -190,7 +190,18 @@ class LabSnapshotStore:
         with self._lock:
             if workspace_id != WORKSPACE_ID:
                 return []
-            return self.quarantined[:limit]
+            records = []
+            for proposal in self.quarantined[:limit]:
+                records.append(
+                    {
+                        "proposal_id": proposal["id"],
+                        "base_revision_id": proposal.get("base_revision_id", REVISION_ID),
+                        "reason": "INCONSISTENT_CANDIDATE",
+                        "request_json": proposal["request_json"],
+                        "created_at": proposal["created_at"],
+                    }
+                )
+            return records
 
     def get_decision_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
@@ -272,7 +283,7 @@ class LabSnapshotStore:
                 "reason": "INCONSISTENT_CANDIDATE",
             }
             self._revision_receipts[idempotency_key] = (request_hash, result)
-            self.quarantined.append(proposal)
+            self.quarantined.append({**proposal, "base_revision_id": base_revision_id})
             return result
 
     def publish_revision(

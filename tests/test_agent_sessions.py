@@ -5,8 +5,8 @@ import pytest
 
 from agents.client import MemoryClient
 from agents.demo_memory import REVISION_ID, WORKSPACE_ID
-from agents.operator import replace_passing_tests, submit_revision
-from agents.scripts import ScriptedReleaseReader
+from agents.operator import inconsistent_failure_add, replace_passing_tests, submit_revision
+from agents.scripts import ScriptedFailureWriter, ScriptedReleaseReader
 from agents.session import AgentSession
 from agents.transport import AsgiTransport
 from evaluation.acceptance import run_acceptance
@@ -22,18 +22,20 @@ def lab_env(monkeypatch):
         json.dumps(
             {
                 "reader-token": {"workspace_id": WORKSPACE_ID, "role": "reader"},
+                "writer-token": {"workspace_id": WORKSPACE_ID, "role": "writer"},
                 "operator-token": {"workspace_id": WORKSPACE_ID, "role": "operator"},
             }
         ),
     )
     app = create_app(store)
     reader = MemoryClient(AsgiTransport(app), "reader-token", WORKSPACE_ID)
+    writer = MemoryClient(AsgiTransport(app), "writer-token", WORKSPACE_ID)
     operator = MemoryClient(AsgiTransport(app), "operator-token", WORKSPACE_ID)
-    return store, reader, operator
+    return store, reader, writer, operator
 
 
 def test_scripted_reader_persists_proceed_decision(lab_env, tmp_path: Path):
-    _store, reader, _operator = lab_env
+    _store, reader, _writer, _operator = lab_env
     session = AgentSession(
         client=reader,
         model=ScriptedReleaseReader(),
@@ -51,7 +53,7 @@ def test_scripted_reader_persists_proceed_decision(lab_env, tmp_path: Path):
 
 
 def test_resumed_reader_changes_decision_after_correction(lab_env, tmp_path: Path):
-    _store, reader, operator = lab_env
+    _store, reader, _writer, operator = lab_env
     journal = tmp_path / "reader.json"
     first = AgentSession(
         client=reader,
