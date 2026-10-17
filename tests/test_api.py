@@ -425,6 +425,53 @@ def test_snapshot_integrity_failure_is_not_reported_as_database_unavailable(clie
     assert "private integrity detail" not in response.text
 
 
+def test_database_unavailability_returns_503_without_fallback_memory(client):
+    client._app.state.memory_store.load_snapshot = lambda *_: (_ for _ in ()).throw(
+        ConnectionError("database is offline")
+    )
+
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": "atom", "id": "p"}),
+        headers={"Authorization": "Bearer reader-token"},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Memory snapshot is unavailable"}
+    assert client._app.state.memory_store.saved == {}
+
+
+def test_query_that_finishes_after_head_advances_is_historical(client):
+    from types import SimpleNamespace
+
+    from memopops.solver import classify
+
+    store = client._app.state.memory_store
+
+    class AdvancingSolver:
+        def submit(self, premises, query, *, timeout_ms):
+            store.head = "rev_2"
+            return SimpleNamespace(
+                result=lambda timeout: classify(premises, query, timeout_ms=timeout_ms)
+            )
+
+        def shutdown(self):
+            pass
+
+    client._app.state.solver_executor.shutdown()
+    client._app.state.solver_executor = AdvancingSolver()
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": "atom", "id": "p"}),
+        headers={"Authorization": "Bearer reader-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["revision_id"] == "rev_1"
+    assert response.json()["head_revision_observed"] == "rev_2"
+    assert response.json()["freshness"] == "HISTORICAL"
+
+
 def test_query_returns_429_when_solver_queue_is_full(client):
     class FullSolverQueue:
         def submit(self, *_args, **_kwargs):

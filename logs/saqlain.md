@@ -116,3 +116,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: `uv run --frozen --no-sync pytest -q` (119 passed); all 40 independent checker tests included; frontend `npm test -- --run` (7 passed); compileall, Compose config and diff checks passed. Hosted FalkorDB smoke created a fresh certified query, atomically linked its 3 checked support assertions, then created and deleted a temporary non-head revision that removed `as_ready_rule`; the workspace-scoped impact API found exactly that query, returned its historical status/support, and counted one result. Temporary revision was detached/deleted; workspace head and accepted memory were not changed.
 - Handoff: expose impact summaries and certificate download in the revision UI after backend routes are available; then proceed to S5 fault and performance checks.
 - Publication: commit `3c8f238407da3173181e0288ef3b79f9b501dbdc` pushed directly to `origin/main`; subsequent fetch and `git merge-base --is-ancestor` confirmed it. No PR was created.
+
+## S-20261017-09
+
+- Updated: 2026-10-17T17:25:30+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; verification tests, API/store edge handling, release notes and Saqlain/master logs. No deployment or accepted-memory changes planned.
+- Objective: close high-value deterministic fault/oracle gaps from the S5 verification matrix and measure persistence behavior that can be tested without Docker.
+- Decisions: run an independent seeded truth-table comparison with 1,000 small solver cases, test head advancement during query and missing-database failure behavior, then verify query result/certificate replay across separate API lifespans on hosted FalkorDB. Docker-based container restart remains blocked if the engine is unavailable.
+- Validation: `uv run --frozen --no-sync pytest -q` (122 passed), including 1,000 deterministic seeded solver-vs-truth-table cases; direct independent checker tests (40 passed); compileall, Compose config and diff checks passed. API fault tests confirm database unavailability returns 503 without fallback and a head advance during solve marks the response HISTORICAL. Hosted FalkorDB check closed the first API lifespan, started a fresh store/app, replayed the same idempotency request with the same query ID, reloaded the VERIFIED result, and exported its 23-clause certificate. Docker engine check failed because the Docker Desktop Linux-engine named pipe is absent; an actual local container restart remains unverified.
+- Handoff: remaining release work includes exposing certificate download and impact pages in the live UI, UI/API auth wiring, full correction walkthrough at r2, Docker restart on a host with its engine, and final video/submission rehearsal.
+- Publication: staged-diff review, commit, origin/main integration and direct push pending. No PR will be created.

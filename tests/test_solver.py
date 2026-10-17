@@ -1,5 +1,6 @@
 import pytest
 from itertools import product
+from random import Random
 
 from memopops.formula import Formula, parse_formula
 from memopops.solver import (
@@ -137,6 +138,71 @@ def test_solver_matches_independent_truth_table_oracle_for_all_v1_operators() ->
                 if witness is not None:
                     assert evaluate(premise, witness)
                     assert evaluate(query, witness) is expected_query_value
+
+
+def test_solver_matches_seeded_truth_table_oracle_for_1000_bounded_cases():
+    from memopops.formula import Atom, Binary, Not
+
+    rng = Random(20261017)
+    registered = {"p", "q", "r", "s"}
+    atom_ids = sorted(registered)
+    operators = ("and", "or", "implies", "iff")
+
+    def generate(depth: int) -> dict[str, object]:
+        if depth == 0 or rng.random() < 0.28:
+            return atom(rng.choice(atom_ids))
+        if rng.random() < 0.22:
+            return neg(generate(depth - 1))
+        return {
+            "op": rng.choice(operators),
+            "args": [generate(depth - 1), generate(depth - 1)],
+        }
+
+    def evaluate(formula: Formula, assignment: dict[str, bool]) -> bool:
+        if isinstance(formula, Atom):
+            return assignment[formula.id]
+        if isinstance(formula, Not):
+            return not evaluate(formula.arg, assignment)
+        left = evaluate(formula.left, assignment)
+        right = evaluate(formula.right, assignment)
+        return {
+            "and": left and right,
+            "or": left or right,
+            "implies": not left or right,
+            "iff": left == right,
+        }[formula.op]
+
+    assignments = [
+        dict(zip(atom_ids, values))
+        for values in product((False, True), repeat=len(atom_ids))
+    ]
+    for case_id in range(1_000):
+        premise_formulas = [
+            parse(generate(rng.randrange(1, 4)), registered)
+            for _ in range(rng.randrange(0, 5))
+        ]
+        query = parse(generate(rng.randrange(1, 4)), registered)
+        models = [
+            assignment
+            for assignment in assignments
+            if all(evaluate(premise, assignment) for premise in premise_formulas)
+        ]
+        if not models:
+            expected = QueryStatus.INCONSISTENT_MEMORY
+        elif all(evaluate(query, assignment) for assignment in models):
+            expected = QueryStatus.PROVED
+        elif all(not evaluate(query, assignment) for assignment in models):
+            expected = QueryStatus.REFUTED
+        else:
+            expected = QueryStatus.UNKNOWN
+
+        actual = classify(premise_formulas, query)
+        assert actual.result is expected, (case_id, expected, actual.result)
+        for witness_name, query_value in (("query_true", True), ("query_false", False)):
+            witness = actual.witnesses[witness_name]
+            if witness is not None:
+                assert all(evaluate(premise, witness) for premise in premise_formulas)
+                assert evaluate(query, witness) is query_value
 
 
 def test_solver_executor_rejects_when_worker_and_queue_are_full(monkeypatch):
