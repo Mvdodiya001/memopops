@@ -47,6 +47,12 @@ class FakeStore:
     def current_head(self, workspace_id):
         return "rev_1"
 
+    def get_query_result(self, workspace, query_id):
+        for _, result in self.saved.values():
+            if result.get("query_id") == query_id:
+                return result
+        return None
+
     def get_query_receipt(self, workspace, key, request_hash):
         if key not in self.saved:
             return None
@@ -244,3 +250,25 @@ def test_idempotent_retry_returns_saved_result_without_using_solver(client):
 
     assert retry.status_code == 200
     assert retry.json() == original.json()
+
+
+def test_persisted_query_result_can_be_read_again_by_workspace_client(client):
+    headers = {"Authorization": "Bearer reader-token"}
+    created = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": "atom", "id": "p"}),
+        headers=headers,
+    ).json()
+
+    restored = client.get(
+        f"/api/v1/workspaces/demo/queries/{created['query_id']}", headers=headers
+    )
+
+    assert restored.status_code == 200
+    assert restored.json() == created
+    assert client.get(
+        "/api/v1/workspaces/other/queries/query_1", headers=headers
+    ).status_code == 404
+    assert client.get(
+        "/api/v1/workspaces/demo/queries/missing", headers=headers
+    ).status_code == 404

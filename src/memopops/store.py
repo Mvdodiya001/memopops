@@ -124,6 +124,16 @@ class FalkorSnapshotStore:
         rows = graph.query("MATCH (w:Workspace) RETURN w.head_revision AS head_revision LIMIT 1").result_set
         return rows[0][0] if rows else None
 
+    def get_query_result(self, workspace_id: str, query_id: str) -> dict[str, Any] | None:
+        """Read a previously persisted result, scoped to its workspace graph."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        rows = graph.query(
+            "MATCH (q:QueryResult {id: $query_id, workspace_id: $workspace_id}) "
+            "RETURN q.result_json AS result_json",
+            {"query_id": query_id, "workspace_id": workspace_id},
+        ).result_set
+        return json.loads(rows[0][0]) if rows else None
+
     def get_query_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
     ) -> dict[str, Any] | None:

@@ -149,3 +149,26 @@ def test_query_receipt_read_reuses_only_the_original_request():
     assert store.get_query_receipt("workspace-1", "missing", "request-hash") is None
     with pytest.raises(IdempotencyConflictError):
         store.get_query_receipt("workspace-1", "reader-1", "different-hash")
+
+
+class QueryReadGraph:
+    def __init__(self, workspace_id="workspace-1", result=None):
+        self.workspace_id = workspace_id
+        self.result = result
+        self.params = None
+
+    def query(self, query, params=None):
+        assert "MATCH (q:QueryResult" in query
+        self.params = params
+        if params["workspace_id"] != self.workspace_id or self.result is None:
+            return Result([])
+        return Result([[json.dumps(self.result)]])
+
+
+def test_query_result_lookup_is_scoped_to_authorized_workspace():
+    expected = {"query_id": "q-1", "result": "PROVED"}
+    graph = QueryReadGraph(result=expected)
+    store = FalkorSnapshotStore(FakeClient(graph))
+
+    assert store.get_query_result("workspace-1", "q-1") == expected
+    assert store.get_query_result("workspace-2", "q-1") is None

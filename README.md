@@ -2,7 +2,7 @@
 
 Proof-carrying shared memory for AI agents, targeting Graph Hacks Track 02. Working concept: persistent propositions, evidence, revisions, and proof dependencies in FalkorDB, with a separate propositional-logic checker.
 
-Status: first backend implementation in progress. The Python 3.12 package contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, and hash-verified FalkorDB snapshot reads. Local package versions are locked in `uv.lock`; live database behavior remains to be checked against the available FalkorDB instance.
+Status: first backend implementation in progress. The Python 3.12 package contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, hash-verified FalkorDB snapshot reads, receipt-first retries, and workspace-scoped query-result reloads. Local package versions are locked in `uv.lock`; live database behavior remains to be checked against the available FalkorDB instance.
 
 ## Local FalkorDB
 

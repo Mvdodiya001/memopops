@@ -31,6 +31,7 @@ class SnapshotReader(Protocol):
     def close(self) -> None: ...
     def load_snapshot(self, workspace_id: str, revision_id: str) -> Any: ...
     def current_head(self, workspace_id: str) -> str | None: ...
+    def get_query_result(self, workspace_id: str, query_id: str) -> dict[str, Any] | None: ...
     def get_query_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
     ) -> dict[str, Any] | None: ...
@@ -182,6 +183,21 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Memory database is unavailable") from exc
         return {"status": "ready"}
+
+    @app.get("/api/v1/workspaces/{workspace_id}/queries/{query_id}")
+    def read_query_result(
+        workspace_id: str,
+        query_id: str,
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            result = memory_store.get_query_result(workspace_id, query_id)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Query result is unavailable") from exc
+        if result is None:
+            raise HTTPException(status_code=404, detail="Query result not found")
+        return result
 
     @app.post("/api/v1/workspaces/{workspace_id}/queries")
     def query_memory(
