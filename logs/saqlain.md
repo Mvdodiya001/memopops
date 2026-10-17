@@ -150,4 +150,4 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Objective: cover the new workspace discovery routes when FalkorDB is unavailable or the authorized workspace has no current head.
 - Validation: `uv run --frozen --no-sync pytest -q` (126 passed). A read-only live smoke using `.env.cloud` returned HTTP 503 from both routes; an isolated `FalkorSnapshotStore.ping()` failed with `TimeoutError`, confirming this session cannot reach the database endpoint now. Credentials and endpoint values were not printed. No live workspace data was changed.
 - Handoff: retry live workspace-list/detail smoke when the database endpoint is reachable; use the same authenticated GET requests as the S10 contract. Backend failure handling is covered and returns a generic 503.
-- Publication: commit, direct push and remote verification pending; no PR.
+- Publication: commit `d734a28` was pushed directly to `origin/main`; fetch and ancestor verification succeeded. No PR was created.
