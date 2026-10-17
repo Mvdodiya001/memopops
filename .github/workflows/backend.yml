@@ -1,0 +1,38 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Install locked project and development dependencies
+        run: uv sync --locked
+
+      - name: Backend tests
+        run: uv run --locked pytest -q
+
+      - name: Compile backend and checker sources
+        run: uv run --locked python -m compileall -q src tests packages/proofcheck/src scripts
+
+      - name: Independent proof checker tests
+        run: uv run --locked python -m unittest discover -s tests/proofcheck -q
+
+      - name: Build source distribution and wheel
+        run: uv build
