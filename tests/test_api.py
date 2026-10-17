@@ -428,6 +428,8 @@ def test_query_requires_auth_and_returns_revision_bound_result(client):
     assert response.json()["freshness"] == "CURRENT_AS_OF_READ"
     assert response.json()["proof_status"] == "NOT_REQUESTED"
     assert response.json()["witnesses_verified"] is False
+    assert response.json()["actor_id"].startswith("actor_")
+    assert response.json()["created_at"].endswith("Z")
 
 
 def test_certificate_query_is_independently_checked_and_exportable(client):

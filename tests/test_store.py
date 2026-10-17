@@ -120,7 +120,10 @@ class ReceiptGraph:
 def test_query_result_and_idempotency_receipt_are_one_atomic_write():
     graph = ReceiptGraph()
     store = FalkorSnapshotStore(FakeClient(graph))
-    payload = {"result": "UNKNOWN", "query_hash": "abc"}
+    payload = {
+        "result": "UNKNOWN", "query_hash": "abc", "actor_id": "actor_reader",
+        "created_at": "2026-10-17T12:00:00.000000Z",
+    }
 
     first = store.persist_query_result("workspace-1", "rev_1", "reader-1", "request-hash", payload, ["as_1"])
     retry = store.persist_query_result("workspace-1", "rev_1", "reader-1", "request-hash", payload, ["as_1"])
@@ -132,6 +135,9 @@ def test_query_result_and_idempotency_receipt_are_one_atomic_write():
     assert "CREATE (q)-[:USES_PREMISE]->(a)" in graph.write_queries[0]
     assert "size(used_assertions) = size($uses_premise_ids)" in graph.write_queries[0]
     assert graph.write_params[0]["uses_premise_ids"] == ["as_1"]
+    assert "actor_id: $actor_id, created_at: $created_at" in graph.write_queries[0]
+    assert graph.write_params[0]["actor_id"] == "actor_reader"
+    assert graph.write_params[0]["created_at"] == "2026-10-17T12:00:00.000000Z"
     assert graph.receipts["reader-1"][0] == "request-hash"
 
     with pytest.raises(IdempotencyConflictError):

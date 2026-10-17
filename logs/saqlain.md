@@ -222,4 +222,16 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Actions and decisions: use bounded `PROCEED`/`BLOCK` outcomes with a required concise rationale, derive actor from bearer identity, and guard both head and query binding in the persisted graph write.
 - Validation: `uv run --locked pytest -q` (133 passed); `uv run python -m compileall -q src`; `git diff --check`. Tests cover authentication, tenant isolation, changed-key conflict, identical replay, stale head, missing query, and graph-write binding.
 - Handoff: decision receipt is audit metadata and does not execute an external action. Real FalkorDB transaction semantics remain part of later live DB validation.
-- Publication: pending direct push to `origin/main`; no PR. The live browser has not yet consumed the decision endpoint; UI integration is a Mahavir-owned follow-up.
+- Publication: commit `91d2abd` pushed directly to `origin/main` and confirmed by fetch; no PR. The live browser has not yet consumed the decision endpoint; UI integration is a Mahavir-owned follow-up.
+
+## S-20261017-18
+
+- Updated: 2026-10-17T18:12:00+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; query persistence in API/store, tests, docs and Saqlain/master logs.
+- Objective and success criteria: persist the authenticated actor and UTC creation timestamp with each query result, without exposing token material.
+- Actions and decisions: derive actor from existing bearer auth and use the existing RFC3339 UTC timestamp convention; retain both fields in the immutable result JSON and graph node.
+- Validation: `uv run --locked pytest -q` (133 passed); `uv run python -m compileall -q src`; `git diff --check`. API tests verify actor IDs are server-derived and timestamps are UTC; store tests assert both are properties of the atomic query write.
+- Handoff: these fields support later ordered audit/event presentation; they do not themselves implement the event feed.
+- Publication: pending direct push to `origin/main`; no PR.

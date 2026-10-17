@@ -53,6 +53,8 @@ Atom registration includes `id`, `label`, `meaning`, `scope`. Register all four 
 
 Decision request: `{expected_revision, query_id, idempotency_key, outcome, rationale}`. `outcome` is `PROCEED` or `BLOCK`; rationale is 1–500 characters. The authenticated actor is derived from the bearer token. The service accepts a decision only if the query belongs to `expected_revision` and that revision is still the workspace head in the same graph write. Identical actor/key retries return the original receipt; reusing the key with different content returns 409. A decision is an audit record and never triggers an external action.
 
+Persisted query results include server-derived `actor_id` and UTC `created_at` fields for audit history; clients cannot supply either field.
+
 Workspace creation, fixture seeding and resets are operator scripts for v1, not anonymous public endpoints. This avoids building a full onboarding/account product. `POST /queries` requires an idempotency key as well, so automatic retries do not duplicate result/event records. Its receipt protects audit identity, not knowledge revision publication.
 
 ## 4. Mutation request and outcomes

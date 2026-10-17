@@ -815,6 +815,8 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             "query_id": str(uuid4()),
             "workspace_id": workspace_id,
             "revision_id": snapshot.revision_id,
+            "actor_id": principal["actor_id"],
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"),
             "head_revision_observed": head,
             "freshness": "CURRENT_AS_OF_READ" if head == snapshot.revision_id else "HISTORICAL",
             "semantics_version": SEMANTICS_VERSION,
