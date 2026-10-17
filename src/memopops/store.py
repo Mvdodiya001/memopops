@@ -124,6 +124,23 @@ class FalkorSnapshotStore:
         rows = graph.query("MATCH (w:Workspace) RETURN w.head_revision AS head_revision LIMIT 1").result_set
         return rows[0][0] if rows else None
 
+    def get_query_receipt(
+        self, workspace_id: str, idempotency_key: str, request_hash: str
+    ) -> dict[str, Any] | None:
+        """Return the prior result for an identical retry, or reject key reuse."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        rows = graph.query(
+            "MATCH (receipt:RequestReceipt {key: $key}) "
+            "RETURN receipt.payload_hash AS payload_hash, receipt.result_json AS result_json",
+            {"key": idempotency_key},
+        ).result_set
+        if not rows:
+            return None
+        stored_hash, stored_result = rows[0]
+        if stored_hash != request_hash:
+            raise IdempotencyConflictError(idempotency_key)
+        return json.loads(stored_result)
+
     def persist_query_result(
         self,
         workspace_id: str,

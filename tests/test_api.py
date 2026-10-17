@@ -47,6 +47,14 @@ class FakeStore:
     def current_head(self, workspace_id):
         return "rev_1"
 
+    def get_query_receipt(self, workspace, key, request_hash):
+        if key not in self.saved:
+            return None
+        previous_hash, result = self.saved[key]
+        if previous_hash != request_hash:
+            raise IdempotencyConflictError(key)
+        return result
+
     def persist_query_result(self, workspace, revision, key, request_hash, payload):
         if key in self.saved:
             previous_hash, result = self.saved[key]
@@ -215,3 +223,24 @@ def test_query_returns_429_when_solver_queue_is_full(client):
 
     assert response.status_code == 429
     assert response.json() == {"detail": "Solver queue is full"}
+
+
+def test_idempotent_retry_returns_saved_result_without_using_solver(client):
+    headers = {"Authorization": "Bearer reader-token"}
+    path = "/api/v1/workspaces/demo/queries"
+    payload = request_body({"op": "atom", "id": "p"})
+    original = client.post(path, json=payload, headers=headers)
+    client._app.state.solver_executor.shutdown()
+
+    class FullSolverQueue:
+        def submit(self, *_args, **_kwargs):
+            raise SolverQueueFullError("full")
+
+        def shutdown(self):
+            pass
+
+    client._app.state.solver_executor = FullSolverQueue()
+    retry = client.post(path, json=payload, headers=headers)
+
+    assert retry.status_code == 200
+    assert retry.json() == original.json()

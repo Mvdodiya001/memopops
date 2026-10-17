@@ -31,6 +31,9 @@ class SnapshotReader(Protocol):
     def close(self) -> None: ...
     def load_snapshot(self, workspace_id: str, revision_id: str) -> Any: ...
     def current_head(self, workspace_id: str) -> str | None: ...
+    def get_query_receipt(
+        self, workspace_id: str, idempotency_key: str, request_hash: str
+    ) -> dict[str, Any] | None: ...
     def persist_query_result(
         self,
         workspace_id: str,
@@ -207,6 +210,19 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
 
         query_digest = formula_hash(formula)
         request_digest = _request_hash(request.revision_id, query_digest, request.proof_mode)
+        try:
+            prior_result = memory_store.get_query_receipt(
+                workspace_id, request.idempotency_key, request_digest
+            )
+        except IdempotencyConflictError as exc:
+            raise HTTPException(
+                status_code=409, detail="Idempotency key was used for another request"
+            ) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Query receipt is unavailable") from exc
+        if prior_result is not None:
+            return prior_result
+
         solve_started = monotonic()
         try:
             evaluation = app.state.solver_executor.submit(

@@ -136,3 +136,16 @@ def test_query_result_is_not_persisted_for_a_missing_revision():
 
     with pytest.raises(SnapshotNotFoundError):
         store.persist_query_result("workspace-1", "missing", "reader-1", "request-hash", {"result": "UNKNOWN"})
+
+
+def test_query_receipt_read_reuses_only_the_original_request():
+    graph = ReceiptGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+    saved = store.persist_query_result(
+        "workspace-1", "rev_1", "reader-1", "request-hash", {"result": "UNKNOWN"}
+    )
+
+    assert store.get_query_receipt("workspace-1", "reader-1", "request-hash") == saved
+    assert store.get_query_receipt("workspace-1", "missing", "request-hash") is None
+    with pytest.raises(IdempotencyConflictError):
+        store.get_query_receipt("workspace-1", "reader-1", "different-hash")
