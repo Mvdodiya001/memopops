@@ -10,10 +10,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
+COPY packages ./packages
 COPY scripts ./scripts
 
 RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/packages/proofcheck/src"
 EXPOSE 8000
 CMD ["uvicorn", "memopops.api:app", "--host", "0.0.0.0", "--port", "8000"]

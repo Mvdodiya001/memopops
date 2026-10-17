@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGE = ROOT / "packages" / "proofcheck"
+PACKAGE = ROOT / "packages" / "proofcheck" / "src" / "proofcheck"
 FORBIDDEN = {"z3", "z3_solver", "services", "certgen", "generator"}
 
 
@@ -27,7 +27,7 @@ class ImportBoundaryTests(unittest.TestCase):
 
     def test_runtime_does_not_load_z3(self) -> None:
         env = dict(**{key: value for key, value in __import__("os").environ.items() if key != "PYTHONPATH"})
-        env["PYTHONPATH"] = str(ROOT / "packages")
+        env["PYTHONPATH"] = str(ROOT / "packages" / "proofcheck" / "src")
         completed = subprocess.run(
             [sys.executable, "-c", "import sys, proofcheck; raise SystemExit(0 if not any(name.split('.')[0]=='z3' for name in sys.modules) else 1)"],
             cwd=ROOT,

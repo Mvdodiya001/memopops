@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "packages"))
+sys.path.insert(0, str(ROOT / "packages" / "proofcheck" / "src"))
 
 from proofcheck.encode import definition_clause_literals, reconstruct  # noqa: E402
 from proofcheck.formula import parse_formula  # noqa: E402

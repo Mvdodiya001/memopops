@@ -2,7 +2,7 @@
 
 Proof-carrying shared memory for AI agents, targeting Graph Hacks Track 02. Working concept: persistent propositions, evidence, revisions, and proof dependencies in FalkorDB, with a separate propositional-logic checker.
 
-Status: backend implementation in progress. The Python 3.12 service contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, hash-verified FalkorDB snapshot reads, atomic revision publication, idempotency receipts, quarantined inconsistent proposals, and workspace-scoped memory/history/query reads. Independent proof certificates and the UI remain pending.
+Status: implementation in progress. The Python 3.12 service contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, hash-verified FalkorDB snapshot reads, atomic revision publication, idempotency receipts, quarantined inconsistent proposals, workspace-scoped memory/history/query reads, and bounded resolution certificates checked by the independent `proofcheck` package.
 
 ## Local FalkorDB
 
@@ -12,9 +12,9 @@ The Compose image currently uses the official server image's moving `latest` tag
 
 ## Python core
 
-Use the locked Python 3.12 environment with `uv sync --frozen --group dev`, then run `uv run pytest`. The core accepts the versioned JSON formula AST, rejects unregistered atoms and over-limit formulas, and classifies queries over the complete supplied snapshot. The revision API validates bounded add/replace/retract candidates, hashes evidence, rejects inconsistent or indeterminate activation, and uses an atomic expected-head graph write. Conflicting candidates are preserved as quarantined proposals. Only an operator credential may commit accepted memory; reader and writer credentials cannot promote a proposal. Query responses remain solver-only until independent certificate generation and checking are integrated.
+Use the locked Python 3.12 environment with `uv sync --frozen --group dev`, then run `uv run pytest`. The core accepts the versioned JSON formula AST, rejects unregistered atoms and over-limit formulas, and classifies queries over the complete supplied snapshot. The revision API validates bounded add/replace/retract candidates, hashes evidence, rejects inconsistent or indeterminate activation, and uses an atomic expected-head graph write. Conflicting candidates are preserved as quarantined proposals. Only an operator credential may commit accepted memory; reader and writer credentials cannot promote a proposal. Query requests default to `proof_mode: "certificate"`; decisive results are marked VERIFIED only after the independent checker validates both the proof and trusted workspace, revision, assertion and evidence context. Certificate search has fixed clause, pair and time limits. If it exceeds a limit, the solver result is retained with `proof_status: "BUDGET_EXCEEDED"`. Use `proof_mode: "solver"` to skip certificate generation. Export a verified bundle from `GET /api/v1/workspaces/{workspace_id}/queries/{query_id}/certificate`; the certificate itself is stored with the immutable query result for retry and history.
 
-The live API exposes `GET /api/v1/workspaces/{workspace_id}/memory`, `GET /api/v1/workspaces/{workspace_id}/revisions`, `POST /api/v1/workspaces/{workspace_id}/revisions`, and revision-bound query endpoints. `model_proposed` submissions and proposal inspection are not yet available.
+The live API exposes `GET /api/v1/workspaces/{workspace_id}/memory`, `GET /api/v1/workspaces/{workspace_id}/revisions`, `POST /api/v1/workspaces/{workspace_id}/revisions`, revision-bound query endpoints, and verified certificate export. `model_proposed` submissions and proposal inspection are not yet available.
 
 ## Start here
 

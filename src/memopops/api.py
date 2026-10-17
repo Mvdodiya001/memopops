@@ -21,8 +21,15 @@ from memopops.formula import (
     SEMANTICS_VERSION,
     canonical_json,
     formula_hash,
+    formula_to_json,
     parse_formula,
 )
+from memopops.certificates import (
+    CertificateBudgetExceeded,
+    CertificateGenerationError,
+    generate_certificate,
+)
+from proofcheck import check_certificate, check_witness_pair
 from memopops.revisions import (
     CandidateInconsistentError,
     CandidateIndeterminateError,
@@ -89,8 +96,7 @@ class QueryRequest(BaseModel):
     revision_id: str = Field(min_length=1, max_length=128)
     idempotency_key: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
     query: dict[str, Any]
-    # Solver-only stays explicit until the independent certificate lane is integrated.
-    proof_mode: Literal["solver"] = "solver"
+    proof_mode: Literal["certificate", "solver"] = "certificate"
 
 
 class RevisionRequest(BaseModel):
@@ -284,7 +290,36 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail="Query result is unavailable") from exc
         if result is None:
             raise HTTPException(status_code=404, detail="Query result not found")
-        return result
+        return {key: value for key, value in result.items() if key != "certificate"}
+
+    @app.get("/api/v1/workspaces/{workspace_id}/queries/{query_id}/certificate")
+    def read_query_certificate(
+        workspace_id: str,
+        query_id: str,
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            result = memory_store.get_query_result(workspace_id, query_id)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Query result is unavailable") from exc
+        if result is None:
+            raise HTTPException(status_code=404, detail="Query result not found")
+        certificate = result.get("certificate")
+        if certificate is None or result.get("proof_status") != "VERIFIED":
+            raise HTTPException(status_code=404, detail="Verified certificate not found")
+        digest = sha256(
+            json.dumps(
+                certificate,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        if not hmac.compare_digest(digest, str(result.get("certificate_id") or "")):
+            raise HTTPException(status_code=500, detail="Stored certificate failed integrity verification")
+        return certificate
 
     @app.post("/api/v1/workspaces/{workspace_id}/revisions", status_code=201)
     def publish_revision(
@@ -480,7 +515,7 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Query receipt is unavailable") from exc
         if prior_result is not None:
-            return prior_result
+            return {key: value for key, value in prior_result.items() if key != "certificate"}
 
         solve_started = monotonic()
         try:
@@ -494,6 +529,105 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail="Solver is unavailable") from exc
         solve_ms = int((monotonic() - solve_started) * 1_000)
+
+        proof_status = "NOT_REQUESTED"
+        witnesses_verified = False
+        certificate: dict[str, object] | None = None
+        certificate_id: str | None = None
+        support_assertion_ids: list[str] = []
+        certificate_ms = 0
+        check_ms = 0
+        if request.proof_mode == "certificate":
+            try:
+                trusted_memory = memory_store.load_memory(workspace_id, request.revision_id)
+            except SnapshotIntegrityError as exc:
+                raise HTTPException(
+                    status_code=500, detail="Stored memory failed integrity verification"
+                ) from exc
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="Memory evidence is unavailable") from exc
+            expected_records = [
+                {
+                    "id": item["id"],
+                    "formula_hash": item["formula_hash"],
+                    "evidence_ids": sorted(evidence["id"] for evidence in item["evidence"]),
+                }
+                for item in trusted_memory["assertions"]
+            ]
+            expected_context = {
+                "workspace_id": trusted_memory["workspace_id"],
+                "revision_id": trusted_memory["revision_id"],
+                "semantics_version": SEMANTICS_VERSION,
+                "knowledge_hash": trusted_memory["knowledge_hash"],
+                "query_hash": query_digest,
+                "assertions": expected_records,
+            }
+            if (
+                trusted_memory["workspace_id"] != snapshot.workspace_id
+                or trusted_memory["revision_id"] != snapshot.revision_id
+                or trusted_memory["knowledge_hash"] != snapshot.knowledge_hash
+                or [item["id"] for item in trusted_memory["assertions"]]
+                != sorted(item.id for item in snapshot.assertions)
+            ):
+                raise HTTPException(status_code=500, detail="Stored memory evidence failed snapshot binding")
+            certificate_started = monotonic()
+            decisive = evaluation.result.value in {"PROVED", "REFUTED"}
+            if decisive:
+                witness = evaluation.witnesses.get("knowledge")
+                if witness is None:
+                    raise HTTPException(status_code=500, detail="Solver omitted the knowledge witness")
+                evidence_ids = {
+                    item["id"]: [evidence["id"] for evidence in item["evidence"]]
+                    for item in trusted_memory["assertions"]
+                }
+                try:
+                    candidate = generate_certificate(
+                        snapshot,
+                        formula,
+                        evaluation.result.value,
+                        witness,
+                        evidence_ids,
+                    )
+                except CertificateBudgetExceeded:
+                    proof_status = "BUDGET_EXCEEDED"
+                except CertificateGenerationError as exc:
+                    raise HTTPException(
+                        status_code=500, detail="Solver result failed certificate preconditions"
+                    ) from exc
+                else:
+                    certificate_ms = int((monotonic() - certificate_started) * 1_000)
+                    check_started = monotonic()
+                    report = check_certificate(candidate, expected_context)
+                    check_ms = int((monotonic() - check_started) * 1_000)
+                    if not report.logical_valid or report.context_binding != "MATCHED":
+                        raise HTTPException(status_code=500, detail="Independent certificate verification failed")
+                    certificate = candidate
+                    certificate_id = sha256(
+                        json.dumps(
+                            candidate,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                            ensure_ascii=True,
+                            allow_nan=False,
+                        ).encode("utf-8")
+                    ).hexdigest()
+                    support_assertion_ids = list(report.support_assertion_ids)
+                    proof_status = "VERIFIED"
+                    witnesses_verified = True
+            elif evaluation.result.value == "UNKNOWN":
+                check_started = monotonic()
+                report = check_witness_pair(
+                    [item["formula"] for item in trusted_memory["assertions"]],
+                    formula_to_json(formula),
+                    evaluation.witnesses.get("query_true"),
+                    evaluation.witnesses.get("query_false"),
+                )
+                check_ms = int((monotonic() - check_started) * 1_000)
+                if not report.logical_valid:
+                    raise HTTPException(status_code=500, detail="Independent witness verification failed")
+                witnesses_verified = True
+            if decisive and proof_status == "BUDGET_EXCEEDED":
+                certificate_ms = int((monotonic() - certificate_started) * 1_000)
 
         try:
             head = memory_store.current_head(workspace_id)
@@ -509,27 +643,35 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             "knowledge_hash": snapshot.knowledge_hash,
             "query_hash": query_digest,
             "result": evaluation.result.value,
-            "proof_status": "NOT_REQUESTED",
-            "witnesses_verified": False,
-            "certificate_id": None,
-            "support_assertion_ids": [],
+            "proof_status": proof_status,
+            "witnesses_verified": witnesses_verified,
+            "certificate_id": certificate_id,
+            "support_assertion_ids": support_assertion_ids,
             "explanation": f"The Boolean query result is {evaluation.result.value} at the requested revision.",
             "solver": {
                 "name": "z3",
                 "version": evaluation.solver_version,
                 "reason_unknown": evaluation.reason_unknown,
             },
-            "timings_ms": {"load": load_ms, "solve": solve_ms},
+            "timings_ms": {
+                "load": load_ms,
+                "solve": solve_ms,
+                "certificate": certificate_ms,
+                "check": check_ms,
+            },
             "witnesses": evaluation.witnesses,
         }
+        if certificate is not None:
+            result_payload["certificate"] = certificate
         try:
-            return memory_store.persist_query_result(
+            persisted = memory_store.persist_query_result(
                 workspace_id,
                 request.revision_id,
                 request.idempotency_key,
                 request_digest,
                 result_payload,
             )
+            return {key: value for key, value in persisted.items() if key != "certificate"}
         except IdempotencyConflictError as exc:
             raise HTTPException(status_code=409, detail="Idempotency key was used for another request") from exc
         except SnapshotNotFoundError as exc:

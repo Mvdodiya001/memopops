@@ -59,7 +59,12 @@ class FakeStore:
             "revision_id": "rev_1",
             "knowledge_hash": self.snapshot.knowledge_hash,
             "atom_ids": ["p", "q"],
-            "assertions": [{"id": "as_p", "formula": {"op": "atom", "id": "p"}}],
+            "assertions": [{
+                "id": "as_p",
+                "formula": {"op": "atom", "id": "p"},
+                "formula_hash": self.snapshot.assertions[0].formula_hash,
+                "evidence": [{"id": "ev_p"}],
+            }],
         }
 
     def list_revisions(self, workspace_id, *, before_sequence=None, limit=50):
@@ -235,6 +240,61 @@ def test_query_requires_auth_and_returns_revision_bound_result(client):
     assert response.json()["freshness"] == "CURRENT_AS_OF_READ"
     assert response.json()["proof_status"] == "NOT_REQUESTED"
     assert response.json()["witnesses_verified"] is False
+
+
+def test_certificate_query_is_independently_checked_and_exportable(client):
+    headers = {"Authorization": "Bearer reader-token"}
+    payload = request_body({"op": "atom", "id": "p"})
+    payload["proof_mode"] = "certificate"
+
+    response = client.post("/api/v1/workspaces/demo/queries", json=payload, headers=headers)
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["proof_status"] == "VERIFIED"
+    assert result["witnesses_verified"] is True
+    assert result["certificate_id"]
+    assert result["support_assertion_ids"] == ["as_p"]
+    assert "certificate" not in result
+    exported = client.get(
+        f"/api/v1/workspaces/demo/queries/{result['query_id']}/certificate",
+        headers=headers,
+    )
+    assert exported.status_code == 200
+    assert exported.json()["knowledge_hash"] == result["knowledge_hash"]
+
+
+def test_certificate_export_detects_stored_bundle_tampering(client):
+    headers = {"Authorization": "Bearer reader-token"}
+    payload = request_body({"op": "atom", "id": "p"})
+    payload["proof_mode"] = "certificate"
+    result = client.post(
+        "/api/v1/workspaces/demo/queries", json=payload, headers=headers
+    ).json()
+    _, stored = client._app.state.memory_store.saved["query-1"]
+    stored["certificate_id"] = "0" * 64
+
+    exported = client.get(
+        f"/api/v1/workspaces/demo/queries/{result['query_id']}/certificate",
+        headers=headers,
+    )
+
+    assert exported.status_code == 500
+    assert exported.json() == {"detail": "Stored certificate failed integrity verification"}
+
+
+def test_certificate_is_default_query_mode(client):
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json={
+            "revision_id": "rev_1",
+            "idempotency_key": "default-certificate",
+            "query": {"op": "atom", "id": "p"},
+        },
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    assert response.status_code == 200
+    assert response.json()["proof_status"] == "VERIFIED"
 
 
 def test_query_rejects_cross_workspace_access_and_unregistered_atoms(client):

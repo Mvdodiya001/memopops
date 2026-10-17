@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "packages"))
+sys.path.insert(0, str(ROOT / "packages" / "proofcheck" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from bundles import chain_proved_bundle, context_for  # noqa: E402
@@ -66,7 +66,7 @@ class CliTests(unittest.TestCase):
 
     def _command(self, args: list[str]) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(ROOT / "packages")
+        env["PYTHONPATH"] = str(ROOT / "packages" / "proofcheck" / "src")
         return subprocess.run(
             [sys.executable, "-m", "proofcheck", *args],
             cwd=ROOT,
