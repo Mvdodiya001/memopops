@@ -108,12 +108,39 @@ export type ProposalDocument = {
   status: "QUARANTINED" | "PENDING_REVIEW"
   base_revision_id: string
   reason: string
-  conflicting_assertion_ids: string[]
-  proposed_assertion: {
+  created_at?: string
+  submitted_request?: {
+    expected_revision?: string
+    reason?: string
+    acceptance?: string
+    mutations?: MutationRequest["mutations"]
+  }
+  /** Present in development fixtures only; the live API does not invent conflict cores. */
+  conflicting_assertion_ids?: string[]
+  proposed_assertion?: {
     client_ref: string
     formula: Formula
     evidence: Evidence[]
   }
+}
+
+export type DecisionRequest = {
+  expected_revision: string
+  query_id: string
+  idempotency_key: string
+  outcome: "PROCEED" | "BLOCK"
+  rationale: string
+}
+
+export type DecisionReceipt = {
+  decision_id: string
+  workspace_id: string
+  revision_id: string
+  query_id: string
+  outcome: "PROCEED" | "BLOCK"
+  rationale: string
+  actor_id: string
+  created_at: string
 }
 
 export type QueryRequest = {

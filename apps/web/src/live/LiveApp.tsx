@@ -8,8 +8,10 @@ import {
   getHealthReady,
   getHistory,
   getMemory,
+  getProposals,
   getWorkspace,
   listWorkspaces,
+  postDecision,
   postQuery,
   postRevision,
 } from "../api/client"
@@ -132,6 +134,10 @@ function WorkspaceScreen(props: {
     queryKey: ["history", workspaceId],
     queryFn: ({ signal }) => getHistory(workspaceId, { signal, token }),
   })
+  const proposals = useQuery({
+    queryKey: ["proposals", workspaceId],
+    queryFn: ({ signal }) => getProposals(workspaceId, { signal, token }),
+  })
 
   function go(patch: Partial<AppLocation>) {
     props.navigate(hrefFor(new URL(window.location.href), { ...props.location, source: "api", preview: null, ...patch }))
@@ -166,7 +172,14 @@ function WorkspaceScreen(props: {
       onNavigate={props.navigate}
       main={
         props.location.section === "queries" ? (
-          <LiveQuery location={props.location} revisionId={revisionId} token={token} canAsk={Boolean(revisionId && token)} onCurrent={() => go({ section: "queries" })} />
+          <LiveQuery
+            location={props.location}
+            revisionId={revisionId}
+            headRevisionId={headRevisionId}
+            token={token}
+            canAsk={Boolean(revisionId && token)}
+            onCurrent={() => go({ section: "queries" })}
+          />
         ) : props.location.section === "history" ? (
           <LiveHistory
             pending={history.isPending}
@@ -177,21 +190,29 @@ function WorkspaceScreen(props: {
             onSelect={(next) => go({ revisionId: next, section: "history" })}
           />
         ) : (
-          <LiveMemory
-            pending={memory.isPending}
-            error={memory.error}
-            onRetry={() => void memory.refetch()}
-            assertions={visibleMemory?.assertions ?? []}
-            atoms={visibleMemory?.atoms ?? []}
-            selectedId={props.location.selectedId}
-            onSelect={(id) => go({ selectedId: id })}
-            waiting={Boolean(memory.data && !visibleMemory)}
-            canWrite={props.canWrite && !historical}
-            workspaceId={workspaceId}
-            revisionId={revisionId}
-            token={token}
-            onCommitted={(next) => go({ revisionId: next, section: "memory" })}
-          />
+          <>
+            <LiveQuarantine
+              pending={proposals.isPending}
+              error={proposals.error}
+              onRetry={() => void proposals.refetch()}
+              items={proposals.data ?? []}
+            />
+            <LiveMemory
+              pending={memory.isPending}
+              error={memory.error}
+              onRetry={() => void memory.refetch()}
+              assertions={visibleMemory?.assertions ?? []}
+              atoms={visibleMemory?.atoms ?? []}
+              selectedId={props.location.selectedId}
+              onSelect={(id) => go({ selectedId: id })}
+              waiting={Boolean(memory.data && !visibleMemory)}
+              canWrite={props.canWrite && !historical}
+              workspaceId={workspaceId}
+              revisionId={revisionId}
+              token={token}
+              onCommitted={(next) => go({ revisionId: next, section: "memory" })}
+            />
+          </>
         )
       }
       inspector={
@@ -202,6 +223,44 @@ function WorkspaceScreen(props: {
         />
       }
     />
+  )
+}
+
+function LiveQuarantine(props: {
+  pending: boolean
+  error: unknown
+  onRetry: () => void
+  items: import("../api/types").ProposalDocument[]
+}) {
+  if (props.pending) return null
+  if (props.error) {
+    return (
+      <section className="panel">
+        <h2 className="section-title">Quarantined submissions</h2>
+        <Failure error={props.error} onRetry={props.onRetry} />
+      </section>
+    )
+  }
+  if (props.items.length === 0) return null
+  return (
+    <section className="panel">
+      <h2 className="section-title">Quarantined submissions</h2>
+      <p className="meta">These proposals were checked and not activated. Head memory is unchanged.</p>
+      <ul className="memory-list">
+        {props.items.map((item) => (
+          <li key={item.proposal_id}>
+            <div className="memory-row">
+              <strong>{item.proposal_id}</strong>
+              <span className="meta">Base {item.base_revision_id} · {item.reason}</span>
+              {item.submitted_request?.reason ? <p>{item.submitted_request.reason}</p> : null}
+              {item.submitted_request?.mutations?.length ? (
+                <code className="formula">{item.submitted_request.mutations.length} mutation(s)</code>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -317,6 +376,7 @@ function AddMemory(props: {
 function LiveQuery(props: {
   location: AppLocation & { workspaceId: string }
   revisionId: string | null
+  headRevisionId?: string
   token: string
   canAsk: boolean
   onCurrent: () => void
@@ -382,9 +442,55 @@ function LiveQuery(props: {
           {visible.proof_status === "VERIFIED" && visible.query_id ? (
             <CertificateDownload workspaceId={props.location.workspaceId} queryId={visible.query_id} token={props.token} />
           ) : null}
+          <RecordDecision
+            workspaceId={props.location.workspaceId}
+            revisionId={visible.revision_id}
+            headRevisionId={props.headRevisionId}
+            queryId={visible.query_id}
+            result={visible.result}
+            token={props.token}
+          />
         </ResultCard>
       ) : null}
     </>
+  )
+}
+
+function RecordDecision(props: {
+  workspaceId: string
+  revisionId: string
+  headRevisionId?: string
+  queryId: string
+  result: QueryResponse["result"]
+  token: string
+}) {
+  const [note, setNote] = useState("")
+  const atHead = props.headRevisionId === props.revisionId
+  const outcome = props.result === "PROVED" ? "PROCEED" : props.result === "REFUTED" ? "BLOCK" : null
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (!outcome) throw new Error("unsupported result")
+      return postDecision(props.workspaceId, {
+        expected_revision: props.revisionId,
+        query_id: props.queryId,
+        idempotency_key: crypto.randomUUID(),
+        outcome,
+        rationale: outcome === "PROCEED"
+          ? "Query is PROVED at the current revision."
+          : "Query is REFUTED at the current revision.",
+      }, { token: props.token })
+    },
+    onSuccess: (receipt) => setNote(`Recorded ${receipt.outcome} for ${receipt.decision_id}.`),
+    onError: (caught) => setNote(caught instanceof ApiError ? caught.message : "Decision could not be recorded."),
+  })
+  if (!atHead || !outcome) return null
+  return (
+    <div className="cluster">
+      <button className="secondary" type="button" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+        {mutation.isPending ? "Recording…" : `Record ${outcome} decision`}
+      </button>
+      {note ? <p className="meta" role="status">{note}</p> : null}
+    </div>
   )
 }
 

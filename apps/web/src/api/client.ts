@@ -5,6 +5,8 @@ import type {
   MemoryDocument,
   MutationReceipt,
   MutationRequest,
+  DecisionReceipt,
+  DecisionRequest,
   ProposalDocument,
   QueryRequest,
   QueryResponse,
@@ -138,6 +140,19 @@ export function getProposals(workspaceId: string, options?: RequestOptions): Pro
 
 export function postQuery(workspaceId: string, body: QueryRequest, options?: RequestOptions): Promise<QueryResponse> {
   return request(workspacePath(workspaceId, "/queries"), {
+    method: "POST",
+    body: JSON.stringify(body),
+    signal: options?.signal,
+    token: options?.token,
+  })
+}
+
+export function postDecision(
+  workspaceId: string,
+  body: DecisionRequest,
+  options?: RequestOptions,
+): Promise<DecisionReceipt> {
+  return request(workspacePath(workspaceId, "/decisions"), {
     method: "POST",
     body: JSON.stringify(body),
     signal: options?.signal,

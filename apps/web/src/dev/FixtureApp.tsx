@@ -133,8 +133,8 @@ export function FixtureApp(props: {
         open={conflictOpen}
         expectedRevision={revisionLabel(quarantine.base_revision_id)}
         proposedTitle="Negation of “Integration tests”"
-        proposedFormula={prettyFormula(quarantine.proposed_assertion.formula)}
-        proposedEvidence={quarantine.proposed_assertion.evidence[0]?.excerpt ?? ""}
+        proposedFormula={prettyFormula(quarantine.proposed_assertion?.formula ?? { op: "atom", id: "tests_pass" })}
+        proposedEvidence={quarantine.proposed_assertion?.evidence[0]?.excerpt ?? ""}
         currentTitle="The integration suite passed for release demo-42."
         currentFormula="tests_pass"
         currentEvidence="The integration suite passed in the original report."
