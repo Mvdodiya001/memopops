@@ -1,8 +1,8 @@
 # Two-person workflow
 
-## Pull request policy
+## Direct publication policy
 
-Publish each completed, validated milestone from a focused task branch through a pull request. Do not push implementation commits directly to main. Both agents must read this policy from current origin/main before starting. Keep PRs small, include exact validation results, and merge only when the user or repository workflow authorizes it.
+Saqlain and Mahavir have standing authorization to commit and push completed, validated work directly to main. No pull request or additional permission request is required. Both agents must read this policy from current origin/main before starting. Task branches/worktrees remain useful for isolation; they are not a PR requirement.
 
 ## Daily use
 
@@ -11,9 +11,9 @@ Publish each completed, validated milestone from a focused task branch through a
 3. Record task ID, file/interface scope, success criteria and dependencies in your personal log. Publish a small log-only commit or task branch when needed to make the claim visible. A claim is advisory, not a lock; agree overlapping interface changes.
 4. Implement a focused milestone. Use separate ports, temporary paths and test graphs for concurrent environments. Review your diff and run relevant checks.
 5. Update your personal/master logs, stage only your own explicit paths, and commit with task ID.
-6. Fetch origin and merge or rebase origin/main into your task branch. Resolve conflicts by understanding both changes. Rerun affected checks.
-7. Push only your task branch and open or update its pull request with a concise description and validation results. Never force-push, reset the teammate's commits, or discard one side of a conflict.
-8. Record the PR link, review status, and next handoff. Do not merge without authorization. Exact HEAD equality is unnecessary if the teammate pushed afterward.
+6. Fetch origin again and merge origin/main into your current branch. Resolve conflicts by understanding both changes. Rerun affected checks on the combined result before pushing HEAD to main.
+7. If the push is rejected because the other agent advanced main, repeat step 6 and retry normally. Never force-push, reset the teammate's commits, or discard one side of a conflict.
+8. Fetch and verify your published commit is an ancestor of origin/main. Record the outcome and next handoff.
 
 ## Command pattern
 
@@ -28,17 +28,19 @@ git commit -m 'feat: describe completed milestone (task ID)'
 git fetch origin
 git merge --no-edit origin/main
 # Resolve any conflicts and rerun affected checks BEFORE the push.
-git push -u origin HEAD
-# Open a pull request from this task branch into main; do not merge without authorization.
+git push origin HEAD:main
+git fetch origin
+git merge-base --is-ancestor HEAD origin/main
+# Exit code 0 confirms this commit is included in remote main.
 ```
 
 Mahavir uses codex/mahavir/task-name and logs/mahavir.md. Commands are a pattern, not a script to run with placeholder paths. Worktrees are optional on different computers. Do not publish an unfinished merge or failed checks merely to complete the sequence. If semantic conflicts need the other person's decision, document the precise overlap and continue independent work.
 
 ## Contracts and quality
 
-Agree assertion identifiers, formula encoding, result enums, revisions and evidence fields before parallel implementation. Follow the plan's one-owner-per-shared-file assignments. Self-review and required tests are mandatory. Use the PR for peer review and CI results before integration.
+Agree assertion identifiers, formula encoding, result enums, revisions and evidence fields before parallel implementation. Follow the plan's one-owner-per-shared-file assignments. Self-review and required tests are mandatory; peer review can happen asynchronously without a PR or publication gate. Do not wait for an unnecessary approval after the authorized task and checks are complete.
 
-Keep main runnable once code exists. Respect repository protections. Revert commits are the normal way to undo merged changes.
+Keep main runnable once code exists. Do not introduce a required-PR protection policy. Existing repository protections still apply; report a blocked push without bypassing them. Revert commits are the normal way to undo published changes.
 
 ## Logs
 

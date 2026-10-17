@@ -23,10 +23,10 @@ These rules apply to Saqlain, Mahavir, and their coding agents. Human instructio
 ## Integrate
 
 - Commit only explicit task paths after reviewing the staged diff. Use short descriptive subjects such as `docs: establish team workflow` or `fix: reject stale proof revisions`.
-- Use a focused task branch and open a pull request for each completed, validated milestone. Do not push implementation commits directly to main. Self-review every staged change and include test evidence in the PR. Keep temporary task branches/worktrees for isolation.
-- Before opening or updating a PR, fetch origin/main and merge or rebase it into your task branch, resolve conflicts by preserving both intended changes, and rerun affected checks. Push only your task branch. Never force-push or automatically choose ours/theirs. Prefer small completed milestones.
+- Both Saqlain and Mahavir agents are authorized to commit and push completed, validated work directly to main. No pull request or another permission request is required. Self-review every staged change; peer review is optional and does not gate publication. Keep temporary task branches/worktrees for isolation.
+- Before each main push, commit your own work, fetch origin, merge origin/main into your current task branch, resolve conflicts by preserving both intended changes, and rerun affected checks on the combined result. Push with git push origin HEAD:main. If rejected because main advanced, repeat fetch/integration/checks and retry; never force-push or automatically choose ours/theirs. Prefer small completed milestones.
 - Do not force-push shared branches, reset another person's work, delete branches/worktrees with unmerged work, or bypass protection. Use revert commits to undo shared changes. Do not change repository access/settings without a specific task.
-- Keep main runnable once implementation exists. Run relevant checks before requesting review; configured CI provides additional feedback. Do not merge a PR unless the user or an authorized repository rule asks for it. Never bypass repository protections or change settings without authorization.
+- Main should stay runnable once implementation exists. Run relevant checks before pushing; configured CI provides additional feedback. Do not require PR-based protection under this workflow. If existing protection blocks a push, report it rather than bypassing or changing settings without authorization. Verify the pushed commit is present in origin/main after fetching; another agent may already have added a later commit.
 
 ## Logging and handoff
 

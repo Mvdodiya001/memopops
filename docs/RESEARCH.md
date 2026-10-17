@@ -30,4 +30,4 @@ Separate checkouts, named task branches, visible task claims, agreed interfaces,
 
 ## Workflow update
 
-The team initially used direct publication to main, then the user requested pull requests for ongoing implementation. Current operational rules are in AGENTS.md and docs/COLLABORATION.md. Isolation, self-review, verification and safe integration still apply.
+The user changed the workflow back to direct publication to main. Current operational rules are in AGENTS.md and docs/COLLABORATION.md; historical PR-based guidance is superseded. Isolation, self-review, verification and safe integration still apply.
