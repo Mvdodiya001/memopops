@@ -166,12 +166,12 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-13
 
-- Updated: 2026-10-17T17:48:33+05:30
+- Updated: 2026-10-17T17:52:02+05:30
 - Human / agent: Saqlain / Codex
 - Status: completed
 - Branch / scope: `codex/saqlain/logic-core`; new `.github/workflows/backend.yml` plus Saqlain/master logs. Existing Mahavir web/checker workflow was not changed.
 - Objective and success criteria: run locked backend dependencies and meaningful backend tests on main pushes and pull requests, with read-only workflow permissions and no secrets.
 - Actions and decisions: use the supported Python 3.12 project range and locked `uv` workflow. Include pytest, compile, checker suite and wheel/sdist build; do not require Docker or live FalkorDB credentials in CI.
-- Validation: `uv sync --locked` passed; local workflow-equivalent commands passed: `uv run --locked pytest -q` (126 passed), compileall, independent checker unittest (40 passed), and `uv build`. No secrets, database service, or Docker engine are required. `actionlint`, Ruby, and a local YAML parser are not installed, so the workflow received a manual syntax review; the first hosted GitHub Actions run is still pending.
+- Validation: `uv sync --locked` passed; local workflow-equivalent commands passed: `uv run --locked pytest -q` (126 passed), compileall, independent checker unittest (40 passed), and `uv build`. After fetching/merging Mahavir's UI integration, `npm test` (8 passed), typecheck and production build passed. A Chrome browser smoke connected to the explicitly synthetic `MemorySnapshotStore` harness and obtained a verified `release_ready` result; it did not exercise FalkorDB or claim persistence. No secrets, database service, or Docker engine were required. `actionlint`, Ruby, and a local YAML parser are not installed, so the workflow received a manual syntax review; the first hosted GitHub Actions run is still pending.
 - Handoff: actual hosted GitHub Actions run will provide the final CI execution evidence after push.
-- Publication: workflow and completion-log publication pending; no PR.
+- Publication: workflow commit `a146df2` was pushed and is included in merge commit `fbfebcc` on `origin/main`; the integrated web checks passed after merge. Fetch and ancestor verification succeeded. No PR was created.
