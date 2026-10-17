@@ -13,7 +13,7 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 - Validation: `npm --prefix apps/web test` passed 7 tests. `npm --prefix apps/web run typecheck` passed. `npm --prefix apps/web run build` passed and emitted a separate fixture chunk. Headless Chrome wrote `apps/web/review/desktop-memory.png`, `desktop-query.png`, `narrow-memory.png`, and `live-error.png`. Browser end-to-end against a live API was not run; the service was not part of this change.
 - Outcome / blockers: Fixture shell, memory, query, history, conflict review, and live error/retry states are in the web app. Hosted database credentials were not committed.
 - Handoff: Saqlain can point the client at a running API with `VITE_API_BASE`. Do not treat development fixtures as backend data.
-- Publication: included with the checker milestone after the fast-forward.
+- Publication: fast-forwarded onto Saqlain's main, then pushed normally. A later fetch showed this branch and origin/main at the same commit. No force-push.
 
 ## M-20261017-02
 
@@ -26,4 +26,4 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 - Validation: `PYTHONPATH=packages python -m unittest discover -s tests/proofcheck -q` passed 40 tests. A separate process imported `memopops.formula.formula_hash` and `memopops.store.calculate_knowledge_hash` and compared them with the checker for atom `p`; both hashes matched. `proofcheck` does not import `z3`. Saqlain's pytest suite was not rerun because those modules were unchanged by this merge.
 - Outcome / blockers: Decisive demo vectors for revision 1 PROVED and revision 2 REFUTED pass with a trusted context. Certificate search and API export remain in Saqlain's generator milestone.
 - Handoff: Call `check_certificate` with a context loaded independently of the bundle. Run `PYTHONPATH=packages python -m proofcheck CERTIFICATE.json --expected-context MANIFEST.json`.
-- Publication: committed after fast-forward onto origin/main. Push verification is recorded after the remote check.
+- Publication: same push as the inspector milestone. Fetch after the push confirmed the commit is contained in origin/main.
