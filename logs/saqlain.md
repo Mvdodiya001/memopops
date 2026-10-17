@@ -94,7 +94,7 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-07
 
-- Updated: 2026-10-17T17:12:14+05:30
+- Updated: 2026-10-17T17:16:30+05:30
 - Human / agent: Saqlain / Codex
 - Status: completed
 - Branch / scope: `codex/saqlain/logic-core`; `src/memopops/certificates.py`, query API, checker runtime path, tests, README and Saqlain/master logs. Certificate generator is independent from the checker implementation; UI remains Mahavir-owned.
@@ -103,4 +103,4 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Proxy: no Git or environment proxy configuration was present at task start. User requested proxy unset because the proxy was closed. Continue using direct HTTPS for GitHub and direct DB endpoint.
 - Validation: `uv run --frozen --no-sync pytest -q` (113 passed); checker unittest suite (40 passed); compileall, Docker Compose config, `uv build --offline`, `git diff --check`, and installed-package import passed. Authenticated query against existing workspace_demo/rev_001 on hosted FalkorDB returned PROVED + VERIFIED with support as_api_v2, as_ready_rule, as_tests_pass; workspace-authorized export returned 23 clauses. One query receipt/result was persisted by the normal API. Proxy configuration and environment variables were absent. Live query timings showed about 3 seconds for snapshot loading on this hosted endpoint; no performance claim is made.
 - Handoff: expose the new authenticated certificate endpoint in the live frontend, then implement dependency impact traversal and S5 fault/performance checks.
-- Publication: staged-diff review, commit, origin/main integration and direct push pending. No PR will be created.
+- Publication: commit `1fb90557b645fff9f840eedb69c58a14fb1aae00` pushed directly to `origin/main`; subsequent fetch and `git merge-base --is-ancestor` confirmed it. No PR was created.
