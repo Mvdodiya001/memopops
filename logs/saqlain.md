@@ -55,7 +55,7 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 - Updated: 2026-10-17T16:05:00+05:30
 - Human / agent: Saqlain / Codex
-- Status: in-progress
+- Status: completed
 - Branch / scope: `codex/saqlain/logic-core`; root Python package and lock, bounded formula parser and HTTP JSON depth guard, Z3 core and bounded worker queue, verified FalkorDB snapshot reader, authenticated revision-bound solver query and result-reload APIs with bounded queue and receipt-first idempotent retries, local Compose/Docker setup, collision-safe synthetic seeder, tests, collaboration policy and docs. No Mahavir-owned app files.
 - Objective: deliver a runnable first backend slice with strict input limits, canonical hashes, complete-snapshot query classification, total witnesses, integrity verification and an honest solver-only API.
 - Environment: repo `G:\mempops`, origin `Mvdodiya001/memopops`; branch started clean from fetched `origin/main`. Installed Python 3.12.13 via uv. Docker CLI exists but its Linux engine pipe is unavailable; `gh` is not installed. Proxy endpoint is 172.31.2.4:8080. Direct FalkorDB access times out; proxy CONNECT to the hosted database returns 403. No hosted query has run.
@@ -68,7 +68,7 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 - Updated: 2026-10-17T16:38:30+05:30
 - Human / agent: Saqlain / Codex
-- Status: in-progress
+- Status: completed
 - Branch / scope: `codex/saqlain/logic-core`; `src/memopops/revisions.py`, `tests/test_revisions.py`, README, and Saqlain/master logs. No graph writes or API contract changes.
 - Objective: continue S2 safely despite the hosted database network restriction by producing a pure, testable revision candidate planner.
 - Decisions: validate exact add/retract/replace shapes, expected parent and targets, accepted provenance, UTC-normalized RFC3339 evidence and SHA-256 excerpt digests; cap mutation count, evidence size and total active AST nodes; solve consistency before activation. Solver indeterminate and inconsistent outcomes both prevent a candidate from being activated. The module performs no graph writes; callers must check retries before creating fresh IDs, and a future store must publish atomically behind a head guard.
@@ -76,3 +76,18 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: post-integration `uv run --frozen --no-sync pytest -q` (54 passed); compileall, `docker compose config --quiet`, package wheel/sdist build, and `git diff --check` passed. `ruff` is not installed in the locked environment, so lint was unavailable. A first timestamp assertion exposed a changed error category; validation was adjusted and the full suite passed afterward.
 - Handoff: next implementation is an atomic graph revision write with expected-head compare-and-set, idempotency receipt, provenance/evidence persistence and concurrent-writer tests. It must be integrated only after a local database engine or allowed hosted network path is available.
 - Publication: commit `1559581b13f29bd36498bfa7fb5ce5b2f18da671` pushed directly to `origin/main`; fetch and `git merge-base --is-ancestor HEAD origin/main` confirmed it is present. No PR was created. The task branch is eight commits ahead of its own remote tracking branch, while the working tree is clean.
+
+## S-20261017-06
+
+- Updated: 2026-10-17T16:56:14+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; atomic graph revision writer, operator-gated activation API, idempotency/head-conflict handling, quarantine persistence, verified memory read and revision history, unit/integration tests, README and logs. Proposal-list API was excluded after automatic review found its query lacked an explicit workspace filter.
+- Proxy and connection: following the user's request, cleared Git global HTTP(S) proxy configuration and Windows user `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and `NO_PROXY`. Direct GitHub HTTPS returned 200; direct FalkorDB TCP connected. TLS handshake timed out, while plain Redis PING with the same endpoint credentials succeeded. Updated ignored `.env.cloud` to `FALKORDB_SSL=false`; configured `FalkorSnapshotStore` PING and `GRAPH.LIST` then succeeded. No secret values were displayed or committed.
+- Live setup: ran the idempotent `scripts/seed_demo.py` with `.env.cloud` preloaded in-process. Synthetic `workspace_demo` seeded at `rev_001` with four atoms and four evidence-backed assertions.
+- Implementation: one parameterized graph query creates revision, new immutable assertions/formulas/evidence, full membership edges, workspace head update, and idempotency receipt behind an expected-head predicate. Concurrent stale writers were exercised against a disposable live graph; exactly one committed and one received a revision conflict. The winning snapshot reloaded with the expected hash, and a lost-response retry returned the original receipt. A live authenticated API commit, retry, reader query and snapshot reload also passed. An inconsistent mutation was stored as a quarantined Proposal with receipt and did not change the accepted head. Disposable graphs were deleted.
+- Read API: live `GET /memory` returned four assertions with verified formula and evidence hashes; `GET /revisions` returned the seeded history. Both are workspace-authorized. Automatic review rejected adding `GET /proposals` because its query lacked an explicit workspace predicate; that read endpoint is omitted pending a safe scoped implementation.
+- Authorization: only operator credentials can commit accepted revisions. Reader and writer credentials are denied; writer credentials cannot override acceptance provenance. Automatic review rejected adding `model_proposed` to the candidate validator because it could allow untrusted proposals to be committed as accepted knowledge; that mode remains outside the planner/API.
+- Validation: final `uv run --frozen --no-sync pytest -q` (66 passed); compileall, Compose config, wheel/sdist build and diff checks passed. Live direct checks covered PING, seed, commit race, idempotency, quarantine, query, memory, history and snapshot reload. The full authenticated API flow was rerun with writer denial and operator commit. Disposable graphs were deleted.
+- Handoff: continue S3/S4 with proposal inspection only after a properly workspace-filtered query passes review; a separate pending-review model is needed for agent submissions. Continue with independent certificate generation/checking, impact traversal, and UI/client integration.
+- Publication: pending staged-diff review, commit, origin/main integration and direct push. No PR will be created.

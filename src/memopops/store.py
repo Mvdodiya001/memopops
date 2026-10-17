@@ -16,6 +16,7 @@ from memopops.formula import (
     canonical_json,
     formula_hash,
     parse_formula,
+    formula_to_json,
 )
 
 
@@ -29,6 +30,15 @@ class SnapshotIntegrityError(RuntimeError):
 
 class IdempotencyConflictError(RuntimeError):
     """An idempotency key was previously used with a different request body."""
+
+
+class RevisionHeadConflictError(RuntimeError):
+    """The workspace head changed before an immutable revision could be published."""
+
+    def __init__(self, expected: str, actual: str | None):
+        self.expected = expected
+        self.actual = actual
+        super().__init__(f"expected revision {expected}, found {actual}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,6 +161,148 @@ class FalkorSnapshotStore:
             raise IdempotencyConflictError(idempotency_key)
         return json.loads(stored_result)
 
+    def get_revision_receipt(
+        self, workspace_id: str, idempotency_key: str, request_hash: str
+    ) -> dict[str, Any] | None:
+        """Return a committed revision receipt for an identical retry."""
+        return self.get_query_receipt(workspace_id, idempotency_key, request_hash)
+
+    def publish_revision(
+        self,
+        workspace_id: str,
+        expected_revision_id: str,
+        idempotency_key: str,
+        request_hash: str,
+        revision: dict[str, Any],
+        added_assertions: list[dict[str, Any]],
+        assertion_ids: list[str],
+    ) -> dict[str, Any]:
+        """Publish a revision, membership, new evidence and receipt in one graph query.
+
+        FalkorDB executes a graph query as one command. The expected-head predicate
+        is part of that same command as all writes, so concurrent stale candidates
+        cannot both advance the workspace head.
+        """
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        result = {
+            "status": "COMMITTED",
+            "revision_id": revision["id"],
+            "parent_revision_id": expected_revision_id,
+            "knowledge_hash": revision["knowledge_hash"],
+            "client_refs": revision["client_refs"],
+        }
+        result_json = json.dumps(
+            result, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+        )
+        created = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) "
+            "MATCH (parent:Revision {id: $expected_revision_id}) "
+            "WHERE w.head_revision = $expected_revision_id "
+            "OPTIONAL MATCH (prior:RequestReceipt {key: $key}) "
+            "WITH w, parent, prior WHERE prior IS NULL "
+            "CREATE (revision:Revision {id: $revision_id, parent_revision_id: $expected_revision_id, "
+            "sequence: w.sequence + 1, knowledge_hash: $knowledge_hash, semantics_version: $semantics_version, "
+            "reason: $reason, acceptance: $acceptance, actor_id: $actor_id, "
+            "removed_assertion_ids: $removed_assertion_ids, created_at: $created_at}) "
+            "FOREACH (item IN $added_assertions | "
+            "MERGE (f:Formula {hash: item.formula_hash}) "
+            "ON CREATE SET f.canonical_json = item.canonical_json "
+            "CREATE (a:Assertion {id: item.id, actor_id: item.actor_id, acceptance: item.acceptance, "
+            "formula_hash: item.formula_hash, created_at: item.created_at}) "
+            "CREATE (a)-[:ENCODES]->(f) "
+            "FOREACH (evidence IN item.evidence | "
+            "CREATE (e:Evidence {id: evidence.id, uri: evidence.uri, excerpt: evidence.excerpt, "
+            "observed_at: evidence.observed_at, content_digest: evidence.content_digest}) "
+            "CREATE (a)-[:SUPPORTED_BY]->(e))) "
+            "WITH w, revision "
+            "OPTIONAL MATCH (active:Assertion) WHERE active.id IN $assertion_ids "
+            "WITH w, revision, collect(active) AS active_assertions "
+            "WHERE size(active_assertions) = size($assertion_ids) "
+            "FOREACH (active IN active_assertions | CREATE (revision)-[:INCLUDES]->(active)) "
+            "SET w.head_revision = revision.id, w.sequence = revision.sequence "
+            "CREATE (receipt:RequestReceipt {key: $key, payload_hash: $request_hash, "
+            "result_id: revision.id, result_json: $result_json}) "
+            "CREATE (receipt)-[:REFERS_TO]->(revision) "
+            "RETURN revision.id AS revision_id",
+            {
+                "workspace_id": workspace_id,
+                "expected_revision_id": expected_revision_id,
+                "key": idempotency_key,
+                "request_hash": request_hash,
+                "revision_id": revision["id"],
+                "knowledge_hash": revision["knowledge_hash"],
+                "semantics_version": SEMANTICS_VERSION,
+                "reason": revision["reason"],
+                "acceptance": revision["acceptance"],
+                "actor_id": revision["actor_id"],
+                "removed_assertion_ids": revision["removed_assertion_ids"],
+                "created_at": revision["created_at"],
+                "added_assertions": added_assertions,
+                "assertion_ids": assertion_ids,
+                "result_json": result_json,
+            },
+        ).result_set
+        if created:
+            return result
+
+        prior = self.get_revision_receipt(workspace_id, idempotency_key, request_hash)
+        if prior is not None:
+            return prior
+        raise RevisionHeadConflictError(expected_revision_id, self.current_head(workspace_id))
+
+    def persist_quarantined_proposal(
+        self,
+        workspace_id: str,
+        base_revision_id: str,
+        idempotency_key: str,
+        request_hash: str,
+        proposal: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Preserve a validated but inconsistent proposal without activating it."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        result = {
+            "status": "QUARANTINED",
+            "proposal_id": proposal["id"],
+            "base_revision_id": base_revision_id,
+            "reason": "INCONSISTENT_CANDIDATE",
+        }
+        result_json = json.dumps(
+            result, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+        )
+        created = graph.query(
+            "MATCH (base:Revision {id: $base_revision_id}) "
+            "OPTIONAL MATCH (prior:RequestReceipt {key: $key}) "
+            "WITH base, prior WHERE prior IS NULL "
+            "CREATE (proposal:Proposal {id: $proposal_id, workspace_id: $workspace_id, "
+            "base_revision_id: $base_revision_id, status: 'QUARANTINED', "
+            "reason: 'INCONSISTENT_CANDIDATE', acceptance: $acceptance, actor_id: $actor_id, "
+            "request_json: $request_json, created_at: $created_at}) "
+            "CREATE (proposal)-[:BASED_ON]->(base) "
+            "CREATE (receipt:RequestReceipt {key: $key, payload_hash: $request_hash, "
+            "result_id: $proposal_id, result_json: $result_json}) "
+            "CREATE (receipt)-[:REFERS_TO]->(proposal) "
+            "RETURN proposal.id AS proposal_id",
+            {
+                "base_revision_id": base_revision_id,
+                "key": idempotency_key,
+                "proposal_id": proposal["id"],
+                "workspace_id": workspace_id,
+                "acceptance": proposal["acceptance"],
+                "actor_id": proposal["actor_id"],
+                "request_json": proposal["request_json"],
+                "created_at": proposal["created_at"],
+                "request_hash": request_hash,
+                "result_json": result_json,
+            },
+        ).result_set
+        if created:
+            return result
+
+        prior = self.get_revision_receipt(workspace_id, idempotency_key, request_hash)
+        if prior is not None:
+            return prior
+        raise SnapshotNotFoundError(base_revision_id)
+
     def persist_query_result(
         self,
         workspace_id: str,
@@ -244,3 +396,96 @@ class FalkorSnapshotStore:
             atom_ids=atom_ids,
             assertions=tuple(assertions),
         )
+
+    def load_memory(self, workspace_id: str, revision_id: str) -> dict[str, Any]:
+        """Return a hash-verified revision with assertion provenance and evidence."""
+        snapshot = self.load_snapshot(workspace_id, revision_id)
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        rows = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) "
+            "MATCH (r:Revision {id: $revision_id})-[:INCLUDES]->(a:Assertion)-[:ENCODES]->(f:Formula) "
+            "OPTIONAL MATCH (a)-[:SUPPORTED_BY]->(e:Evidence) "
+            "RETURN a.id AS assertion_id, a.actor_id AS actor_id, a.acceptance AS acceptance, "
+            "a.created_at AS created_at, collect({id:e.id, uri:e.uri, excerpt:e.excerpt, "
+            "observed_at:e.observed_at, content_digest:e.content_digest}) AS evidence "
+            "ORDER BY assertion_id",
+            {"workspace_id": workspace_id, "revision_id": revision_id},
+        ).result_set
+        assertion_by_id = {item.id: item for item in snapshot.assertions}
+        found: dict[str, dict[str, Any]] = {}
+        for assertion_id, actor_id, acceptance, created_at, evidence_items in rows:
+            assertion = assertion_by_id.get(assertion_id)
+            if assertion is None or assertion_id in found:
+                raise SnapshotIntegrityError("revision provenance contains an unknown or duplicate assertion")
+            if not isinstance(actor_id, str) or not actor_id or not isinstance(acceptance, str) or not acceptance:
+                raise SnapshotIntegrityError(f"missing provenance for assertion {assertion_id}")
+            if not isinstance(created_at, str) or not created_at:
+                raise SnapshotIntegrityError(f"missing creation time for assertion {assertion_id}")
+            evidence: list[dict[str, str]] = []
+            for item in evidence_items or []:
+                if not item or item.get("id") is None:
+                    continue
+                excerpt = item.get("excerpt")
+                digest = item.get("content_digest")
+                evidence_fields = {
+                    key: item.get(key)
+                    for key in ("id", "uri", "observed_at", "content_digest")
+                }
+                if (
+                    not isinstance(excerpt, str)
+                    or not excerpt
+                    or not isinstance(digest, str)
+                    or any(not isinstance(value, str) or not value for value in evidence_fields.values())
+                ):
+                    raise SnapshotIntegrityError(f"invalid evidence for assertion {assertion_id}")
+                if hashlib.sha256(excerpt.encode("utf-8")).hexdigest() != digest:
+                    raise SnapshotIntegrityError(f"evidence digest mismatch for assertion {assertion_id}")
+                evidence.append({**evidence_fields, "excerpt": excerpt})
+            if not evidence:
+                raise SnapshotIntegrityError(f"missing evidence for assertion {assertion_id}")
+            found[assertion_id] = {
+                "id": assertion_id,
+                "formula": formula_to_json(assertion.formula),
+                "formula_hash": assertion.formula_hash,
+                "actor_id": actor_id,
+                "acceptance": acceptance,
+                "created_at": created_at,
+                "evidence": evidence,
+            }
+        if set(found) != set(assertion_by_id):
+            raise SnapshotIntegrityError("revision provenance membership does not match its snapshot")
+        return {
+            "workspace_id": workspace_id,
+            "revision_id": snapshot.revision_id,
+            "knowledge_hash": snapshot.knowledge_hash,
+            "atom_ids": sorted(snapshot.atom_ids),
+            "assertions": [found[key] for key in sorted(found)],
+        }
+
+    def list_revisions(
+        self, workspace_id: str, *, before_sequence: int | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """List immutable revisions in descending sequence order."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        rows = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) MATCH (r:Revision) "
+            "WHERE $before_sequence IS NULL OR r.sequence < $before_sequence "
+            "RETURN r.id AS revision_id, r.parent_revision_id AS parent_revision_id, "
+            "r.sequence AS sequence, r.knowledge_hash AS knowledge_hash, r.reason AS reason, "
+            "r.acceptance AS acceptance, r.actor_id AS actor_id, r.created_at AS created_at "
+            "ORDER BY sequence DESC LIMIT $limit",
+            {"workspace_id": workspace_id, "before_sequence": before_sequence, "limit": limit},
+        ).result_set
+        return [
+            {
+                "revision_id": row[0],
+                "parent_revision_id": row[1],
+                "sequence": row[2],
+                "knowledge_hash": row[3],
+                "reason": row[4],
+                "acceptance": row[5],
+                "actor_id": row[6],
+                "created_at": row[7],
+            }
+            for row in rows
+        ]

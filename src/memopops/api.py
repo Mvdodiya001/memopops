@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from hashlib import sha256
 import hmac
 import json
@@ -11,18 +12,30 @@ from time import monotonic
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
 
-from memopops.formula import SEMANTICS_VERSION, formula_hash, formula_to_json, parse_formula
+from memopops.formula import (
+    SEMANTICS_VERSION,
+    canonical_json,
+    formula_hash,
+    parse_formula,
+)
+from memopops.revisions import (
+    CandidateInconsistentError,
+    CandidateIndeterminateError,
+    MutationValidationError,
+    build_revision_candidate,
+)
 from memopops.solver import BoundedSolverExecutor, SolverQueueFullError
 from memopops.store import (
     FalkorSnapshotStore,
     IdempotencyConflictError,
     SnapshotIntegrityError,
     SnapshotNotFoundError,
+    RevisionHeadConflictError,
 )
 
 
@@ -30,6 +43,10 @@ class SnapshotReader(Protocol):
     def ping(self) -> bool: ...
     def close(self) -> None: ...
     def load_snapshot(self, workspace_id: str, revision_id: str) -> Any: ...
+    def load_memory(self, workspace_id: str, revision_id: str) -> dict[str, Any]: ...
+    def list_revisions(
+        self, workspace_id: str, *, before_sequence: int | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]: ...
     def current_head(self, workspace_id: str) -> str | None: ...
     def get_query_result(self, workspace_id: str, query_id: str) -> dict[str, Any] | None: ...
     def get_query_receipt(
@@ -43,6 +60,27 @@ class SnapshotReader(Protocol):
         request_hash: str,
         result_payload: dict[str, Any],
     ) -> dict[str, Any]: ...
+    def get_revision_receipt(
+        self, workspace_id: str, idempotency_key: str, request_hash: str
+    ) -> dict[str, Any] | None: ...
+    def publish_revision(
+        self,
+        workspace_id: str,
+        expected_revision_id: str,
+        idempotency_key: str,
+        request_hash: str,
+        revision: dict[str, Any],
+        added_assertions: list[dict[str, Any]],
+        assertion_ids: list[str],
+    ) -> dict[str, Any]: ...
+    def persist_quarantined_proposal(
+        self,
+        workspace_id: str,
+        base_revision_id: str,
+        idempotency_key: str,
+        request_hash: str,
+        proposal: dict[str, Any],
+    ) -> dict[str, Any]: ...
 
 
 class QueryRequest(BaseModel):
@@ -53,6 +91,16 @@ class QueryRequest(BaseModel):
     query: dict[str, Any]
     # Solver-only stays explicit until the independent certificate lane is integrated.
     proof_mode: Literal["solver"] = "solver"
+
+
+class RevisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    expected_revision: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+    reason: str = Field(min_length=1, max_length=500)
+    acceptance: Literal["human_confirmed", "trusted_fixture"]
+    mutations: list[dict[str, Any]] = Field(min_length=1, max_length=32)
 
 
 class RequestBodyLimitMiddleware:
@@ -163,7 +211,8 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
                 workspace_id = principal.get("workspace_id")
                 role = principal.get("role")
                 if isinstance(workspace_id, str) and role in {"reader", "writer", "operator"}:
-                    return {"workspace_id": workspace_id, "role": role}
+                    actor_id = "actor_" + sha256(credentials.credentials.encode("utf-8")).hexdigest()[:16]
+                    return {"workspace_id": workspace_id, "role": role, "actor_id": actor_id}
                 break
         raise HTTPException(status_code=401, detail="Invalid bearer token")
 
@@ -184,6 +233,44 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail="Memory database is unavailable") from exc
         return {"status": "ready"}
 
+    @app.get("/api/v1/workspaces/{workspace_id}/memory")
+    def read_memory(
+        workspace_id: str,
+        revision_id: str | None = Query(default=None, min_length=1, max_length=128),
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            selected_revision = revision_id or memory_store.current_head(workspace_id)
+            if selected_revision is None:
+                raise HTTPException(status_code=404, detail="Workspace has no current revision")
+            return memory_store.load_memory(workspace_id, selected_revision)
+        except SnapshotNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Revision not found") from exc
+        except SnapshotIntegrityError as exc:
+            raise HTTPException(status_code=500, detail="Stored memory failed integrity verification") from exc
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Memory snapshot is unavailable") from exc
+
+    @app.get("/api/v1/workspaces/{workspace_id}/revisions")
+    def read_revisions(
+        workspace_id: str,
+        before_sequence: int | None = Query(default=None, ge=1),
+        limit: int = Query(default=50, ge=1, le=50),
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            items = memory_store.list_revisions(
+                workspace_id, before_sequence=before_sequence, limit=limit
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Revision history is unavailable") from exc
+        next_cursor = items[-1]["sequence"] if len(items) == limit else None
+        return {"items": items, "next_cursor": next_cursor}
+
     @app.get("/api/v1/workspaces/{workspace_id}/queries/{query_id}")
     def read_query_result(
         workspace_id: str,
@@ -198,6 +285,162 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         if result is None:
             raise HTTPException(status_code=404, detail="Query result not found")
         return result
+
+    @app.post("/api/v1/workspaces/{workspace_id}/revisions", status_code=201)
+    def publish_revision(
+        workspace_id: str,
+        request: RevisionRequest,
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> Any:
+        authorize_workspace(workspace_id, principal)
+        if principal["role"] != "operator":
+            raise HTTPException(
+                status_code=403,
+                detail="Operator role required to activate accepted memory",
+            )
+
+        request_payload = {
+            "expected_revision": request.expected_revision,
+            "reason": request.reason,
+            "acceptance": request.acceptance,
+            "mutations": request.mutations,
+            "actor_id": principal["actor_id"],
+        }
+        request_digest = sha256(
+            json.dumps(
+                request_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        try:
+            prior = memory_store.get_revision_receipt(
+                workspace_id, request.idempotency_key, request_digest
+            )
+        except IdempotencyConflictError as exc:
+            raise HTTPException(status_code=409, detail="Idempotency key was used for another request") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Revision receipt is unavailable") from exc
+        if prior is not None:
+            status_code = 200 if prior.get("status") == "QUARANTINED" else 201
+            return JSONResponse(status_code=status_code, content=prior)
+
+        try:
+            snapshot = memory_store.load_snapshot(workspace_id, request.expected_revision)
+        except SnapshotNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Revision not found") from exc
+        except SnapshotIntegrityError as exc:
+            raise HTTPException(status_code=500, detail="Stored memory failed integrity verification") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Memory snapshot is unavailable") from exc
+
+        try:
+            candidate = build_revision_candidate(
+                snapshot,
+                expected_revision_id=request.expected_revision,
+                mutations=request.mutations,
+                reason=request.reason,
+                acceptance=request.acceptance,
+            )
+        except CandidateInconsistentError:
+            proposal = {
+                "id": f"proposal_{uuid4().hex}",
+                "acceptance": request.acceptance,
+                "actor_id": principal["actor_id"],
+                "request_json": json.dumps(
+                    request_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=True,
+                    allow_nan=False,
+                ),
+                "created_at": datetime.now(timezone.utc)
+                .isoformat(timespec="microseconds")
+                .replace("+00:00", "Z"),
+            }
+            try:
+                quarantined = memory_store.persist_quarantined_proposal(
+                    workspace_id,
+                    request.expected_revision,
+                    request.idempotency_key,
+                    request_digest,
+                    proposal,
+                )
+            except IdempotencyConflictError as receipt_error:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Idempotency key was used for another request",
+                ) from receipt_error
+            except SnapshotNotFoundError as missing_error:
+                raise HTTPException(status_code=404, detail="Revision not found") from missing_error
+            except Exception as store_error:
+                raise HTTPException(status_code=503, detail="Quarantined proposal could not be saved") from store_error
+            return JSONResponse(status_code=200, content=quarantined)
+        except CandidateIndeterminateError as exc:
+            raise HTTPException(status_code=503, detail="Candidate consistency could not be determined") from exc
+        except MutationValidationError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        created_at = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+        added_assertions = []
+        for added in candidate.added_assertions:
+            added_assertions.append(
+                {
+                    "id": added.record.id,
+                    "canonical_json": canonical_json(added.record.formula),
+                    "formula_hash": added.record.formula_hash,
+                    "actor_id": principal["actor_id"],
+                    "acceptance": added.acceptance,
+                    "created_at": created_at,
+                    "evidence": [
+                        {
+                            "id": item.id,
+                            "uri": item.uri,
+                            "excerpt": item.excerpt,
+                            "observed_at": item.observed_at,
+                            "content_digest": item.content_digest,
+                        }
+                        for item in added.evidence
+                    ],
+                }
+            )
+        revision = {
+            "id": candidate.revision_id,
+            "knowledge_hash": candidate.knowledge_hash,
+            "reason": candidate.reason,
+            "acceptance": candidate.acceptance,
+            "actor_id": principal["actor_id"],
+            "removed_assertion_ids": list(candidate.removed_assertion_ids),
+            "client_refs": candidate.client_refs,
+            "created_at": created_at,
+        }
+        try:
+            return memory_store.publish_revision(
+                workspace_id,
+                request.expected_revision,
+                request.idempotency_key,
+                request_digest,
+                revision,
+                added_assertions,
+                [item.id for item in candidate.assertions],
+            )
+        except IdempotencyConflictError as exc:
+            raise HTTPException(status_code=409, detail="Idempotency key was used for another request") from exc
+        except RevisionHeadConflictError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "REVISION_CONFLICT",
+                    "expected_revision": exc.expected,
+                    "actual_revision": exc.actual,
+                },
+            ) from exc
+        except SnapshotNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Revision not found") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Revision could not be published") from exc
 
     @app.post("/api/v1/workspaces/{workspace_id}/queries")
     def query_memory(

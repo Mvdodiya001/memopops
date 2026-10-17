@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 import pytest
@@ -7,6 +8,7 @@ from memopops.store import (
     AssertionRecord,
     FalkorSnapshotStore,
     IdempotencyConflictError,
+    RevisionHeadConflictError,
     SnapshotIntegrityError,
     SnapshotNotFoundError,
     calculate_knowledge_hash,
@@ -172,3 +174,237 @@ def test_query_result_lookup_is_scoped_to_authorized_workspace():
 
     assert store.get_query_result("workspace-1", "q-1") == expected
     assert store.get_query_result("workspace-2", "q-1") is None
+
+
+class RevisionWriteGraph:
+    def __init__(self, head="rev_1"):
+        self.head = head
+        self.receipts = {}
+        self.write_queries = []
+
+    def query(self, query, params=None):
+        params = params or {}
+        if "RETURN revision.id AS revision_id" in query:
+            self.write_queries.append((query, params))
+            if self.head != params["expected_revision_id"] or params["key"] in self.receipts:
+                return Result([])
+            self.head = params["revision_id"]
+            self.receipts[params["key"]] = (params["request_hash"], params["result_json"])
+            return Result([[self.head]])
+        if "RETURN receipt.payload_hash AS payload_hash" in query:
+            receipt = self.receipts.get(params["key"])
+            return Result([list(receipt)] if receipt else [])
+        if "RETURN w.head_revision AS head_revision" in query:
+            return Result([[self.head]])
+        raise AssertionError("unexpected graph query")
+
+
+def revision_inputs():
+    return (
+        {
+            "id": "rev_2",
+            "knowledge_hash": "hash-2",
+            "reason": "Correction",
+            "acceptance": "human_confirmed",
+            "actor_id": "actor_1",
+            "removed_assertion_ids": ["as_old"],
+            "client_refs": {"replacement": "as_new"},
+            "created_at": "2026-10-17T00:00:00.000000Z",
+        },
+        [{
+            "id": "as_new",
+            "canonical_json": '{"id":"q","op":"atom"}',
+            "formula_hash": "formula-hash",
+            "actor_id": "actor_1",
+            "acceptance": "human_confirmed",
+            "created_at": "2026-10-17T00:00:00.000000Z",
+            "evidence": [{
+                "id": "ev_new",
+                "uri": "fixture://q",
+                "excerpt": "q is supported",
+                "observed_at": "2026-10-17T00:00:00.000000Z",
+                "content_digest": "digest",
+            }],
+        }],
+        ["as_new"],
+    )
+
+
+def test_revision_and_receipt_are_published_in_one_guarded_graph_query():
+    graph = RevisionWriteGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+    revision, additions, assertion_ids = revision_inputs()
+
+    result = store.publish_revision(
+        "workspace-1", "rev_1", "writer-1", "request-hash", revision, additions, assertion_ids
+    )
+
+    assert result == {
+        "status": "COMMITTED",
+        "revision_id": "rev_2",
+        "parent_revision_id": "rev_1",
+        "knowledge_hash": "hash-2",
+        "client_refs": {"replacement": "as_new"},
+    }
+    query, params = graph.write_queries[0]
+    assert len(graph.write_queries) == 1
+    assert "WHERE w.head_revision = $expected_revision_id" in query
+    assert "CREATE (revision:Revision" in query
+    assert "CREATE (e:Evidence" in query
+    assert "CREATE (receipt:RequestReceipt" in query
+    assert params["assertion_ids"] == ["as_new"]
+    assert graph.head == "rev_2"
+
+
+def test_revision_retry_returns_original_receipt_and_rejects_key_reuse():
+    graph = RevisionWriteGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+    revision, additions, assertion_ids = revision_inputs()
+    first = store.publish_revision(
+        "workspace-1", "rev_1", "writer-1", "request-hash", revision, additions, assertion_ids
+    )
+
+    retry = store.publish_revision(
+        "workspace-1", "rev_1", "writer-1", "request-hash", revision, additions, assertion_ids
+    )
+    assert retry == first
+    assert len(graph.write_queries) == 2
+    with pytest.raises(IdempotencyConflictError):
+        store.publish_revision(
+            "workspace-1", "rev_1", "writer-1", "different-hash", revision, additions, assertion_ids
+        )
+
+
+def test_stale_revision_head_does_not_publish_any_candidate_nodes():
+    graph = RevisionWriteGraph(head="rev_2")
+    store = FalkorSnapshotStore(FakeClient(graph))
+    revision, additions, assertion_ids = revision_inputs()
+
+    with pytest.raises(RevisionHeadConflictError) as error:
+        store.publish_revision(
+            "workspace-1", "rev_1", "writer-2", "request-hash", revision, additions, assertion_ids
+        )
+
+    assert error.value.expected == "rev_1"
+    assert error.value.actual == "rev_2"
+    assert graph.head == "rev_2"
+
+
+class ProposalGraph:
+    def __init__(self):
+        self.receipts = {}
+        self.write_queries = []
+
+    def query(self, query, params=None):
+        params = params or {}
+        if "RETURN proposal.id AS proposal_id" in query:
+            self.write_queries.append(query)
+            if params["key"] in self.receipts:
+                return Result([])
+            self.receipts[params["key"]] = (params["request_hash"], params["result_json"])
+            return Result([[params["proposal_id"]]])
+        if "RETURN receipt.payload_hash AS payload_hash" in query:
+            receipt = self.receipts.get(params["key"])
+            return Result([list(receipt)] if receipt else [])
+        raise AssertionError("unexpected graph query")
+
+
+def test_quarantined_proposal_and_receipt_are_persisted_without_head_write():
+    graph = ProposalGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+    proposal = {
+        "id": "proposal_1",
+        "acceptance": "human_confirmed",
+        "actor_id": "actor_1",
+        "request_json": '{"mutations":[]}',
+        "created_at": "2026-10-17T00:00:00.000000Z",
+    }
+
+    result = store.persist_quarantined_proposal(
+        "workspace-1", "rev_1", "writer-1", "request-hash", proposal
+    )
+    retry = store.persist_quarantined_proposal(
+        "workspace-1", "rev_1", "writer-1", "request-hash", proposal
+    )
+
+    assert result["status"] == "QUARANTINED"
+    assert result["proposal_id"] == "proposal_1"
+    assert retry == result
+    assert len(graph.write_queries) == 2
+    assert "CREATE (proposal:Proposal" in graph.write_queries[0]
+    assert "CREATE (receipt:RequestReceipt" in graph.write_queries[0]
+    assert "SET w.head_revision" not in graph.write_queries[0]
+
+
+class MemoryGraph(FakeGraph):
+    def __init__(self, expected_hash, evidence_digest):
+        super().__init__(expected_hash)
+        self.evidence_digest = evidence_digest
+
+    def query(self, query, params=None):
+        if "a.actor_id AS actor_id" in query:
+            return Result([[
+                "as_1",
+                "actor_writer",
+                "human_confirmed",
+                "2026-10-17T00:00:00Z",
+                [{
+                    "id": "ev_1",
+                    "uri": "fixture://p",
+                    "excerpt": "P was confirmed.",
+                    "observed_at": "2026-10-17T00:00:00Z",
+                    "content_digest": self.evidence_digest,
+                }],
+            ]])
+        return super().query(query, params)
+
+
+def test_memory_read_returns_hash_verified_provenance_and_evidence():
+    formula = parse_formula(ATOM_P, {"p"})
+    assertion = AssertionRecord("as_1", formula, formula_hash(formula))
+    digest = hashlib.sha256(b"P was confirmed.").hexdigest()
+    graph = MemoryGraph(calculate_knowledge_hash([assertion]), digest)
+    store = FalkorSnapshotStore(FakeClient(graph))
+
+    memory = store.load_memory("workspace-1", "rev_1")
+
+    assert memory["revision_id"] == "rev_1"
+    assert memory["assertions"][0]["actor_id"] == "actor_writer"
+    assert memory["assertions"][0]["formula"] == ATOM_P
+    assert memory["assertions"][0]["evidence"][0]["content_digest"] == digest
+
+
+def test_memory_read_rejects_tampered_evidence_digest():
+    formula = parse_formula(ATOM_P, {"p"})
+    assertion = AssertionRecord("as_1", formula, formula_hash(formula))
+    graph = MemoryGraph(calculate_knowledge_hash([assertion]), "wrong-digest")
+
+    with pytest.raises(SnapshotIntegrityError, match="evidence digest mismatch"):
+        FalkorSnapshotStore(FakeClient(graph)).load_memory("workspace-1", "rev_1")
+
+
+class RevisionHistoryGraph:
+    def __init__(self):
+        self.params = None
+
+    def query(self, query, params=None):
+        self.params = params
+        assert "ORDER BY sequence DESC LIMIT $limit" in query
+        return Result([
+            ["rev_3", "rev_2", 3, "hash-3", "Correct", "human_confirmed", "actor", "t3"],
+            ["rev_2", "rev_1", 2, "hash-2", "Update", "human_confirmed", "actor", "t2"],
+        ])
+
+
+def test_revision_history_is_paged_in_stable_descending_order():
+    graph = RevisionHistoryGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+
+    history = store.list_revisions("workspace-1", before_sequence=4, limit=2)
+
+    assert [item["sequence"] for item in history] == [3, 2]
+    assert graph.params == {
+        "workspace_id": "workspace-1",
+        "before_sequence": 4,
+        "limit": 2,
+    }

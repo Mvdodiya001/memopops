@@ -11,6 +11,7 @@ from memopops.store import (
     IdempotencyConflictError,
     Snapshot,
     SnapshotIntegrityError,
+    RevisionHeadConflictError,
     calculate_knowledge_hash,
 )
 from memopops.solver import SolverQueueFullError
@@ -28,6 +29,10 @@ class FakeStore:
             assertions=(assertion,),
         )
         self.saved = {}
+        self.revision_saved = {}
+        self.head = "rev_1"
+        self.published = []
+        self.quarantined = []
         self.ready = True
 
 
@@ -44,8 +49,68 @@ class FakeStore:
             raise SnapshotNotFoundError(revision_id)
         return self.snapshot
 
+    def load_memory(self, workspace_id, revision_id):
+        if workspace_id != "demo" or revision_id != "rev_1":
+            from memopops.store import SnapshotNotFoundError
+
+            raise SnapshotNotFoundError(revision_id)
+        return {
+            "workspace_id": "demo",
+            "revision_id": "rev_1",
+            "knowledge_hash": self.snapshot.knowledge_hash,
+            "atom_ids": ["p", "q"],
+            "assertions": [{"id": "as_p", "formula": {"op": "atom", "id": "p"}}],
+        }
+
+    def list_revisions(self, workspace_id, *, before_sequence=None, limit=50):
+        if workspace_id != "demo":
+            return []
+        return [{"revision_id": "rev_1", "sequence": 1}]
+
     def current_head(self, workspace_id):
-        return "rev_1"
+        return self.head
+
+    def get_revision_receipt(self, workspace, key, request_hash):
+        if key not in self.revision_saved:
+            return None
+        previous_hash, result = self.revision_saved[key]
+        if previous_hash != request_hash:
+            raise IdempotencyConflictError(key)
+        return result
+
+    def publish_revision(
+        self, workspace, expected_revision, key, request_hash, revision, added_assertions, assertion_ids
+    ):
+        prior = self.get_revision_receipt(workspace, key, request_hash)
+        if prior is not None:
+            return prior
+        if expected_revision != self.head:
+            raise RevisionHeadConflictError(expected_revision, self.head)
+        result = {
+            "status": "COMMITTED",
+            "revision_id": revision["id"],
+            "parent_revision_id": expected_revision,
+            "knowledge_hash": revision["knowledge_hash"],
+            "client_refs": revision["client_refs"],
+        }
+        self.head = revision["id"]
+        self.revision_saved[key] = (request_hash, result)
+        self.published.append((revision, added_assertions, assertion_ids))
+        return result
+
+    def persist_quarantined_proposal(self, workspace, base_revision, key, request_hash, proposal):
+        prior = self.get_revision_receipt(workspace, key, request_hash)
+        if prior is not None:
+            return prior
+        result = {
+            "status": "QUARANTINED",
+            "proposal_id": proposal["id"],
+            "base_revision_id": base_revision,
+            "reason": "INCONSISTENT_CANDIDATE",
+        }
+        self.revision_saved[key] = (request_hash, result)
+        self.quarantined.append(proposal)
+        return result
 
     def get_query_result(self, workspace, query_id):
         for _, result in self.saved.values():
@@ -98,7 +163,11 @@ class SyncASGIClient:
 def client(monkeypatch):
     monkeypatch.setenv(
         "MEMOPOPS_AUTH_TOKENS",
-        json.dumps({"reader-token": {"workspace_id": "demo", "role": "reader"}}),
+        json.dumps({
+            "reader-token": {"workspace_id": "demo", "role": "reader"},
+            "writer-token": {"workspace_id": "demo", "role": "writer"},
+            "operator-token": {"workspace_id": "demo", "role": "operator"},
+        }),
     )
     app = create_app(FakeStore())
     test_client = SyncASGIClient(app)
@@ -115,9 +184,43 @@ def request_body(query, key="query-1"):
     }
 
 
+def revision_body(key="revision-1"):
+    return {
+        "expected_revision": "rev_1",
+        "idempotency_key": key,
+        "reason": "Record the passing check",
+        "acceptance": "human_confirmed",
+        "mutations": [{
+            "op": "add",
+            "assertion": {
+                "client_ref": "passing-check",
+                "formula": {"op": "atom", "id": "q"},
+                "evidence": [{
+                    "uri": "fixture://test/check",
+                    "excerpt": "The check passed.",
+                    "observed_at": "2026-10-17T10:00:00Z",
+                }],
+            },
+        }],
+    }
+
+
 def test_liveness_is_separate_from_database_readiness(client):
     assert client.get("/api/v1/health/live").status_code == 200
     assert client.get("/api/v1/health/ready").json() == {"status": "ready"}
+
+
+def test_memory_and_history_reads_are_workspace_scoped(client):
+    headers = {"Authorization": "Bearer reader-token"}
+    memory = client.get("/api/v1/workspaces/demo/memory", headers=headers)
+    history = client.get("/api/v1/workspaces/demo/revisions", headers=headers)
+
+    assert memory.status_code == 200
+    assert memory.json()["revision_id"] == "rev_1"
+    assert history.status_code == 200
+    assert history.json() == {"items": [{"revision_id": "rev_1", "sequence": 1}], "next_cursor": None}
+    assert client.get("/api/v1/workspaces/other/memory", headers=headers).status_code == 404
+    assert client.get("/api/v1/workspaces/other/revisions", headers=headers).status_code == 404
 
 
 def test_query_requires_auth_and_returns_revision_bound_result(client):
@@ -272,3 +375,72 @@ def test_persisted_query_result_can_be_read_again_by_workspace_client(client):
     assert client.get(
         "/api/v1/workspaces/demo/queries/missing", headers=headers
     ).status_code == 404
+
+
+def test_revision_mutation_requires_writer_and_commits_one_candidate(client):
+    path = "/api/v1/workspaces/demo/revisions"
+    body = revision_body()
+    reader = client.post(path, json=body, headers={"Authorization": "Bearer reader-token"})
+    assert reader.status_code == 403
+    agent_writer = client.post(path, json=body, headers={"Authorization": "Bearer writer-token"})
+    assert agent_writer.status_code == 403
+
+    response = client.post(path, json=body, headers={"Authorization": "Bearer operator-token"})
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "COMMITTED"
+    assert response.json()["parent_revision_id"] == "rev_1"
+    assert response.json()["client_refs"] == {"passing-check": client._app.state.memory_store.published[0][1][0]["id"]}
+    revision, additions, assertion_ids = client._app.state.memory_store.published[0]
+    assert revision["actor_id"].startswith("actor_")
+    assert additions[0]["evidence"][0]["content_digest"]
+    assert set(assertion_ids) == {"as_p", additions[0]["id"]}
+
+
+def test_revision_retry_is_receipt_first_and_wrong_key_reuse_conflicts(client):
+    path = "/api/v1/workspaces/demo/revisions"
+    headers = {"Authorization": "Bearer operator-token"}
+    body = revision_body("once")
+
+    first = client.post(path, json=body, headers=headers)
+    retry = client.post(path, json=body, headers=headers)
+    changed = revision_body("once")
+    changed["reason"] = "Different request"
+    conflict = client.post(path, json=changed, headers=headers)
+
+    assert first.status_code == retry.status_code == 201
+    assert retry.json() == first.json()
+    assert conflict.status_code == 409
+    assert len(client._app.state.memory_store.published) == 1
+
+
+def test_revision_route_rejects_trusted_fixture_from_writer(client):
+    body = revision_body()
+    body["acceptance"] = "trusted_fixture"
+    response = client.post(
+        "/api/v1/workspaces/demo/revisions",
+        json=body,
+        headers={"Authorization": "Bearer writer-token"},
+    )
+    assert response.status_code == 403
+
+
+def test_inconsistent_revision_is_quarantined_and_retry_is_receipt_first(client):
+    body = revision_body("quarantine-once")
+    body["mutations"][0]["assertion"]["formula"] = {
+        "op": "not",
+        "arg": {"op": "atom", "id": "p"},
+    }
+    headers = {"Authorization": "Bearer operator-token"}
+    path = "/api/v1/workspaces/demo/revisions"
+
+    first = client.post(path, json=body, headers=headers)
+    retry = client.post(path, json=body, headers=headers)
+
+    assert first.status_code == retry.status_code == 200
+    assert first.json()["status"] == "QUARANTINED"
+    assert retry.json() == first.json()
+    store = client._app.state.memory_store
+    assert store.head == "rev_1"
+    assert len(store.published) == 0
+    assert len(store.quarantined) == 1

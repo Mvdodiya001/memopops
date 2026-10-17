@@ -78,6 +78,8 @@ Mutation union: `add {assertion}`, `retract {target_assertion_id}`, `replace {ta
 
 Acceptance provenance values: `human_confirmed`, `trusted_fixture`, `model_proposed`. Permission policy determines who may use each value: it is not a client-controlled bypass. Model-proposed input is stored pending review. During the demonstration an operator explicitly confirms synthetic observations, or the seeded trusted fixture path is clearly identified.
 
+Current API boundary: accepted revisions require an `operator` credential for both `human_confirmed` and `trusted_fixture`; `reader` and `writer` credentials cannot activate accepted memory. `model_proposed` submission and proposal-inspection endpoints remain unimplemented and must be added as a separate pending-review path, never by weakening the accepted-candidate validator.
+
 Outcomes:
 
 - `COMMITTED` (201): new `revision_id`, `parent_revision_id`, `knowledge_hash`, mapped client references, receipt and timings.
