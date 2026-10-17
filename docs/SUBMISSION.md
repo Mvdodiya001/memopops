@@ -4,15 +4,15 @@ Authoritative rules: [FalkorDB Graph Hacks](https://www.wemakedevs.org/hackathon
 
 ## Repository
 
-- [ ] Public GitHub repo linked; final commit hash recorded.
-- [ ] README: problem, setup, FalkorDB role, demo commands, limits, evaluation summary.
-- [ ] `scripts/verify_release.sh` passes on a clean machine with Node 24 and Python 3.12.
+- [x] Public GitHub repo linked; final commit hash recorded (`434ad4e` on `main` as of 2026-10-17 IST).
+- [x] README: problem, setup, FalkorDB role, demo commands, limits, evaluation summary.
+- [x] `scripts/verify_release.sh` passes on a clean machine with Node 24 and Python 3.12 (138 pytest, web CI, 4/4 acceptance).
 
 ## Demo evidence
 
 - [ ] Video (signed-out link check) or complete local instructions.
 - [ ] Screenshots from real UI states (not fixture mode unless labeled).
-- [ ] Measured evaluation: `docs/evaluation/README.md` and sample `report.json` if committed.
+- [x] Measured evaluation: `docs/evaluation/README.md` and `docs/evaluation/acceptance-sample-report.json`.
 
 ## Technical talking points
 

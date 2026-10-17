@@ -66,4 +66,4 @@ Earlier text said publication was pending; the live UI integration was already m
 - Objective: close remaining P0 presentation gaps — revision impact in the live UI, lab impact parity, writer/quarantine tests, release verification script, demo/submission docs, and a committed acceptance sample.
 - Validation: `uv run --locked pytest -q` (138 passed); web typecheck and 8 vitest tests passed; `evaluation.run --suite acceptance` (4/4 cases passed).
 - Handoff: run `./scripts/verify_release.sh` before submit; record demo video per `docs/DEMO.md`; FalkorDB persistence/restart and live model remain optional.
-- Publication: pushed to `origin/main` after validation.
+- Publication: pushed to `origin/main` as `434ad4e` after validation (`merge-base` confirmed).
