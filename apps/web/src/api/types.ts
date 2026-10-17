@@ -132,6 +132,28 @@ export type DecisionRequest = {
   rationale: string
 }
 
+export type ImpactItem = {
+  query_id: string
+  revision_id: string
+  query_hash?: string
+  result: LogicalResult
+  proof_status: ProofStatus
+  dependency_basis: "CHECKED_SUPPORT" | "FULL_SNAPSHOT"
+  support_assertion_ids: string[]
+  changed_assertion_ids: string[]
+  freshness: Freshness
+}
+
+export type ImpactDocument = {
+  workspace_id: string
+  revision_id: string
+  parent_revision_id: string | null
+  changed_assertion_ids: string[]
+  total_count: number
+  items: ImpactItem[]
+  next_cursor: string | null
+}
+
 export type DecisionReceipt = {
   decision_id: string
   workspace_id: string

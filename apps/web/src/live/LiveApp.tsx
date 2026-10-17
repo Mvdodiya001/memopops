@@ -9,6 +9,7 @@ import {
   getHistory,
   getMemory,
   getProposals,
+  getRevisionImpact,
   getWorkspace,
   listWorkspaces,
   postDecision,
@@ -182,6 +183,8 @@ function WorkspaceScreen(props: {
           />
         ) : props.location.section === "history" ? (
           <LiveHistory
+            workspaceId={workspaceId}
+            token={token}
             pending={history.isPending}
             error={history.error}
             onRetry={() => void history.refetch()}
@@ -528,6 +531,8 @@ function CertificateDownload(props: { workspaceId: string; queryId: string; toke
 }
 
 function LiveHistory(props: {
+  workspaceId: string
+  token: string
   pending: boolean
   error: unknown
   onRetry: () => void
@@ -535,6 +540,11 @@ function LiveHistory(props: {
   selected: string | null
   onSelect: (revisionId: string) => void
 }) {
+  const impact = useQuery({
+    queryKey: ["impact", props.workspaceId, props.selected],
+    queryFn: ({ signal }) => getRevisionImpact(props.workspaceId, props.selected ?? "", { signal, token: props.token }),
+    enabled: Boolean(props.selected),
+  })
   if (props.pending) return <Loading label="Loading history" />
   if (props.error) return <Failure error={props.error} onRetry={props.onRetry} />
   return (
@@ -553,7 +563,26 @@ function LiveHistory(props: {
           ))}
         </ul>
       )}
-      <p className="meta">Assertion diffs appear when both snapshots are loaded. This view does not invent them from the revision list.</p>
+      {props.selected && impact.data && impact.data.total_count > 0 ? (
+        <section className="panel">
+          <h3 className="section-title">Affected prior queries</h3>
+          <p className="meta">
+            {impact.data.total_count} historical result(s) used assertion(s) removed in {revisionLabel(props.selected)}.
+          </p>
+          <ul className="memory-list">
+            {impact.data.items.map((item) => (
+              <li key={item.query_id}>
+                <div className="memory-row">
+                  <strong>{item.result}</strong>
+                  <span className="meta">Query {item.query_id} at {revisionLabel(item.revision_id)} · {item.dependency_basis}</span>
+                  <span className="meta">Changed support: {item.changed_assertion_ids.join(", ")}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      <p className="meta">Select a revision to inspect history. Impact lists real stored query dependencies when the API provides them.</p>
     </>
   )
 }

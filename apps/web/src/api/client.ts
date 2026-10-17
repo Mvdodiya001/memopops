@@ -7,6 +7,7 @@ import type {
   MutationRequest,
   DecisionReceipt,
   DecisionRequest,
+  ImpactDocument,
   ProposalDocument,
   QueryRequest,
   QueryResponse,
@@ -129,6 +130,15 @@ export async function getHistory(workspaceId: string, options?: RequestOptions):
 
 export function getCertificate(workspaceId: string, queryId: string, options?: RequestOptions): Promise<unknown> {
   return request(workspacePath(workspaceId, `/queries/${encodeURIComponent(queryId)}/certificate`), options)
+}
+
+export function getRevisionImpact(
+  workspaceId: string,
+  revisionId: string,
+  options?: RequestOptions,
+): Promise<ImpactDocument> {
+  const query = new URLSearchParams({ revision: revisionId, limit: "50" })
+  return request(workspacePath(workspaceId, `/impact?${query}`), options)
 }
 
 export function getProposals(workspaceId: string, options?: RequestOptions): Promise<ProposalDocument[]> {
