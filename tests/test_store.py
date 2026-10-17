@@ -401,6 +401,10 @@ class ProposalGraph:
 
     def query(self, query, params=None):
         params = params or {}
+        if "ORDER BY proposal.created_at DESC" in query:
+            self.list_query = query
+            self.list_params = params
+            return Result([["proposal_1", "rev_1", "INCONSISTENT_CANDIDATE", '{"mutations":[]}', "2026-10-17T00:00:00Z"]])
         if "RETURN proposal.id AS proposal_id" in query:
             self.write_queries.append(query)
             if params["key"] in self.receipts:
@@ -438,6 +442,26 @@ def test_quarantined_proposal_and_receipt_are_persisted_without_head_write():
     assert "CREATE (proposal:Proposal" in graph.write_queries[0]
     assert "CREATE (receipt:RequestReceipt" in graph.write_queries[0]
     assert "SET w.head_revision" not in graph.write_queries[0]
+
+
+def test_quarantined_proposal_list_is_workspace_scoped_and_bounded():
+    graph = ProposalGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+
+    proposals = store.list_quarantined_proposals("workspace-1", limit=7)
+
+    assert proposals == [{
+        "proposal_id": "proposal_1",
+        "base_revision_id": "rev_1",
+        "reason": "INCONSISTENT_CANDIDATE",
+        "request_json": '{"mutations":[]}',
+        "created_at": "2026-10-17T00:00:00Z",
+    }]
+    assert graph.list_params == {"workspace_id": "workspace-1", "limit": 7}
+    assert "workspace_id: $workspace_id" in graph.list_query
+    assert "status: 'QUARANTINED'" in graph.list_query
+    with pytest.raises(ValueError):
+        store.list_quarantined_proposals("workspace-1", limit=51)
 
 
 class MemoryGraph(FakeGraph):

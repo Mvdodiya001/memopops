@@ -46,7 +46,7 @@ Atom registration includes `id`, `label`, `meaning`, `scope`. Register all four 
 | POST /workspaces/{w}/queries | Evaluate AST against required explicit revision; persist QueryResult. |
 | GET /workspaces/{w}/queries/{q} | Stored result, freshness observation, premises/evidence; no automatic relabeling. |
 | GET /workspaces/{w}/queries/{q}/certificate | Export original snapshot, variable map, definitions, steps and witnesses. |
-| GET /workspaces/{w}/proposals?status=QUARANTINED | Inspect conflicts and pending model suggestions. |
+| GET /workspaces/{w}/proposals?status=QUARANTINED&limit=50 | List up to 50 recent quarantined submissions and the sanitized original request. This does not claim an exact inconsistent core or accept any mutation. |
 | GET /workspaces/{w}/impact?revision={r} | Changed IDs and graph-derived affected query summaries for r versus its parent. |
 | GET /workspaces/{w}/events?after={sequence} | Ordered sanitized history, bounded pages; polling is enough for v1. |
 | POST /workspaces/{w}/decisions | Record a reader decision against an expected current revision and QueryResult; does not deploy anything. |

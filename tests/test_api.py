@@ -90,6 +90,20 @@ class FakeStore:
             "next_cursor": None,
         }
 
+    def list_quarantined_proposals(self, workspace_id, *, limit=50):
+        if workspace_id != "demo":
+            return []
+        records = []
+        for proposal in reversed(self.quarantined[-limit:]):
+            records.append({
+                "proposal_id": proposal["id"],
+                "base_revision_id": proposal["base_revision_id"],
+                "reason": proposal["reason"],
+                "request_json": proposal["request_json"],
+                "created_at": proposal["created_at"],
+            })
+        return records
+
     def current_head(self, workspace_id):
         return self.head
 
@@ -132,7 +146,11 @@ class FakeStore:
             "reason": "INCONSISTENT_CANDIDATE",
         }
         self.revision_saved[key] = (request_hash, result)
-        self.quarantined.append(proposal)
+        self.quarantined.append({
+            **proposal,
+            "base_revision_id": base_revision,
+            "reason": "INCONSISTENT_CANDIDATE",
+        })
         return result
 
     def get_query_result(self, workspace, query_id):
@@ -657,3 +675,49 @@ def test_inconsistent_revision_is_quarantined_and_retry_is_receipt_first(client)
     assert store.head == "rev_1"
     assert len(store.published) == 0
     assert len(store.quarantined) == 1
+
+
+def test_quarantined_proposals_are_listed_with_workspace_scope_and_sanitized_request(client):
+    body = revision_body("quarantine-list")
+    body["mutations"][0]["assertion"]["formula"] = {
+        "op": "not",
+        "arg": {"op": "atom", "id": "p"},
+    }
+    created = client.post(
+        "/api/v1/workspaces/demo/revisions",
+        json=body,
+        headers={"Authorization": "Bearer operator-token"},
+    )
+    listed = client.get(
+        "/api/v1/workspaces/demo/proposals?status=QUARANTINED&limit=10",
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    hidden = client.get(
+        "/api/v1/workspaces/other/proposals",
+        headers={"Authorization": "Bearer reader-token"},
+    )
+
+    assert created.status_code == 200
+    assert listed.status_code == 200
+    proposals = listed.json()["proposals"]
+    assert len(proposals) == 1
+    assert proposals[0]["proposal_id"] == created.json()["proposal_id"]
+    assert proposals[0]["base_revision_id"] == "rev_1"
+    assert proposals[0]["status"] == "QUARANTINED"
+    assert proposals[0]["submitted_request"]["reason"] == body["reason"]
+    assert proposals[0]["submitted_request"]["mutations"] == body["mutations"]
+    assert "actor_id" not in proposals[0]["submitted_request"]
+    assert hidden.status_code == 404
+
+
+def test_proposal_listing_requires_auth_and_bounds_limit(client):
+    assert client.get("/api/v1/workspaces/demo/proposals").status_code == 401
+    invalid_limit = client.get(
+        "/api/v1/workspaces/demo/proposals?limit=51",
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    invalid_status = client.get(
+        "/api/v1/workspaces/demo/proposals?status=PENDING_REVIEW",
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    assert invalid_limit.status_code == invalid_status.status_code == 422

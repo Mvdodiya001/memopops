@@ -190,12 +190,12 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-15
 
-- Updated: 2026-10-17T17:54:14+05:30
+- Updated: 2026-10-17T17:57:15+05:30
 - Human / agent: Saqlain / Codex
-- Status: in-progress
-- Branch / scope: `codex/saqlain/logic-core`; planned `src/memopops/store.py`, `src/memopops/api.py`, API/store tests, contract/README and Saqlain/master logs. No frontend edits.
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; `src/memopops/store.py`, `src/memopops/api.py`, API/store tests, contract/README and Saqlain/master logs. No frontend edits.
 - Objective and success criteria: implement a bounded, workspace-scoped read endpoint for existing quarantined revision submissions so a review client can inspect the exact submitted request without exposing credentials or suggesting that a proposal is accepted.
 - Actions and decisions: return original validated mutation data as a pending submission; do not fabricate a minimal conflict core because the persistence format does not calculate one. Limit pages to 50 and restrict status to QUARANTINED.
-- Validation: pending.
-- Handoff: frontend review UI can consume the new `proposals` array and render the quarantined mutation/request reason; the route will not claim exact conflicting assertions.
-- Publication: planned-work log commit pending; no PR.
+- Validation: `uv run --locked pytest -q` (129 passed); `git diff --check` passed. Tests cover authenticated reads, role/workspace isolation, the 50-item bound, allowed status, request-data sanitization, and store query scoping/limit. The response excludes internal `actor_id` and does not invent conflicting assertion IDs.
+- Handoff: the endpoint is `GET /api/v1/workspaces/{workspace_id}/proposals?status=QUARANTINED&limit=50`, returning `{proposals:[{proposal_id,status,base_revision_id,reason,created_at,submitted_request}]}`. `apps/web/src/api/types.ts` still describes the earlier proposal shape and should be updated before UI consumes this route. Exact conflict cores and model-proposed submissions remain separate work.
+- Publication: code/docs/completion-log publication pending; no PR.

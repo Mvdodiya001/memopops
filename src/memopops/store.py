@@ -303,6 +303,32 @@ class FalkorSnapshotStore:
             return prior
         raise SnapshotNotFoundError(base_revision_id)
 
+    def list_quarantined_proposals(
+        self, workspace_id: str, *, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """Read a bounded list of sanitized quarantine records from one workspace graph."""
+        if not 1 <= limit <= 50:
+            raise ValueError("proposal limit must be between 1 and 50")
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        rows = graph.query(
+            "MATCH (proposal:Proposal {workspace_id: $workspace_id, status: 'QUARANTINED'}) "
+            "RETURN proposal.id AS proposal_id, proposal.base_revision_id AS base_revision_id, "
+            "proposal.reason AS reason, proposal.request_json AS request_json, "
+            "proposal.created_at AS created_at "
+            "ORDER BY proposal.created_at DESC, proposal.id DESC LIMIT $limit",
+            {"workspace_id": workspace_id, "limit": limit},
+        ).result_set
+        return [
+            {
+                "proposal_id": row[0],
+                "base_revision_id": row[1],
+                "reason": row[2],
+                "request_json": row[3],
+                "created_at": row[4],
+            }
+            for row in rows
+        ]
+
     def persist_query_result(
         self,
         workspace_id: str,

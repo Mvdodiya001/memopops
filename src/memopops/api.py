@@ -55,6 +55,7 @@ class SnapshotReader(Protocol):
         self, workspace_id: str, *, before_sequence: int | None = None, limit: int = 50
     ) -> list[dict[str, Any]]: ...
     def current_head(self, workspace_id: str) -> str | None: ...
+    def list_quarantined_proposals(self, workspace_id: str, *, limit: int = 50) -> list[dict[str, Any]]: ...
     def get_query_result(self, workspace_id: str, query_id: str) -> dict[str, Any] | None: ...
     def get_query_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
@@ -319,6 +320,41 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail="Revision history is unavailable") from exc
         next_cursor = items[-1]["sequence"] if len(items) == limit else None
         return {"items": items, "next_cursor": next_cursor}
+
+    @app.get("/api/v1/workspaces/{workspace_id}/proposals")
+    def read_quarantined_proposals(
+        workspace_id: str,
+        status: Literal["QUARANTINED"] = "QUARANTINED",
+        limit: int = Query(default=50, ge=1, le=50),
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            records = memory_store.list_quarantined_proposals(workspace_id, limit=limit)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Quarantined proposals are unavailable") from exc
+
+        proposals = []
+        for record in records:
+            try:
+                submitted = json.loads(record["request_json"])
+            except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                raise HTTPException(status_code=500, detail="Stored proposal failed integrity verification") from exc
+            if not isinstance(submitted, dict) or not isinstance(submitted.get("mutations"), list):
+                raise HTTPException(status_code=500, detail="Stored proposal failed integrity verification")
+            proposals.append({
+                "proposal_id": record["proposal_id"],
+                "status": status,
+                "base_revision_id": record["base_revision_id"],
+                "reason": record["reason"],
+                "created_at": record["created_at"],
+                "submitted_request": {
+                    key: submitted[key]
+                    for key in ("expected_revision", "reason", "acceptance", "mutations")
+                    if key in submitted
+                },
+            })
+        return {"proposals": proposals}
 
     @app.get("/api/v1/workspaces/{workspace_id}/impact")
     def read_revision_impact(
