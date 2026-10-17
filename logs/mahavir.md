@@ -55,4 +55,15 @@ Earlier text said publication was pending; the live UI integration was already m
 - Actions and decisions: merged latest `origin/main` before work to avoid backend conflicts. Reader `record_decision` maps ship/hold to `PROCEED`/`BLOCK`; abstain stays journal-only. Operator corrections use trusted fixture revisions outside the writer tool allowlist.
 - Validation: `uv run --locked pytest -q` (136 passed, including 3 new agent/acceptance tests). Pytest exercises the acceptance path via `evaluation.acceptance.run_acceptance`. No FalkorDB or live model run.
 - Handoff: wire UI to `GET /proposals` and decision history when ready; optional live model adapter remains behind env credentials.
-- Publication: merged to local `main` with UI proposals/decision wiring, demo script, and evaluation docs; push to `origin/main` uses user-supplied credentials outside the repository.
+- Publication: merged to `origin/main` as `be55565` with UI proposals/decision wiring, demo script, and evaluation docs.
+
+## M-20261017-05
+
+- Updated: 2026-10-17T18:31:00+05:30
+- Human / agent: Mahavir / Grok 4.7
+- Status: completed
+- Branch / scope: `main`; `apps/web/` impact/history, `evaluation/lab_store.py`, `scripts/verify_release.sh`, `docs/DEMO.md`, `docs/SUBMISSION.md`, `docs/evaluation/acceptance-sample-report.json`, tests and logs. No `src/memopops/` edits.
+- Objective: close remaining P0 presentation gaps — revision impact in the live UI, lab impact parity, writer/quarantine tests, release verification script, demo/submission docs, and a committed acceptance sample.
+- Validation: `uv run --locked pytest -q` (138 passed); web typecheck and 8 vitest tests passed; `evaluation.run --suite acceptance` (4/4 cases passed).
+- Handoff: run `./scripts/verify_release.sh` before submit; record demo video per `docs/DEMO.md`; FalkorDB persistence/restart and live model remain optional.
+- Publication: pending push to `origin/main`.

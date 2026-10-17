@@ -2,7 +2,9 @@
 
 Proof-carrying shared memory for AI agents, targeting Graph Hacks Track 02. Working concept: persistent propositions, evidence, revisions, and proof dependencies in FalkorDB, with a separate propositional-logic checker.
 
-Status: implementation in progress. The Python 3.12 service contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, hash-verified FalkorDB snapshot reads, atomic revision publication, idempotency receipts, quarantined inconsistent proposals, workspace-scoped memory/history/query reads, and bounded resolution certificates checked by the independent `proofcheck` package.
+Status: hackathon MVP on `main` — proof-carrying shared memory with FalkorDB, independent checker, web inspector, scripted agents, and acceptance evaluation. Hosted database restart, public deployment, and live model demos are optional follow-ups documented in [docs/SUBMISSION.md](docs/SUBMISSION.md).
+
+The Python 3.12 service contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, hash-verified FalkorDB snapshot reads, atomic revision publication, idempotency receipts, quarantined inconsistent proposals, workspace-scoped memory/history/query reads, and bounded resolution certificates checked by the independent `proofcheck` package.
 
 ## Local FalkorDB
 
@@ -50,8 +52,17 @@ See [docs/evaluation/README.md](docs/evaluation/README.md). Live model adapters 
 
 The live web inspector can list quarantined proposals (`GET /proposals`) and record reader decisions after a verified query at the current head.
 
+## Release verification
+
+```bash
+chmod +x scripts/verify_release.sh
+./scripts/verify_release.sh
+```
+
 ## Start here
 
+- [Demo storyboard](docs/DEMO.md)
+- [Submission checklist](docs/SUBMISSION.md)
 - [Detailed implementation plan and parallel work](docs/IMPLEMENTATION_PLAN.md)
 - [Agent and contributor rules](AGENTS.md)
 - [Project context and MVP boundaries](docs/PROJECT_CONTEXT.md)
