@@ -47,12 +47,12 @@ Earlier text said publication was pending; the live UI integration was already m
 
 ## M-20261017-04
 
-- Updated: 2026-10-17T18:20:00+05:30
+- Updated: 2026-10-17T18:28:00+05:30
 - Human / agent: Mahavir / Grok 4.7
-- Status: in-progress
+- Status: completed
 - Branch / scope: `codex/mahavir/m4-agents`, fast-forwarded through Saqlain commits through S-20261017-18 (`40a446b`). Files: `agents/`, `evaluation/`, `tests/test_agent_sessions.py`, this log, and the master index. Did not edit `src/memopops/`, `pyproject.toml`, or `apps/web/`.
 - Objective: deterministic writer and reader clients against the published memory API, recording reader decisions through Saqlain's `POST /decisions` endpoint, plus a small acceptance evaluation and scripted-replay baselines. Live model calls stay disabled unless credentials exist.
 - Actions and decisions: merged latest `origin/main` before work to avoid backend conflicts. Reader `record_decision` maps ship/hold to `PROCEED`/`BLOCK`; abstain stays journal-only. Operator corrections use trusted fixture revisions outside the writer tool allowlist.
 - Validation: `uv run --locked pytest -q` (136 passed, including 3 new agent/acceptance tests). Pytest exercises the acceptance path via `evaluation.acceptance.run_acceptance`. No FalkorDB or live model run.
 - Handoff: wire UI to `GET /proposals` and decision history when ready; optional live model adapter remains behind env credentials.
-- Publication: five milestone commits on `codex/mahavir/m4-agents`; merge to main pending authenticated `git push`.
+- Publication: merged to local `main` with UI proposals/decision wiring, demo script, and evaluation docs; push to `origin/main` uses user-supplied credentials outside the repository.
