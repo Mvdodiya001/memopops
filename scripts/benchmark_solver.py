@@ -100,6 +100,7 @@ def run(*, samples: int, runs: int, warmup: int) -> dict[str, Any]:
                     "min": round(min(elapsed_ms), 3),
                     "max": round(max(elapsed_ms), 3),
                 },
+                "samples_ms": [round(value, 3) for value in elapsed_ms],
             })
         results.append({"assertion_count": assertion_count, "runs": run_results})
 
