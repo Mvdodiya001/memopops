@@ -151,3 +151,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: `uv run --frozen --no-sync pytest -q` (126 passed). A read-only live smoke using `.env.cloud` returned HTTP 503 from both routes; an isolated `FalkorSnapshotStore.ping()` failed with `TimeoutError`, confirming this session cannot reach the database endpoint now. Credentials and endpoint values were not printed. No live workspace data was changed.
 - Handoff: retry live workspace-list/detail smoke when the database endpoint is reachable; use the same authenticated GET requests as the S10 contract. Backend failure handling is covered and returns a generic 503.
 - Publication: commit `d734a28` was pushed directly to `origin/main`; fetch and ancestor verification succeeded. No PR was created.
+
+## S-20261017-12
+
+- Updated: 2026-10-17T17:41:04+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Branch / scope: `codex/saqlain/logic-core`; planned `scripts/benchmark_solver.py`, `docs/performance/` result artifact, and Saqlain/master logs.
+- Objective and success criteria: create and run a reproducible benchmark following the verification plan's fixed workloads, warm-up, 100 samples and three independent runs; clearly identify solver-only scope and record actual runtime metadata/results.
+- Actions and decisions: keep database/API/certificate timing claims out of this report because FalkorDB is paused/unreachable and Docker is unavailable. Use a deterministic implication-chain workload and validate every answer as PROVED.
+- Validation: pending implementation and benchmark run.
+- Handoff: after this measurement, integrate Mahavir's UI/model/evaluation changes when available and complete local release checks before retrying hosted database work.
+- Publication: planned-work log commit pending; no PR.
