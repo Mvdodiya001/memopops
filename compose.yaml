@@ -1,0 +1,49 @@
+services:
+  falkordb:
+    image: ${FALKORDB_IMAGE:-falkordb/falkordb-server:latest}
+    restart: unless-stopped
+    environment:
+      FALKORDB_PASSWORD: ${FALKORDB_PASSWORD:?Copy .env.example to .env and set FALKORDB_PASSWORD}
+      REDIS_ARGS: --requirepass ${FALKORDB_PASSWORD:?Set FALKORDB_PASSWORD in .env} --appendonly yes
+      FALKORDB_ARGS: THREAD_COUNT 2
+    ports:
+      - 127.0.0.1:${FALKORDB_PORT:-6379}:6379
+    volumes:
+      - falkordb_data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - REDISCLI_AUTH=$$FALKORDB_PASSWORD redis-cli ping | grep -q PONG
+      interval: 10s
+      timeout: 3s
+      retries: 8
+      start_period: 20s
+
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: 6379
+      FALKORDB_USERNAME: default
+      FALKORDB_PASSWORD: ${FALKORDB_PASSWORD:?Set FALKORDB_PASSWORD in .env}
+      FALKORDB_SSL: "false"
+      MEMOPOPS_AUTH_TOKENS: ${MEMOPOPS_AUTH_TOKENS:?Set MEMOPOPS_AUTH_TOKENS in .env}
+    ports:
+      - 127.0.0.1:8000:8000
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/v1/health/live', timeout=2)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  falkordb_data:
