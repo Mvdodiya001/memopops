@@ -66,13 +66,13 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-05
 
-- Updated: 2026-10-17T16:35:21+05:30
+- Updated: 2026-10-17T16:38:30+05:30
 - Human / agent: Saqlain / Codex
 - Status: in-progress
 - Branch / scope: `codex/saqlain/logic-core`; `src/memopops/revisions.py`, `tests/test_revisions.py`, README, and Saqlain/master logs. No graph writes or API contract changes.
 - Objective: continue S2 safely despite the hosted database network restriction by producing a pure, testable revision candidate planner.
 - Decisions: validate exact add/retract/replace shapes, expected parent and targets, accepted provenance, UTC-normalized RFC3339 evidence and SHA-256 excerpt digests; cap mutation count, evidence size and total active AST nodes; solve consistency before activation. Solver indeterminate and inconsistent outcomes both prevent a candidate from being activated. The module performs no graph writes; callers must check retries before creating fresh IDs, and a future store must publish atomically behind a head guard.
 - Proxy: Windows user-level HTTP(S)_PROXY remains `http://172.31.2.4:8080`. The proxy carries HTTPS to GitHub but returns HTTP 403 to the Redis TLS CONNECT on FalkorDB port 63194. No password values are recorded. The local Docker engine is unavailable, so no live persistence test ran.
-- Validation: `uv run --frozen --no-sync pytest -q` (53 passed); compileall, `docker compose config --quiet`, and `git diff --check` passed. `ruff` is not installed in the locked environment, so lint was unavailable. A first timestamp assertion exposed a changed error category; validation was adjusted and the full suite passed afterward.
+- Validation: post-integration `uv run --frozen --no-sync pytest -q` (54 passed); compileall, `docker compose config --quiet`, package wheel/sdist build, and `git diff --check` passed. `ruff` is not installed in the locked environment, so lint was unavailable. A first timestamp assertion exposed a changed error category; validation was adjusted and the full suite passed afterward.
 - Handoff: next implementation is an atomic graph revision write with expected-head compare-and-set, idempotency receipt, provenance/evidence persistence and concurrent-writer tests. It must be integrated only after a local database engine or allowed hosted network path is available.
-- Publication: pending staged-diff review, commit, origin/main integration, and direct push under the user's instruction. No PR will be created.
+- Publication: commit `1559581b13f29bd36498bfa7fb5ce5b2f18da671` pushed directly to `origin/main`; fetch and `git merge-base --is-ancestor HEAD origin/main` confirmed it is present. No PR was created. The task branch is eight commits ahead of its own remote tracking branch, while the working tree is clean.
