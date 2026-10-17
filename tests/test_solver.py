@@ -1,7 +1,13 @@
+import pytest
 from itertools import product
 
 from memopops.formula import Formula, parse_formula
-from memopops.solver import QueryStatus, classify
+from memopops.solver import (
+    BoundedSolverExecutor,
+    QueryStatus,
+    SolverQueueFullError,
+    classify,
+)
 
 
 def parse(value: dict[str, object], atoms: set[str]) -> Formula:
@@ -131,3 +137,31 @@ def test_solver_matches_independent_truth_table_oracle_for_all_v1_operators() ->
                 if witness is not None:
                     assert evaluate(premise, witness)
                     assert evaluate(query, witness) is expected_query_value
+
+
+def test_solver_executor_rejects_when_worker_and_queue_are_full(monkeypatch):
+    import threading
+
+    import memopops.solver as solver_module
+
+    started = threading.Event()
+    release = threading.Event()
+
+    def blocked_classify(*_args, **_kwargs):
+        started.set()
+        if not release.wait(timeout=2):
+            raise TimeoutError("test worker was not released")
+        return None
+
+    monkeypatch.setattr(solver_module, "classify", blocked_classify)
+    executor = BoundedSolverExecutor(workers=1, queue_capacity=0)
+    try:
+        future = executor.submit((), None, timeout_ms=100)
+        assert started.wait(timeout=1)
+        with pytest.raises(SolverQueueFullError):
+            executor.submit((), None, timeout_ms=100)
+        release.set()
+        assert future.result(timeout=1) is None
+    finally:
+        release.set()
+        executor.shutdown()

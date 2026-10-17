@@ -17,7 +17,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
 
 from memopops.formula import SEMANTICS_VERSION, formula_hash, formula_to_json, parse_formula
-from memopops.solver import classify
+from memopops.solver import BoundedSolverExecutor, SolverQueueFullError
 from memopops.store import (
     FalkorSnapshotStore,
     IdempotencyConflictError,
@@ -128,13 +128,17 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
     memory_store = store or FalkorSnapshotStore.from_env()
     bearer = HTTPBearer(auto_error=False)
 
+    solver_executor = BoundedSolverExecutor(workers=2, queue_capacity=16)
+
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         yield
+        solver_executor.shutdown()
         memory_store.close()
 
     app = FastAPI(title="Memopops Memory API", version="0.1.0", lifespan=lifespan)
     app.state.memory_store = memory_store
+    app.state.solver_executor = solver_executor
     app.add_middleware(RequestBodyLimitMiddleware, max_bytes=65_536)
 
     def authenticate(
@@ -204,7 +208,16 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         query_digest = formula_hash(formula)
         request_digest = _request_hash(request.revision_id, query_digest, request.proof_mode)
         solve_started = monotonic()
-        evaluation = classify(snapshot.formulas, formula, timeout_ms=3_000)
+        try:
+            evaluation = app.state.solver_executor.submit(
+                snapshot.formulas, formula, timeout_ms=3_000
+            ).result(timeout=3.5)
+        except SolverQueueFullError as exc:
+            raise HTTPException(status_code=429, detail="Solver queue is full") from exc
+        except TimeoutError as exc:
+            raise HTTPException(status_code=503, detail="Solver exceeded its wall-clock budget") from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail="Solver is unavailable") from exc
         solve_ms = int((monotonic() - solve_started) * 1_000)
 
         try:

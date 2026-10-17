@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import StrEnum
+from threading import BoundedSemaphore, Lock
 from time import monotonic
 from typing import Iterable
 
@@ -146,3 +148,46 @@ def classify(
         query_true=true_witness,
         query_false=false_witness,
     )
+
+
+class SolverQueueFullError(RuntimeError):
+    """Raised when all solver workers and bounded waiting slots are occupied."""
+
+
+class BoundedSolverExecutor:
+    """Limit solver concurrency and queued work per API process."""
+
+    def __init__(self, *, workers: int = 2, queue_capacity: int = 16):
+        if workers < 1 or queue_capacity < 0:
+            raise ValueError("workers must be positive and queue capacity nonnegative")
+        self._executor = ThreadPoolExecutor(
+            max_workers=workers, thread_name_prefix="memopops-solver"
+        )
+        self._capacity = BoundedSemaphore(workers + queue_capacity)
+        self._lock = Lock()
+        self._closed = False
+
+    def submit(
+        self, premises: Iterable[Formula], query: Formula, *, timeout_ms: int
+    ) -> Future[QueryEvaluation]:
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("solver executor is shut down")
+            if not self._capacity.acquire(blocking=False):
+                raise SolverQueueFullError("solver queue is full")
+            try:
+                future = self._executor.submit(
+                    classify, tuple(premises), query, timeout_ms=timeout_ms
+                )
+            except BaseException:
+                self._capacity.release()
+                raise
+        future.add_done_callback(lambda _future: self._capacity.release())
+        return future
+
+    def shutdown(self) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+        self._executor.shutdown(wait=True, cancel_futures=True)

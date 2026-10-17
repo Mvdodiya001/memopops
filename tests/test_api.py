@@ -13,6 +13,7 @@ from memopops.store import (
     SnapshotIntegrityError,
     calculate_knowledge_hash,
 )
+from memopops.solver import SolverQueueFullError
 
 
 class FakeStore:
@@ -85,7 +86,10 @@ def client(monkeypatch):
         "MEMOPOPS_AUTH_TOKENS",
         json.dumps({"reader-token": {"workspace_id": "demo", "role": "reader"}}),
     )
-    return SyncASGIClient(create_app(FakeStore()))
+    app = create_app(FakeStore())
+    test_client = SyncASGIClient(app)
+    yield test_client
+    app.state.solver_executor.shutdown()
 
 
 def request_body(query, key="query-1"):
@@ -191,3 +195,23 @@ def test_snapshot_integrity_failure_is_not_reported_as_database_unavailable(clie
     assert response.status_code == 500
     assert response.json() == {"detail": "Stored memory failed integrity verification"}
     assert "private integrity detail" not in response.text
+
+
+def test_query_returns_429_when_solver_queue_is_full(client):
+    class FullSolverQueue:
+        def submit(self, *_args, **_kwargs):
+            raise SolverQueueFullError("full")
+
+        def shutdown(self):
+            pass
+
+    client._app.state.solver_executor.shutdown()
+    client._app.state.solver_executor = FullSolverQueue()
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": "atom", "id": "p"}),
+        headers={"Authorization": "Bearer reader-token"},
+    )
+
+    assert response.status_code == 429
+    assert response.json() == {"detail": "Solver queue is full"}
