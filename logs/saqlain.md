@@ -41,10 +41,12 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 - Updated: 2026-10-17T15:41:26+05:30
 - Human / agent: Saqlain / Codex
-- Status: in-progress
+- Status: completed
 - Objective: honor the user's explicit direct-push policy for both agents; no PR requirement.
 - Changes: AGENTS.md, collaboration guide, execution plan/prompts, verification guidance and historical research clarification; removed the unused PR template.
 - Policy: isolated worktrees/task branches, self-review, commit, fetch/merge latest origin/main, rerun affected checks, normal push HEAD:main. Retry after races without force and verify commit inclusion.
 - Publication: publish the existing researched plan and these rules directly to main; retire PR #1 after main contains its commits. No application implementation is started by this task.
 - Validation: document consistency, local links and whitespace checks before commit; remote publication verified afterward.
 - Handoff: Mahavir should fetch current origin/main before starting and follow the updated direct-push prompts. Historical PR references in older log entries remain audit history, not active instructions.
+
+- Verified publication: direct push 2c7aa8f to main succeeded; fetch plus merge-base confirmed inclusion. The full implementation plan is now on main. GitHub reports PR #1 closed/merged automatically after direct publication. This resolves the earlier pending-review publication state for S-20261017-02. Document links and whitespace checks passed.
