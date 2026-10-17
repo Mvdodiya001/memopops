@@ -39,13 +39,16 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 - Validation: `npm --prefix apps/web run typecheck` passed. `npm --prefix apps/web test` passed 8 tests. `node apps/web/e2e/live-query.mjs` passed: the browser connected, queried `release_ready`, and showed “Follows from memory” and “Proof verified” without the development-fixture banner. That browser check used `apps/web/e2e/harness.py`, an in-memory snapshot behind the published FastAPI routes, because Docker Hub timed out pulling FalkorDB and a direct connection to the hosted database timed out from this machine. It is not a FalkorDB persistence test.
 - Outcome / blockers: Live memory, history, certificate query, and download are wired. Hosted FalkorDB end-to-end from this machine remains blocked by a connection timeout. No credentials were committed.
 - Handoff: Run the API with the ignored `.env` / `.env.cloud` settings Saqlain already uses, then open the web app without `source=development`. Reader tokens cannot activate memory. Operator tokens can try a revision write; the service still decides.
-- Publication: pending the push after this commit.
+- Publication: feature commit `5671884` is on `origin/main`. Revalidated web checks earlier on `91d2abd` (typecheck, 8 tests, build). See publication correction under M-20261017-04 branch log commit `a54cd53` for the pending-text cleanup.
 
 ## M-20261017-04
 
-- Updated: 2026-10-17T17:56:00+05:30
+- Updated: 2026-10-17T18:20:00+05:30
 - Human / agent: Mahavir / Grok 4.7
 - Status: in-progress
-- Branch / scope: `codex/mahavir/m4-agents`, from current `origin/main`. Planned files: `agents/`, `evaluation/`, `tests/test_agent_sessions.py`, `tests/test_evaluation.py`, this log, and the master index. Saqlain's API, store, solver, and `pyproject.toml` stay untouched while S-20261017-15 is in progress.
-- Objective: deterministic writer and reader clients against the published memory API, with an independent decision check, plus a small acceptance evaluation and scripted-replay baseline. Live model calls stay disabled unless credentials exist.
-- Validation: pending.
+- Branch / scope: `codex/mahavir/m4-agents`, fast-forwarded through Saqlain commits through S-20261017-18 (`40a446b`). Files: `agents/`, `evaluation/`, `tests/test_agent_sessions.py`, this log, and the master index. Did not edit `src/memopops/`, `pyproject.toml`, or `apps/web/`.
+- Objective: deterministic writer and reader clients against the published memory API, recording reader decisions through Saqlain's `POST /decisions` endpoint, plus a small acceptance evaluation and scripted-replay baselines. Live model calls stay disabled unless credentials exist.
+- Actions and decisions: merged latest `origin/main` before work to avoid backend conflicts. Reader `record_decision` maps ship/hold to `PROCEED`/`BLOCK`; abstain stays journal-only. Operator corrections use trusted fixture revisions outside the writer tool allowlist.
+- Validation: `uv run --locked pytest -q` (136 passed, including 3 new agent/acceptance tests). `uv run --locked python -m evaluation.run --suite acceptance --output /tmp/memopops-acceptance` not recorded here; pytest exercises the same acceptance path. No FalkorDB or live model run.
+- Handoff: wire UI to `GET /proposals` and decision history when ready; optional live model adapter remains behind env credentials.
+- Publication: four milestone commits on `codex/mahavir/m4-agents`; push to `origin/main` pending authenticated `git push`.
