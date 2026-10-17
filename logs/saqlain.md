@@ -50,3 +50,16 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Handoff: Mahavir should fetch current origin/main before starting and follow the updated direct-push prompts. Historical PR references in older log entries remain audit history, not active instructions.
 
 - Verified publication: direct push 2c7aa8f to main succeeded; fetch plus merge-base confirmed inclusion. The full implementation plan is now on main. GitHub reports PR #1 closed/merged automatically after direct publication. This resolves the earlier pending-review publication state for S-20261017-02. Document links and whitespace checks passed.
+
+## S-20261017-04
+
+- Updated: 2026-10-17T16:05:00+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Branch / scope: `codex/saqlain/logic-core`; root Python package and lock, bounded formula parser and HTTP JSON depth guard, Z3 core and bounded worker queue, verified FalkorDB snapshot reader, authenticated revision-bound solver query API, local Compose/Docker setup, synthetic seeder, tests, collaboration policy and docs. No Mahavir-owned app files.
+- Objective: deliver a runnable first backend slice with strict input limits, canonical hashes, complete-snapshot query classification, total witnesses, integrity verification and an honest solver-only API.
+- Environment: repo `G:\mempops`, origin `Mvdodiya001/memopops`; branch started clean from fetched `origin/main`. Installed Python 3.12.13 via uv. Docker CLI exists but its Linux engine pipe is unavailable; `gh` is not installed. Proxy endpoint is 172.31.2.4:8080. Direct FalkorDB access times out; proxy CONNECT to the hosted database returns 403. No hosted query has run.
+- Decisions: follow the user's latest request to publish through PRs; keep work on `codex/saqlain/logic-core`. Local secrets stay in ignored `.env`/`.env.cloud`; no credential values are logged or staged. This milestone does not claim mutations, independent proof certificates, process-pool solver isolation, or live database validation.
+- Validation: latest `uv run --frozen --no-sync pytest -q` (32 passed); `uv run --frozen --no-sync python -m compileall -q src tests scripts`; `docker compose config --quiet`; `uv build --wheel --sdist --out-dir .artifacts` (wheel and sdist built; output removed and ignored); `git diff --check`. Docker image startup and hosted FalkorDB integration remain blocked by unavailable engine/proxy policy.
+- Handoff: next S2/S3 work is guarded immutable revision mutation, then live FalkorDB verification when network/runtime permits. API currently serves only solver-mode queries against an existing seeded revision; certificates and writes are not implemented.
+- PR: [#2](https://github.com/Mvdodiya001/memopops/pull/2), branch pushed at c9295fc and updated with follow-up commits; do not merge without authorization.
