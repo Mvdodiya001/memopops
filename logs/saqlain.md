@@ -126,5 +126,17 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Objective: close high-value deterministic fault/oracle gaps from the S5 verification matrix and measure persistence behavior that can be tested without Docker.
 - Decisions: run an independent seeded truth-table comparison with 1,000 small solver cases, test head advancement during query and missing-database failure behavior, then verify query result/certificate replay across separate API lifespans on hosted FalkorDB. Docker-based container restart remains blocked if the engine is unavailable.
 - Validation: `uv run --frozen --no-sync pytest -q` (122 passed), including 1,000 deterministic seeded solver-vs-truth-table cases; direct independent checker tests (40 passed); compileall, Compose config and diff checks passed. API fault tests confirm database unavailability returns 503 without fallback and a head advance during solve marks the response HISTORICAL. Hosted FalkorDB check closed the first API lifespan, started a fresh store/app, replayed the same idempotency request with the same query ID, reloaded the VERIFIED result, and exported its 23-clause certificate. Docker engine check failed because the Docker Desktop Linux-engine named pipe is absent; an actual local container restart remains unverified.
-- Handoff: remaining release work includes exposing certificate download and impact pages in the live UI, UI/API auth wiring, full correction walkthrough at r2, Docker restart on a host with its engine, and final video/submission rehearsal.
+- Handoff: backend verification is complete; frontend integration, UI/API auth wiring, full correction walkthrough at r2, Docker restart on a host with its engine, and final video/submission rehearsal remain.
 - Publication: staged-diff review, commit, origin/main integration and direct push pending. No PR will be created.
+
+## S-20261017-10
+
+- Updated: 2026-10-17T17:33:29+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; `src/memopops/api.py`, `tests/test_api.py`, and Saqlain/master logs. No frontend files changed.
+- Objective: implement the authenticated GET /workspaces and GET /workspaces/{workspace_id} contracts needed by the live workspace gate and detail screen.
+- Decisions: derive the sole discoverable workspace from the authenticated principal, never enumerate other tenant graphs; return 404 for a different workspace ID; use the current persisted head and principal role; expose memory write capability only to operator credentials. The seed has no display-label field, so label is the workspace ID until a label is added to the schema.
+- Validation: `uv run --frozen --no-sync pytest -q` (124 passed); `git diff --check` passed. Tests cover authenticated listing/details, role capability, workspace isolation and missing bearer credentials. Frontend integration cannot yet succeed until its API client supplies an authorized bearer token.
+- Handoff: Mahavir can integrate `listWorkspaces` and `getWorkspace` against these exact routes. Remaining UI work includes bearer-token session wiring, proposal review endpoint/UI, certificate download, impact display, and the end-to-end correction walkthrough. Reproduce backend checks with `uv run --frozen --no-sync pytest -q`.
+- Publication: commit, origin/main integration, direct push and remote verification pending; no PR.

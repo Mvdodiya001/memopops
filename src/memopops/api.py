@@ -248,6 +248,40 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail="Memory database is unavailable") from exc
         return {"status": "ready"}
 
+    @app.get("/api/v1/workspaces")
+    def list_workspaces(principal: dict[str, str] = Depends(authenticate)) -> dict[str, Any]:
+        """Return only the workspace granted by the authenticated principal."""
+        workspace_id = principal["workspace_id"]
+        try:
+            head = memory_store.current_head(workspace_id)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Workspace is unavailable") from exc
+        if head is None:
+            return {"workspaces": []}
+        return {"workspaces": [{"workspace_id": workspace_id, "label": workspace_id}]}
+
+    @app.get("/api/v1/workspaces/{workspace_id}")
+    def read_workspace(
+        workspace_id: str,
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            head = memory_store.current_head(workspace_id)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Workspace is unavailable") from exc
+        if head is None:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+        role = principal["role"]
+        return {
+            "workspace_id": workspace_id,
+            "label": workspace_id,
+            "head_revision_id": head,
+            "role": role,
+            "capabilities": {"can_write_memory": role == "operator"},
+            "semantics_version": SEMANTICS_VERSION,
+        }
+
     @app.get("/api/v1/workspaces/{workspace_id}/memory")
     def read_memory(
         workspace_id: str,

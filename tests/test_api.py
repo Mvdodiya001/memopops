@@ -210,6 +210,36 @@ def request_body(query, key="query-1"):
     }
 
 
+def test_workspace_discovery_is_authenticated_and_scoped_to_principal(client):
+    listed = client.get(
+        "/api/v1/workspaces", headers={"Authorization": "Bearer reader-token"}
+    )
+    workspace = client.get(
+        "/api/v1/workspaces/demo", headers={"Authorization": "Bearer reader-token"}
+    )
+    hidden = client.get(
+        "/api/v1/workspaces/other", headers={"Authorization": "Bearer reader-token"}
+    )
+
+    assert listed.status_code == 200
+    assert listed.json() == {"workspaces": [{"workspace_id": "demo", "label": "demo"}]}
+    assert workspace.status_code == 200
+    assert workspace.json() == {
+        "workspace_id": "demo",
+        "label": "demo",
+        "head_revision_id": "rev_1",
+        "role": "reader",
+        "capabilities": {"can_write_memory": False},
+        "semantics_version": "boolean-v1",
+    }
+    assert hidden.status_code == 404
+
+
+def test_workspace_discovery_requires_bearer_authentication(client):
+    assert client.get("/api/v1/workspaces").status_code == 401
+    assert client.get("/api/v1/workspaces/demo").status_code == 401
+
+
 def revision_body(key="revision-1"):
     return {
         "expected_revision": "rev_1",
