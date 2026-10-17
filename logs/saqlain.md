@@ -175,3 +175,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: `uv sync --locked` passed; local workflow-equivalent commands passed: `uv run --locked pytest -q` (126 passed), compileall, independent checker unittest (40 passed), and `uv build`. After fetching/merging Mahavir's UI integration, `npm test` (8 passed), typecheck and production build passed. A Chrome browser smoke connected to the explicitly synthetic `MemorySnapshotStore` harness and obtained a verified `release_ready` result; it did not exercise FalkorDB or claim persistence. No secrets, database service, or Docker engine were required. `actionlint`, Ruby, and a local YAML parser are not installed, so the workflow received a manual syntax review; the first hosted GitHub Actions run is still pending.
 - Handoff: actual hosted GitHub Actions run will provide the final CI execution evidence after push.
 - Publication: workflow commit `a146df2` was pushed and is included in merge commit `fbfebcc` on `origin/main`; the integrated web checks passed after merge. Fetch and ancestor verification succeeded. No PR was created.
+
+## S-20261017-14
+
+- Updated: 2026-10-17T17:52:42+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Branch / scope: `codex/saqlain/logic-core`; root README and Saqlain/master logs.
+- Objective and success criteria: give contributors an exact browser-smoke recipe that works while FalkorDB is offline and clearly states the harness is synthetic, in-memory, and non-persistent.
+- Actions and decisions: document only the command sequence actually exercised with the committed build and Chrome; do not conflate it with the hosted database restart gate.
+- Validation: the sequence already passed locally: deterministic API harness, Vite preview, and Chrome CDP E2E query returned a verified `release_ready` result.
+- Handoff: local smoke is repeatable; retain actual FalkorDB persistence and correction-flow rehearsal as separate release gates.
+- Publication: planned-work log commit pending; no PR.
