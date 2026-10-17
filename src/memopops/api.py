@@ -21,6 +21,7 @@ from memopops.solver import classify
 from memopops.store import (
     FalkorSnapshotStore,
     IdempotencyConflictError,
+    SnapshotIntegrityError,
     SnapshotNotFoundError,
 )
 
@@ -187,6 +188,10 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             snapshot = memory_store.load_snapshot(workspace_id, request.revision_id)
         except SnapshotNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Revision not found") from exc
+        except SnapshotIntegrityError as exc:
+            raise HTTPException(
+                status_code=500, detail="Stored memory failed integrity verification"
+            ) from exc
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Memory snapshot is unavailable") from exc
         load_ms = int((monotonic() - load_started) * 1_000)

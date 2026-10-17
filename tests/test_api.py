@@ -6,7 +6,13 @@ from httpx import ASGITransport, AsyncClient
 
 from memopops.api import RequestBodyLimitMiddleware, create_app
 from memopops.formula import formula_hash, parse_formula
-from memopops.store import AssertionRecord, IdempotencyConflictError, Snapshot, calculate_knowledge_hash
+from memopops.store import (
+    AssertionRecord,
+    IdempotencyConflictError,
+    Snapshot,
+    SnapshotIntegrityError,
+    calculate_knowledge_hash,
+)
 
 
 class FakeStore:
@@ -170,3 +176,18 @@ def test_request_json_nesting_is_bounded_before_parsing(client):
 
 def test_json_depth_scan_ignores_brackets_inside_strings():
     assert RequestBodyLimitMiddleware._exceeds_json_depth(b'{"text":"[[[[[[not nesting]]]]]]"}') is False
+
+
+def test_snapshot_integrity_failure_is_not_reported_as_database_unavailable(client):
+    client._app.state.memory_store.load_snapshot = lambda *_: (_ for _ in ()).throw(
+        SnapshotIntegrityError("private integrity detail")
+    )
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": "atom", "id": "p"}),
+        headers={"Authorization": "Bearer reader-token"},
+    )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Stored memory failed integrity verification"}
+    assert "private integrity detail" not in response.text
