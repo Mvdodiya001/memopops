@@ -1,39 +1,50 @@
 # Two-person workflow
 
+## Direct publication policy
+
+Saqlain and Mahavir have standing authorization to commit and push completed, validated work directly to main. No pull request or additional permission request is required. Both agents must read this policy from current origin/main before starting. Task branches/worktrees remain useful for isolation; they are not a PR requirement.
+
 ## Daily use
 
-1. Read AGENTS.md, project context, master log, and the relevant personal handoff.
-2. Use your own clone on your computer. Fetch origin, inspect status, and start a focused task branch from origin/main. For simultaneous sessions on one machine, use separate worktrees and branches.
-3. Claim the task in your personal log and publish the branch/draft PR. List files and shared interfaces, success criteria, and dependencies. Agree overlaps with the teammate; a claim is advisory, not a lock.
-4. Implement and verify a small change. Give each local service instance its own ports, temporary files, and test graph/tenant. Never share a writable demo database accidentally.
-5. Update your detailed task and append a brief master milestone. Review explicit staged paths, commit with task ID, push, and request the other person's review.
-6. Integrate current main and rerun affected checks before merging. Hand off blockers and next steps explicitly.
+1. Read AGENTS.md, project context, implementation plan, master log, and the relevant personal handoff.
+2. Use your own clone or worktree. Fetch origin, inspect status, and start a focused personal task branch from origin/main. Never run concurrent writers in one checkout.
+3. Record task ID, file/interface scope, success criteria and dependencies in your personal log. Publish a small log-only commit or task branch when needed to make the claim visible. A claim is advisory, not a lock; agree overlapping interface changes.
+4. Implement a focused milestone. Use separate ports, temporary paths and test graphs for concurrent environments. Review your diff and run relevant checks.
+5. Update your personal/master logs, stage only your own explicit paths, and commit with task ID.
+6. Fetch origin again and merge origin/main into your current branch. Resolve conflicts by understanding both changes. Rerun affected checks on the combined result before pushing HEAD to main.
+7. If the push is rejected because the other agent advanced main, repeat step 6 and retry normally. Never force-push, reset the teammate's commits, or discard one side of a conflict.
+8. Fetch and verify your published commit is an ancestor of origin/main. Record the outcome and next handoff. Exact HEAD equality is unnecessary if the teammate pushed afterward.
 
-Example PowerShell commands, run from your own clean checkout; replace the task name:
+## Command pattern
+
+Run from your own checkout. Replace the task name and paths. Check each command succeeded before continuing.
 
 ```powershell
 git fetch origin
-git switch -c codex/saqlain/memory-contract origin/main
-# Mahavir uses codex/mahavir/<task> in his own clone.
-# If adding a second simultaneous session on the same computer:
-git worktree add -b codex/saqlain/logic-tests ../mempops-logic-tests origin/main
+git switch -c codex/saqlain/task-name origin/main
+# Implement, test, review, and update logs.
+git add -- path/to/your/file logs/saqlain.md logs/MASTER.md
+git commit -m 'feat: describe completed milestone (task ID)'
+git fetch origin
+git merge --no-edit origin/main
+# Resolve any conflicts and rerun affected checks BEFORE the push.
+git push origin HEAD:main
+git fetch origin
+git merge-base --is-ancestor HEAD origin/main
+# Exit code 0 confirms this commit is included in remote main.
 ```
 
-Do not run these examples blindly if branches/paths already exist. A worktree is optional when each person already has a separate clone. Never share one checkout between agents.
+Mahavir uses codex/mahavir/task-name and logs/mahavir.md. Commands are a pattern, not a script to run with placeholder paths. Worktrees are optional on different computers. Do not publish an unfinished merge or failed checks merely to complete the sequence. If semantic conflicts need the other person's decision, document the precise overlap and continue independent work.
 
-## Reviews and shared contracts
+## Contracts and quality
 
-Agree assertion identifiers, formula encoding, query results, revision handling, and evidence fields before parallel implementation. A proposed change to a shared contract should include its consumer impact. One author implements; the other checks logic-sensitive changes and migrations. Reuse a small deterministic demo fixture for integration.
+Agree assertion identifiers, formula encoding, result enums, revisions and evidence fields before parallel implementation. Follow the plan's one-owner-per-shared-file assignments. Self-review and required tests are mandatory; peer review can happen asynchronously without a PR or publication gate. Do not wait for an unnecessary approval after the authorized task and checks are complete.
 
-Use a PR per task. Squash merging is a reasonable default; no merge policy is configured by this file. Recommended GitHub settings when the maintainers configure CI: require PR review, passing relevant checks, and prevent force pushes to main. Do not require nonexistent checks. During an explicitly authorized urgent direct push, record the exception and validation.
+Keep main runnable once code exists. Do not introduce a required-PR protection policy. Existing repository protections still apply; report a blocked push without bypassing them. Revert commits are the normal way to undo published changes.
 
 ## Logs
 
-MASTER.md is a concise human index, not a synchronized task scheduler. saqlain.md and mahavir.md hold detailed task records, not hidden chain-of-thought. Each milestone links its task heading. Keep entries about meaningful work and failures. Do not log private prompts, raw conversations, credentials, or private infrastructure addresses.
-
-Concurrent master-log conflicts: preserve both task entries, order them by timestamp, and check links after resolution. If log contention becomes frequent, propose generated summaries from per-person entries; do not add automation before it is needed.
-
-Task template for personal logs:
+MASTER.md is a concise milestone index. saqlain.md and mahavir.md contain task-level explanations. Each person edits their own log; never invent the other's work. Preserve both master entries during an append conflict, ordered by timestamp, and validate their links.
 
 ```markdown
 ## S-YYYYMMDD-NN
@@ -46,11 +57,7 @@ Task template for personal logs:
 - Validation: exact commands and observed results; skipped checks and why
 - Outcome / blockers: ...
 - Handoff: remaining work, affected interfaces, reproduction steps
-- PR / commit reference: task ID in commit message; add PR link when available
+- Publication: commit/task reference; verified inclusion in origin/main
 ```
 
-Use M-prefixed IDs in Mahavir's log. Correct past mistakes with explicit notes. Do not mark tasks completed until required work and verification are done; specify push or merge status separately.
-
-## Lightweight safeguards
-
-Keep task-specific plans in logs or PRs, durable decisions in docs, and broadly applicable instructions in AGENTS.md. Keep one lockfile per selected package manager and avoid unrelated dependency upgrades. Before submission, both humans should understand the demo, limits of its proof claims, local startup, and evidence of passing scenarios. Add CI once runnable code exists; these initial Markdown rules are guidance, not automated enforcement.
+Use M-prefixed IDs for Mahavir. Do not mark a task completed if required implementation/checks remain. Code completion and successful push are separate observed facts. Correct historical errors explicitly. Never log credentials, private prompts or hidden reasoning.

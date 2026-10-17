@@ -51,16 +51,16 @@ S1/S2 are separate tasks in Saqlain's lane, not an instruction to run two writer
 3. Validate Python solver install in the target container. Verify SAT/UNSAT/unknown handling, context isolation and worker spawn. Choose/pin versions in the lockfile. Record tested image digest and runtime versions.
 4. Create shared models and fixtures for all five logical states, conflict, revision race, pending suggestion, stale result and certificate error. Fixtures must be labeled development-only and have computed hashes where the schema requires hashes.
 5. Define package boundaries, health endpoints, Compose network/volume, .env.example with placeholders, and the checker interface. Add one real DB integration smoke test.
-6. Generate OpenAPI; reserve contract changes to Saqlain until G0 merges. Publish a small PR. State any unresolved database/library issue explicitly.
+6. Generate OpenAPI; reserve contract changes to Saqlain until G0 is published to main. Self-review, validate and push directly to main. State any unresolved database/library issue explicitly.
 
 **Mahavir M0, in parallel**
 
-1. Read contracts and ask focused questions as PR findings when necessary: enum values, proof-state distinction, evidence fields, mutation outcomes, freshness and pagination.
+1. Read contracts and ask focused questions as concise handoff findings when necessary: enum values, proof-state distinction, evidence fields, mutation outcomes, freshness and pagination.
 2. Create React/TS/Vite shell, spacing/type/color tokens, navigation and API client boundary in a separate branch.
 3. Render exactly the proposed fixture shapes; do not invent a second response model or optimistic accepted-memory behavior.
 4. Review the demo story and model credential availability with Saqlain. Pick one provider adapter compatible with an available account; no multi-provider framework.
 
-**Gate:** both can start from the same merged bootstrap commit and same fixtures. If the database commit spike fails, stop higher-level write work and fix the protocol. UI and pure checker work can continue.
+**Gate:** both can start from the same published bootstrap commit and same fixtures. If the database commit spike fails, stop higher-level write work and fix the protocol. UI and pure checker work can continue.
 
 ## 4. Saqlain implementation lane
 
@@ -102,7 +102,7 @@ S1/S2 are separate tasks in Saqlain's lane, not an instruction to run two writer
 - Run concurrency/fault/isolation suites with real FalkorDB. Fix correctness failures before optimization.
 - Measure snapshot load, solver, certificate, check and end-to-end time separately. Inspect indexes/query plans and eliminate N+1 reads if measurable.
 - Test production Compose startup, readiness, volume restart and safe seed behavior. Keep secrets out of output/logs.
-- Integrate Mahavir's completed tasks through PRs; update README setup and limitations using verified commands.
+- Fetch Mahavir's completed work from main and integrate it; update README setup and limitations using verified commands.
 
 ## 5. Mahavir implementation lane
 
@@ -148,10 +148,10 @@ S1/S2 are separate tasks in Saqlain's lane, not an instruction to run two writer
 
 ## 6. Working agreements at integration
 
-- One owner per schema/lockfile. Log claim + branch + file scope before edits; publish branch/PR so the other person can see it.
-- Prefer PRs under roughly 400 changed source lines where coherent; do not split a necessary atomic change just to satisfy a line count.
-- Every PR includes task ID, behavior, contract changes, exact checks and known gaps. Cross-review correctness-sensitive changes before main.
-- At G1/G2/G3, integrate once tests pass. Each person fetches main before the next task. Neither agent rebases or resets the other's branch.
+- One owner per schema/lockfile. Log claim + branch + file scope before edits; publish a small log-only commit or task branch so the other person can see it.
+- Prefer small, coherent completed commits; do not split a necessary atomic change merely to satisfy a line count.
+- Every milestone records task ID, behavior, contract changes, exact checks and known gaps. Self-review before publication; optional peer review is asynchronous and requires no PR.
+- At G1/G2/G3, commit validated work, fetch/merge origin/main, rerun affected checks and push origin HEAD:main. On a non-fast-forward rejection, repeat integration/checks and retry without force. Fetch again to verify commit inclusion. Neither agent rebases or resets the other's branch.
 - Add one master milestone per integrated task and details to the owner's log. Preserve both append entries if logs conflict.
 - If blocked for 20 minutes, write the concrete failing command/error and switch to independent work. Do not invent an interface to bypass the blocker. Saqlain resolves shared contracts; Mahavir resolves visual decisions within the stated design.
 - Proposed path/package changes require an ownership update here. A plan is not a mutex; tell the teammate before editing their files.
@@ -178,10 +178,10 @@ Repository tests need configuration for a dedicated test graph prefix. Never see
 
 **For Saqlain's implementation agent:**
 
-> You work for Saqlain. Read AGENTS.md and docs/IMPLEMENTATION_PLAN.md, then its architecture/contracts/runbook. Implement S0 through the next agreed gate in your own task branch. Own services/memory, graph/Cypher, solver, revisions, Python dependencies and infrastructure. Preserve Mahavir's reserved files. Start with the database guarded-write spike and contract fixtures. Do not claim certificates are verified until proofcheck accepts them. Record exact checks and handoffs in logs/saqlain.md. Use PRs and integrate at gates; do not start the entire roadmap blindly if a foundational test fails.
+> You work for Saqlain. Read AGENTS.md and docs/IMPLEMENTATION_PLAN.md, then its architecture/contracts/runbook. Implement S0 through the next agreed gate in your own task branch. Own services/memory, graph/Cypher, solver, revisions, Python dependencies and infrastructure. Preserve Mahavir's reserved files. Start with the database guarded-write spike and contract fixtures. Do not claim certificates are verified until proofcheck accepts them. Record exact checks and handoffs in logs/saqlain.md. Commit and push validated milestones directly to main using docs/COLLABORATION.md, without PRs or additional permission requests; do not start the entire roadmap blindly if a foundational test fails.
 
 **For Mahavir's implementation agent:**
 
-> You work for Mahavir. Read AGENTS.md and docs/IMPLEMENTATION_PLAN.md, then contracts/interface/runbook. Start M0/M1 against the frozen fixture contract, then M2 independent checker. Own apps/web, packages/proofcheck, agents, evaluation and E2E tests. Coordinate any Python dependency or contract change with Saqlain. The checker must not import the generator or Z3. Use separate checkout/branch, write logs/mahavir.md only for observed work, and publish small PRs. Connect the UI to real endpoints as Saqlain supplies them; never hide API failure with fixture fallback.
+> You work for Mahavir. Read AGENTS.md and docs/IMPLEMENTATION_PLAN.md, then contracts/interface/runbook. Start M0/M1 against the frozen fixture contract, then M2 independent checker. Own apps/web, packages/proofcheck, agents, evaluation and E2E tests. Coordinate any Python dependency or contract change with Saqlain. The checker must not import the generator or Z3. Use separate checkout/branch, write logs/mahavir.md only for observed work, and commit/push completed validated milestones directly to main without PRs or additional permission requests. Connect the UI to real endpoints as Saqlain supplies them; never hide API failure with fixture fallback.
 
 These prompts are handoff artifacts. No message has been sent to another chat and no extra agent has been launched by this planning task.

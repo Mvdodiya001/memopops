@@ -84,7 +84,7 @@ Estimated active work is 14–18 hours per person including integration. If G2 r
 
 Critical path: contract → correct solver/revision protocol → real API → correction flow → checked proof and handoff → failure tests → reproducible demo. UI scaffolding, checker, fixtures and submission outline proceed independently.
 
-G0 has one owner per shared file. Both implementation branches start from its merged commit. Contract changes need an example and matching backend/frontend updates. Merge small units at gates. Implementation commands listed in this package are targets to create and verify, not claims of tests already run.
+G0 has one owner per shared file. Both implementation branches start from its published main commit. Contract changes need an example and matching backend/frontend updates. Publish small validated milestones directly to main at gates, following the fetch/integrate/recheck/retry protocol in docs/COLLABORATION.md; no PR is required. Implementation commands listed in this package are targets to create and verify, not claims of tests already run.
 
 ## Initial bounds
 

@@ -36,3 +36,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Outcome: planning complete and ready for teammate review. No database/runtime/browser/benchmark results are claimed. Exact dependency compatibility and commit-query behavior remain explicit G0 tasks.
 - Handoff: both humans review/freeze G0 contracts; Saqlain starts S0/S1/S2 and Mahavir starts M0/M1/M2 in separate branches/checkouts. Copyable agent prompts are in the runbook. No extra agent launched and no message sent to another chat.
 - Publication: pushed planning commit f5585a4 and verified remote HEAD matched. Opened [PR #1](https://github.com/Mvdodiya001/memopops/pull/1) for review. A follow-up removes session-specific identity from shared AGENTS.md so Mahavir's agent cannot inherit Saqlain identity from repository text. User's standing instruction authorizes this publication; main remains pending review.
+
+## S-20261017-03
+
+- Updated: 2026-10-17T15:41:26+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Objective: honor the user's explicit direct-push policy for both agents; no PR requirement.
+- Changes: AGENTS.md, collaboration guide, execution plan/prompts, verification guidance and historical research clarification; removed the unused PR template.
+- Policy: isolated worktrees/task branches, self-review, commit, fetch/merge latest origin/main, rerun affected checks, normal push HEAD:main. Retry after races without force and verify commit inclusion.
+- Publication: publish the existing researched plan and these rules directly to main; retire PR #1 after main contains its commits. No application implementation is started by this task.
+- Validation: document consistency, local links and whitespace checks before commit; remote publication verified afterward.
+- Handoff: Mahavir should fetch current origin/main before starting and follow the updated direct-push prompts. Historical PR references in older log entries remain audit history, not active instructions.

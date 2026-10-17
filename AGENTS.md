@@ -8,7 +8,7 @@ These rules apply to Saqlain, Mahavir, and their coding agents. Human instructio
 - Inspect `git status --short --branch`, remotes, and recent history. Preserve unrelated edits and never stage another person's work.
 - Fetch origin when online. Use one task branch per person: `codex/saqlain/<task>` or `codex/mahavir/<task>`, starting from current `origin/main`.
 - Each concurrent agent needs a separate checkout or worktree. Never run two writers in one working directory. People on different computers use their own clones. Worktrees share Git objects but do not merge changes automatically.
-- Record the task ID, branch, intended files/interfaces, success criteria, and status in your personal log before substantial work. Publish a small draft PR or branch so the teammate can see the claim; a local log is not a distributed lock.
+- Record the task ID, branch, intended files/interfaces, success criteria, and status in your personal log before substantial work. Publish a small log-only commit to main or a task branch when needed so the teammate can see the claim; a local log is not a distributed lock.
 - If ownership overlaps, coordinate before changing shared interfaces, schema, dependencies, lockfiles, or build configuration. Agree input/output contracts first. Use the temporary task ownership in docs/plan/PARALLEL_EXECUTION.md when implementing; no permanent module ownership is assigned.
 
 ## Implement and verify
@@ -23,10 +23,10 @@ These rules apply to Saqlain, Mahavir, and their coding agents. Human instructio
 ## Integrate
 
 - Commit only explicit task paths after reviewing the staged diff. Use short descriptive subjects such as `docs: establish team workflow` or `fix: reject stale proof revisions`.
-- Push the task branch and open a PR by default. The other person reviews changes to shared contracts and correctness-sensitive code. An explicitly authorized direct push is allowed; record that exception. This initial documentation bootstrap is authorized for direct push.
-- Before merge, fetch again, incorporate current main, resolve conflicts by understanding both changes, and rerun affected checks. Do not automatically choose ours/theirs. Prefer small, frequent integrations.
+- Both Saqlain and Mahavir agents are authorized to commit and push completed, validated work directly to main without a PR or another permission request. Self-review every staged change; peer review is optional and does not gate publication. Keep temporary task branches/worktrees for isolation.
+- Before each main push, commit your own work, fetch origin, merge origin/main into your current task branch, resolve conflicts by preserving both intended changes, and rerun affected checks on the combined result. Push with git push origin HEAD:main. If rejected because main advanced, repeat fetch/integration/checks and retry; never force-push or automatically choose ours/theirs. Prefer small completed milestones.
 - Do not force-push shared branches, reset another person's work, delete branches/worktrees with unmerged work, or bypass protection. Use revert commits to undo shared changes. Do not change repository access/settings without a specific task.
-- Main should stay runnable once implementation exists. Branch protection and CI are recommendations until actually configured; Markdown does not enforce them.
+- Main should stay runnable once implementation exists. Run relevant checks before pushing; configured CI provides additional feedback. Do not require PR-based protection under this workflow. If existing protection blocks a push, report it rather than bypassing or changing settings without authorization. Verify the pushed commit is present in origin/main after fetching; another agent may already have added a later commit.
 
 ## Logging and handoff
 
@@ -35,5 +35,5 @@ These rules apply to Saqlain, Mahavir, and their coding agents. Human instructio
 - Each person edits their own log. Never fabricate the other's activity. Update your existing milestone entry instead of creating noisy duplicates; keep past substantive outcomes intact and append corrections explicitly.
 - Add master entries when work is ready for review/integration, linking the detailed task. If simultaneous appends conflict, retain both complete entries ordered by timestamp; do not overwrite the file or discard a teammate's entry. Integration owner handles the reconciliation.
 - Use states planned, in-progress, blocked, ready-for-review, completed, or abandoned. Code completion, tests, commit, push, and merge are separate facts: report only observed results.
-- A handoff states what works, remaining work, exact reproduction/check commands, and any interface changes. Use the task ID in commit/PR text; Git history supplies commit hashes so logs need no self-referential commit hash.
+- A handoff states what works, remaining work, exact reproduction/check commands, and any interface changes. Use the task ID in commit messages; Git history supplies commit hashes so logs need no self-referential commit hash.
 - Record one reusable rule after a recurring failure; keep this file short and move background detail to docs. No extra agents or unattended tasks are started merely by these rules.

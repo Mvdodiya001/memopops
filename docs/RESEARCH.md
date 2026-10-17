@@ -26,3 +26,8 @@ Direct X retrieval failed during this research. Indexed [thread mirror](https://
 ## Decisions from the synthesis
 
 Separate checkouts, named task branches, visible task claims, agreed interfaces, small PRs, review of correctness-sensitive work, observed test evidence, and precise handoffs reduce coordination risk. A three-file log is the team's chosen convention, not an industry standard. Its shared master file can conflict, so entries use stable IDs and an explicit keep-both resolution policy. Avoid long instruction files, transcript dumps, premature automation, and claims that prose rules enforce permissions or CI.
+
+
+## Workflow update
+
+The user subsequently chose direct publication to main by both agents, without PRs. Current operational rules are in AGENTS.md and docs/COLLABORATION.md; earlier research recommendations about PRs are historical background. Isolation, self-review, verification and safe integration still apply.

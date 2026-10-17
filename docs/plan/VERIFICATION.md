@@ -85,7 +85,7 @@ Measurement protocol: record commit, OS, CPU/RAM, image digest, solver/library v
 
 Saqlain establishes backend lint/core/property/DB integration workflow; Mahavir establishes web typecheck/build/E2E and checker tests. Trigger real integration tests against the pinned database, not mocks only. Exclude secret-dependent live model tests from default CI; deterministic tool-schema and replay tests still run.
 
-CI checks should enforce behavior, not the presence of a string in code. Set branch protections only after actual checks exist and maintainers choose the settings. Do not claim protection from a Markdown rule.
+CI checks should enforce behavior, not the presence of a string in code. Run relevant checks locally before direct pushes; do not introduce required-PR gates. Existing protections still apply. Do not claim enforcement from a Markdown rule.
 
 Release gate: all P0 cases pass; no untriaged correctness or data-isolation failure; no misleading verified badge; normal restart works; fresh clone setup succeeds; documented limitations agree with the UI. A proof failure, accepted inconsistency, stale-current leak or cross-workspace leak is a stop-ship defect. A missing optional theme or fancy graph is not.
 
