@@ -40,3 +40,12 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 - Outcome / blockers: Live memory, history, certificate query, and download are wired. Hosted FalkorDB end-to-end from this machine remains blocked by a connection timeout. No credentials were committed.
 - Handoff: Run the API with the ignored `.env` / `.env.cloud` settings Saqlain already uses, then open the web app without `source=development`. Reader tokens cannot activate memory. Operator tokens can try a revision write; the service still decides.
 - Publication: pending the push after this commit.
+
+## M-20261017-04
+
+- Updated: 2026-10-17T17:56:00+05:30
+- Human / agent: Mahavir / Grok 4.7
+- Status: in-progress
+- Branch / scope: `codex/mahavir/m4-agents`, from current `origin/main`. Planned files: `agents/`, `evaluation/`, `tests/test_agent_sessions.py`, `tests/test_evaluation.py`, this log, and the master index. Saqlain's API, store, solver, and `pyproject.toml` stay untouched while S-20261017-15 is in progress.
+- Objective: deterministic writer and reader clients against the published memory API, with an independent decision check, plus a small acceptance evaluation and scripted-replay baseline. Live model calls stay disabled unless credentials exist.
+- Validation: pending.
