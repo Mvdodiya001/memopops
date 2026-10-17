@@ -107,7 +107,7 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-08
 
-- Updated: 2026-10-17T17:22:00+05:30
+- Updated: 2026-10-17T17:24:00+05:30
 - Human / agent: Saqlain / Codex
 - Status: completed
 - Branch / scope: `codex/saqlain/logic-core`; `src/memopops/store.py`, query persistence, API impact route, tests, README and Saqlain/master logs. No accepted memory or revision head changes planned.
@@ -115,4 +115,4 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Decisions: persist explicit `USES_PREMISE` edges with each immutable QueryResult; compute distinct impacted query count before applying a bounded ID cursor/page; require workspace identity in every impact query and keep old query statuses historical.
 - Validation: `uv run --frozen --no-sync pytest -q` (119 passed); all 40 independent checker tests included; frontend `npm test -- --run` (7 passed); compileall, Compose config and diff checks passed. Hosted FalkorDB smoke created a fresh certified query, atomically linked its 3 checked support assertions, then created and deleted a temporary non-head revision that removed `as_ready_rule`; the workspace-scoped impact API found exactly that query, returned its historical status/support, and counted one result. Temporary revision was detached/deleted; workspace head and accepted memory were not changed.
 - Handoff: expose impact summaries and certificate download in the revision UI after backend routes are available; then proceed to S5 fault and performance checks.
-- Publication: staged-diff review, commit, origin/main integration and direct push pending. No PR will be created.
+- Publication: commit `3c8f238407da3173181e0288ef3b79f9b501dbdc` pushed directly to `origin/main`; subsequent fetch and `git merge-base --is-ancestor` confirmed it. No PR was created.
