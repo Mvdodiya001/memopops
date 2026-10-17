@@ -27,3 +27,16 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 - Outcome / blockers: Decisive demo vectors for revision 1 PROVED and revision 2 REFUTED pass with a trusted context. Certificate search and API export remain in Saqlain's generator milestone.
 - Handoff: Call `check_certificate` with a context loaded independently of the bundle. Run `PYTHONPATH=packages python -m proofcheck CERTIFICATE.json --expected-context MANIFEST.json`.
 - Publication: same push as the inspector milestone. Fetch after the push confirmed the commit is contained in origin/main.
+
+## M-20261017-03
+
+- Updated: 2026-10-17T17:44:06+05:30
+- Human / agent: Mahavir / Grok 4.7
+- Status: completed
+- Branch / scope: `codex/mahavir/m3-live-ui`. Files: `apps/web/` only, plus this log and the master index. Saqlain's API, store, benchmark script, `pyproject.toml`, and checker sources were not edited. Fast-forwarded his commits through the solver benchmark before committing.
+- Objective and success criteria: Connect the inspector to the published endpoints. Keep fixture mode explicit. Do not treat a failed API call as fixture data.
+- Actions and decisions: Live mode asks for a bearer token kept in page memory, then calls `GET /workspaces` and `GET /workspaces/{id}` for the authorized workspace, head revision, and operator write capability. Memory uses `revision_id`. History reads `items`. Queries use `proof_mode=certificate`. A verified result can download `GET .../queries/{id}/certificate`. A 409 keeps the form and asks for review before another submit. The dev server proxies `/api` to the local API.
+- Validation: `npm --prefix apps/web run typecheck` passed. `npm --prefix apps/web test` passed 8 tests. `node apps/web/e2e/live-query.mjs` passed: the browser connected, queried `release_ready`, and showed “Follows from memory” and “Proof verified” without the development-fixture banner. That browser check used `apps/web/e2e/harness.py`, an in-memory snapshot behind the published FastAPI routes, because Docker Hub timed out pulling FalkorDB and a direct connection to the hosted database timed out from this machine. It is not a FalkorDB persistence test.
+- Outcome / blockers: Live memory, history, certificate query, and download are wired. Hosted FalkorDB end-to-end from this machine remains blocked by a connection timeout. No credentials were committed.
+- Handoff: Run the API with the ignored `.env` / `.env.cloud` settings Saqlain already uses, then open the web app without `source=development`. Reader tokens cannot activate memory. Operator tokens can try a revision write; the service still decides.
+- Publication: pending the push after this commit.

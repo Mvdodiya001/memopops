@@ -16,10 +16,16 @@ export default defineConfig({
   server: {
     host: "127.0.0.1",
     port: 5173,
+    proxy: {
+      "/api": process.env.MEMOPOPS_API_ORIGIN ?? "http://127.0.0.1:8010",
+    },
   },
   preview: {
     host: "127.0.0.1",
     port: 4173,
+    proxy: {
+      "/api": process.env.MEMOPOPS_API_ORIGIN ?? "http://127.0.0.1:8010",
+    },
   },
   test: {
     environment: "node",
