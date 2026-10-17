@@ -12,7 +12,7 @@ The Compose image currently uses the official server image's moving `latest` tag
 
 ## Python core
 
-Use the locked Python 3.12 environment with `uv sync --frozen --group dev`, then run `uv run pytest`. The core accepts the versioned JSON formula AST, rejects unregistered atoms and over-limit formulas, and classifies queries over the complete supplied snapshot. The current API supports solver-only query requests; independent certificate generation/checking and revision mutation are later milestones and are not represented as complete.
+Use the locked Python 3.12 environment with `uv sync --frozen --group dev`, then run `uv run pytest`. The core accepts the versioned JSON formula AST, rejects unregistered atoms and over-limit formulas, and classifies queries over the complete supplied snapshot. An offline revision planner now validates bounded add/replace/retract candidates, hashes evidence, and rejects inconsistent or indeterminate candidates. It does not write graph data; atomic revision publication remains a later milestone. The current API supports solver-only query requests, and independent certificate generation/checking is also pending.
 
 ## Start here
 
