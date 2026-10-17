@@ -66,6 +66,15 @@ class SnapshotReader(Protocol):
         idempotency_key: str,
         request_hash: str,
         result_payload: dict[str, Any],
+        uses_premise_ids: list[str],
+    ) -> dict[str, Any]: ...
+    def get_revision_impact(
+        self,
+        workspace_id: str,
+        revision_id: str,
+        *,
+        before_query_id: str | None = None,
+        limit: int = 50,
     ) -> dict[str, Any]: ...
     def get_revision_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
@@ -276,6 +285,27 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail="Revision history is unavailable") from exc
         next_cursor = items[-1]["sequence"] if len(items) == limit else None
         return {"items": items, "next_cursor": next_cursor}
+
+    @app.get("/api/v1/workspaces/{workspace_id}/impact")
+    def read_revision_impact(
+        workspace_id: str,
+        revision: str = Query(min_length=1, max_length=128),
+        before: str | None = Query(default=None, min_length=1, max_length=128),
+        limit: int = Query(default=50, ge=1, le=50),
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            return memory_store.get_revision_impact(
+                workspace_id,
+                revision,
+                before_query_id=before,
+                limit=limit,
+            )
+        except SnapshotNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Revision not found") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Revision impact is unavailable") from exc
 
     @app.get("/api/v1/workspaces/{workspace_id}/queries/{query_id}")
     def read_query_result(
@@ -663,6 +693,11 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         }
         if certificate is not None:
             result_payload["certificate"] = certificate
+        uses_premise_ids = (
+            support_assertion_ids
+            if proof_status == "VERIFIED"
+            else sorted(assertion.id for assertion in snapshot.assertions)
+        )
         try:
             persisted = memory_store.persist_query_result(
                 workspace_id,
@@ -670,6 +705,7 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
                 request.idempotency_key,
                 request_digest,
                 result_payload,
+                uses_premise_ids,
             )
             return {key: value for key, value in persisted.items() if key != "certificate"}
         except IdempotencyConflictError as exc:

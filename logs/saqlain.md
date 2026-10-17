@@ -104,3 +104,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: `uv run --frozen --no-sync pytest -q` (113 passed); checker unittest suite (40 passed); compileall, Docker Compose config, `uv build --offline`, `git diff --check`, and installed-package import passed. Authenticated query against existing workspace_demo/rev_001 on hosted FalkorDB returned PROVED + VERIFIED with support as_api_v2, as_ready_rule, as_tests_pass; workspace-authorized export returned 23 clauses. One query receipt/result was persisted by the normal API. Proxy configuration and environment variables were absent. Live query timings showed about 3 seconds for snapshot loading on this hosted endpoint; no performance claim is made.
 - Handoff: expose the new authenticated certificate endpoint in the live frontend, then implement dependency impact traversal and S5 fault/performance checks.
 - Publication: commit `1fb90557b645fff9f840eedb69c58a14fb1aae00` pushed directly to `origin/main`; subsequent fetch and `git merge-base --is-ancestor` confirmed it. No PR was created.
+
+## S-20261017-08
+
+- Updated: 2026-10-17T17:22:00+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; `src/memopops/store.py`, query persistence, API impact route, tests, README and Saqlain/master logs. No accepted memory or revision head changes planned.
+- Objective: identify query results from a revision's parent that used removed/replaced assertions, prioritizing checked proof support and conservatively depending on all active assertions for solver-only or budget-limited results.
+- Decisions: persist explicit `USES_PREMISE` edges with each immutable QueryResult; compute distinct impacted query count before applying a bounded ID cursor/page; require workspace identity in every impact query and keep old query statuses historical.
+- Validation: `uv run --frozen --no-sync pytest -q` (119 passed); all 40 independent checker tests included; frontend `npm test -- --run` (7 passed); compileall, Compose config and diff checks passed. Hosted FalkorDB smoke created a fresh certified query, atomically linked its 3 checked support assertions, then created and deleted a temporary non-head revision that removed `as_ready_rule`; the workspace-scoped impact API found exactly that query, returned its historical status/support, and counted one result. Temporary revision was detached/deleted; workspace head and accepted memory were not changed.
+- Handoff: expose impact summaries and certificate download in the revision UI after backend routes are available; then proceed to S5 fault and performance checks.
+- Publication: staged-diff review, commit, origin/main integration and direct push pending. No PR will be created.

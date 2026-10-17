@@ -310,8 +310,9 @@ class FalkorSnapshotStore:
         idempotency_key: str,
         request_hash: str,
         result_payload: dict[str, Any],
+        uses_premise_ids: list[str],
     ) -> dict[str, Any]:
-        """Atomically persist a query result and its retry receipt in one graph write."""
+        """Atomically persist a query result, its support edges, and retry receipt."""
         graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
         query_id = str(uuid4())
         result_payload = {**result_payload, "query_id": query_id}
@@ -320,11 +321,16 @@ class FalkorSnapshotStore:
         )
         created = graph.query(
             "MATCH (r:Revision {id: $revision_id}) "
+            "OPTIONAL MATCH (r)-[:INCLUDES]->(active:Assertion) "
+            "WITH r, collect(active) AS active_assertions "
+            "WITH r, [a IN active_assertions WHERE a IS NOT NULL AND a.id IN $uses_premise_ids] AS used_assertions "
             "OPTIONAL MATCH (prior:RequestReceipt {key: $key}) "
-            "WITH r, prior WHERE r IS NOT NULL AND prior IS NULL "
+            "WITH r, used_assertions, prior "
+            "WHERE r IS NOT NULL AND prior IS NULL AND size(used_assertions) = size($uses_premise_ids) "
             "CREATE (q:QueryResult {id: $query_id, workspace_id: $workspace_id, "
             "revision_id: $revision_id, request_hash: $request_hash, result_json: $result_json}) "
             "CREATE (q)-[:AT_REVISION]->(r) "
+            "FOREACH (a IN used_assertions | CREATE (q)-[:USES_PREMISE]->(a)) "
             "CREATE (receipt:RequestReceipt {key: $key, payload_hash: $request_hash, "
             "result_id: $query_id, result_json: $result_json}) "
             "CREATE (receipt)-[:REFERS_TO]->(q) "
@@ -336,6 +342,7 @@ class FalkorSnapshotStore:
                 "workspace_id": workspace_id,
                 "request_hash": request_hash,
                 "result_json": serialized,
+                "uses_premise_ids": uses_premise_ids,
             },
         ).result_set
         if created:
@@ -352,6 +359,95 @@ class FalkorSnapshotStore:
         if stored_hash != request_hash:
             raise IdempotencyConflictError(idempotency_key)
         return json.loads(stored_result)
+
+    def get_revision_impact(
+        self,
+        workspace_id: str,
+        revision_id: str,
+        *,
+        before_query_id: str | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """List parent-revision query results that used assertions removed by this revision."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        revision_rows = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) "
+            "MATCH (r:Revision {id: $revision_id}) "
+            "RETURN r.parent_revision_id AS parent_revision_id, "
+            "coalesce(r.removed_assertion_ids, []) AS changed_assertion_ids LIMIT 1",
+            {"workspace_id": workspace_id, "revision_id": revision_id},
+        ).result_set
+        if not revision_rows:
+            raise SnapshotNotFoundError(revision_id)
+        parent_revision_id, raw_changed_ids = revision_rows[0]
+        changed_ids = sorted(set(raw_changed_ids or []))
+        if parent_revision_id is None or not changed_ids:
+            return {
+                "workspace_id": workspace_id,
+                "revision_id": revision_id,
+                "parent_revision_id": parent_revision_id,
+                "changed_assertion_ids": changed_ids,
+                "total_count": 0,
+                "items": [],
+                "next_cursor": None,
+            }
+
+        params = {
+            "workspace_id": workspace_id,
+            "parent_revision_id": parent_revision_id,
+            "changed_assertion_ids": changed_ids,
+        }
+        count_rows = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) "
+            "MATCH (r:Revision {id: $parent_revision_id}) "
+            "MATCH (q:QueryResult {workspace_id: $workspace_id, revision_id: $parent_revision_id}) "
+            "MATCH (q)-[:USES_PREMISE]->(a:Assertion) "
+            "WHERE a.id IN $changed_assertion_ids "
+            "RETURN count(DISTINCT q) AS total_count",
+            params,
+        ).result_set
+        total_count = int(count_rows[0][0]) if count_rows else 0
+        item_rows = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) "
+            "MATCH (r:Revision {id: $parent_revision_id}) "
+            "MATCH (q:QueryResult {workspace_id: $workspace_id, revision_id: $parent_revision_id}) "
+            "MATCH (q)-[:USES_PREMISE]->(a:Assertion) "
+            "WHERE a.id IN $changed_assertion_ids "
+            "AND ($before_query_id IS NULL OR q.id > $before_query_id) "
+            "RETURN q.id AS query_id, q.result_json AS result_json, "
+            "collect(DISTINCT a.id) AS changed_ids "
+            "ORDER BY query_id LIMIT $limit",
+            {**params, "before_query_id": before_query_id, "limit": limit},
+        ).result_set
+        items = []
+        for query_id, result_json, affected_ids in item_rows:
+            payload = json.loads(result_json)
+            items.append(
+                {
+                    "query_id": query_id,
+                    "revision_id": parent_revision_id,
+                    "query_hash": payload.get("query_hash"),
+                    "result": payload.get("result"),
+                    "proof_status": payload.get("proof_status"),
+                    "dependency_basis": (
+                        "CHECKED_SUPPORT"
+                        if payload.get("proof_status") == "VERIFIED"
+                        else "FULL_SNAPSHOT"
+                    ),
+                    "support_assertion_ids": payload.get("support_assertion_ids", []),
+                    "changed_assertion_ids": sorted(affected_ids or []),
+                    "freshness": "HISTORICAL",
+                }
+            )
+        return {
+            "workspace_id": workspace_id,
+            "revision_id": revision_id,
+            "parent_revision_id": parent_revision_id,
+            "changed_assertion_ids": changed_ids,
+            "total_count": total_count,
+            "items": items,
+            "next_cursor": items[-1]["query_id"] if len(items) == limit else None,
+        }
 
     def load_snapshot(self, workspace_id: str, revision_id: str) -> Snapshot:
         graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))

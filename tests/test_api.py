@@ -34,6 +34,7 @@ class FakeStore:
         self.published = []
         self.quarantined = []
         self.ready = True
+        self.query_dependencies = {}
 
 
     def ping(self):
@@ -71,6 +72,23 @@ class FakeStore:
         if workspace_id != "demo":
             return []
         return [{"revision_id": "rev_1", "sequence": 1}]
+
+    def get_revision_impact(
+        self, workspace_id, revision_id, *, before_query_id=None, limit=50
+    ):
+        if workspace_id != "demo" or revision_id != "rev_1":
+            from memopops.store import SnapshotNotFoundError
+
+            raise SnapshotNotFoundError(revision_id)
+        return {
+            "workspace_id": workspace_id,
+            "revision_id": revision_id,
+            "parent_revision_id": None,
+            "changed_assertion_ids": [],
+            "total_count": 0,
+            "items": [],
+            "next_cursor": None,
+        }
 
     def current_head(self, workspace_id):
         return self.head
@@ -131,7 +149,9 @@ class FakeStore:
             raise IdempotencyConflictError(key)
         return result
 
-    def persist_query_result(self, workspace, revision, key, request_hash, payload):
+    def persist_query_result(
+        self, workspace, revision, key, request_hash, payload, uses_premise_ids
+    ):
         if key in self.saved:
             previous_hash, result = self.saved[key]
             if previous_hash != request_hash:
@@ -139,6 +159,7 @@ class FakeStore:
             return result
         result = {**payload, "query_id": "query_1"}
         self.saved[key] = (request_hash, result)
+        self.query_dependencies[key] = list(uses_premise_ids)
         return result
 
 
@@ -228,6 +249,24 @@ def test_memory_and_history_reads_are_workspace_scoped(client):
     assert client.get("/api/v1/workspaces/other/revisions", headers=headers).status_code == 404
 
 
+def test_revision_impact_is_authenticated_and_workspace_scoped(client):
+    headers = {"Authorization": "Bearer reader-token"}
+    response = client.get(
+        "/api/v1/workspaces/demo/impact?revision=rev_1&limit=10",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total_count"] == 0
+    assert client.get(
+        "/api/v1/workspaces/demo/impact?revision=rev_1"
+    ).status_code == 401
+    assert client.get(
+        "/api/v1/workspaces/other/impact?revision=rev_1",
+        headers=headers,
+    ).status_code == 404
+
+
 def test_query_requires_auth_and_returns_revision_bound_result(client):
     path = "/api/v1/workspaces/demo/queries"
     payload = request_body({"op": "atom", "id": "p"})
@@ -256,6 +295,7 @@ def test_certificate_query_is_independently_checked_and_exportable(client):
     assert result["certificate_id"]
     assert result["support_assertion_ids"] == ["as_p"]
     assert "certificate" not in result
+    assert client._app.state.memory_store.query_dependencies["query-1"] == ["as_p"]
     exported = client.get(
         f"/api/v1/workspaces/demo/queries/{result['query_id']}/certificate",
         headers=headers,
@@ -295,6 +335,17 @@ def test_certificate_is_default_query_mode(client):
     )
     assert response.status_code == 200
     assert response.json()["proof_status"] == "VERIFIED"
+
+
+def test_solver_mode_uses_all_snapshot_assertions_as_conservative_dependencies(client):
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": "atom", "id": "p"}),
+        headers={"Authorization": "Bearer reader-token"},
+    )
+
+    assert response.status_code == 200
+    assert client._app.state.memory_store.query_dependencies["query-1"] == ["as_p"]
 
 
 def test_query_rejects_cross_workspace_access_and_unregistered_atoms(client):

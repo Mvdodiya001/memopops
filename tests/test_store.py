@@ -100,11 +100,13 @@ class ReceiptGraph:
         self.revision_exists = revision_exists
         self.receipts = {}
         self.write_queries = []
+        self.write_params = []
 
     def query(self, query, params=None):
         params = params or {}
         if "CREATE (q:QueryResult" in query:
             self.write_queries.append(query)
+            self.write_params.append(params)
             if not self.revision_exists or params["key"] in self.receipts:
                 return Result([])
             self.receipts[params["key"]] = (params["request_hash"], params["result_json"])
@@ -120,16 +122,20 @@ def test_query_result_and_idempotency_receipt_are_one_atomic_write():
     store = FalkorSnapshotStore(FakeClient(graph))
     payload = {"result": "UNKNOWN", "query_hash": "abc"}
 
-    first = store.persist_query_result("workspace-1", "rev_1", "reader-1", "request-hash", payload)
-    retry = store.persist_query_result("workspace-1", "rev_1", "reader-1", "request-hash", payload)
+    first = store.persist_query_result("workspace-1", "rev_1", "reader-1", "request-hash", payload, ["as_1"])
+    retry = store.persist_query_result("workspace-1", "rev_1", "reader-1", "request-hash", payload, ["as_1"])
 
     assert first["query_id"] == retry["query_id"]
     assert first["result"] == retry["result"]
     assert len(graph.write_queries) == 2
     assert "CREATE (receipt:RequestReceipt" in graph.write_queries[0]
+    assert "CREATE (q)-[:USES_PREMISE]->(a)" in graph.write_queries[0]
+    assert "size(used_assertions) = size($uses_premise_ids)" in graph.write_queries[0]
+    assert graph.write_params[0]["uses_premise_ids"] == ["as_1"]
+    assert graph.receipts["reader-1"][0] == "request-hash"
 
     with pytest.raises(IdempotencyConflictError):
-        store.persist_query_result("workspace-1", "rev_1", "reader-1", "different-hash", payload)
+        store.persist_query_result("workspace-1", "rev_1", "reader-1", "different-hash", payload, ["as_1"])
 
 
 def test_query_result_is_not_persisted_for_a_missing_revision():
@@ -137,14 +143,14 @@ def test_query_result_is_not_persisted_for_a_missing_revision():
     store = FalkorSnapshotStore(FakeClient(graph))
 
     with pytest.raises(SnapshotNotFoundError):
-        store.persist_query_result("workspace-1", "missing", "reader-1", "request-hash", {"result": "UNKNOWN"})
+        store.persist_query_result("workspace-1", "missing", "reader-1", "request-hash", {"result": "UNKNOWN"}, [])
 
 
 def test_query_receipt_read_reuses_only_the_original_request():
     graph = ReceiptGraph()
     store = FalkorSnapshotStore(FakeClient(graph))
     saved = store.persist_query_result(
-        "workspace-1", "rev_1", "reader-1", "request-hash", {"result": "UNKNOWN"}
+        "workspace-1", "rev_1", "reader-1", "request-hash", {"result": "UNKNOWN"}, []
     )
 
     assert store.get_query_receipt("workspace-1", "reader-1", "request-hash") == saved
@@ -165,6 +171,104 @@ class QueryReadGraph:
         if params["workspace_id"] != self.workspace_id or self.result is None:
             return Result([])
         return Result([[json.dumps(self.result)]])
+
+
+class ImpactGraph:
+    def __init__(self, parent="rev_0", changed=None, items=None):
+        self.parent = parent
+        self.changed = ["as_removed"] if changed is None else changed
+        self.items = items or [
+            ["query_a", json.dumps({
+                "query_hash": "hash-a",
+                "result": "PROVED",
+                "proof_status": "VERIFIED",
+                "support_assertion_ids": ["as_removed"],
+                "certificate": {"private": "not exposed"},
+            }), ["as_removed"]],
+        ]
+        self.calls = []
+
+    def query(self, query, params=None):
+        params = params or {}
+        self.calls.append((query, params))
+        assert "MATCH (w:Workspace {id: $workspace_id})" in query
+        if "RETURN r.parent_revision_id AS parent_revision_id" in query:
+            return Result([[self.parent, self.changed]])
+        if "RETURN count(DISTINCT q)" in query:
+            return Result([[3]])
+        if "RETURN q.id AS query_id" in query:
+            return Result(self.items)
+        raise AssertionError("unexpected graph query")
+
+
+def test_revision_impact_is_parent_scoped_historical_and_paginated():
+    graph = ImpactGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+
+    impact = store.get_revision_impact(
+        "workspace-1", "rev_1", before_query_id="query_0", limit=1
+    )
+
+    assert impact == {
+        "workspace_id": "workspace-1",
+        "revision_id": "rev_1",
+        "parent_revision_id": "rev_0",
+        "changed_assertion_ids": ["as_removed"],
+        "total_count": 3,
+        "items": [{
+            "query_id": "query_a",
+            "revision_id": "rev_0",
+            "query_hash": "hash-a",
+            "result": "PROVED",
+            "proof_status": "VERIFIED",
+            "dependency_basis": "CHECKED_SUPPORT",
+            "support_assertion_ids": ["as_removed"],
+            "changed_assertion_ids": ["as_removed"],
+            "freshness": "HISTORICAL",
+        }],
+        "next_cursor": "query_a",
+    }
+    assert len(graph.calls) == 3
+    assert all(call[1]["workspace_id"] == "workspace-1" for call in graph.calls)
+    assert graph.calls[1][1]["changed_assertion_ids"] == ["as_removed"]
+    assert graph.calls[2][1]["before_query_id"] == "query_0"
+
+
+def test_revision_without_parent_or_removed_assertions_has_no_impact_queries():
+    graph = ImpactGraph(parent=None, changed=[])
+    result = FalkorSnapshotStore(FakeClient(graph)).get_revision_impact("workspace-1", "rev_1")
+
+    assert result["total_count"] == 0
+    assert result["items"] == []
+    assert len(graph.calls) == 1
+
+
+def test_revision_impact_marks_solver_only_dependency_as_conservative():
+    graph = ImpactGraph(
+        items=[[
+            "query_solver",
+            json.dumps({
+                "query_hash": "hash-solver",
+                "result": "UNKNOWN",
+                "proof_status": "NOT_REQUESTED",
+                "support_assertion_ids": [],
+            }),
+            ["as_removed"],
+        ]]
+    )
+
+    result = FalkorSnapshotStore(FakeClient(graph)).get_revision_impact("workspace-1", "rev_1")
+
+    assert result["items"][0]["dependency_basis"] == "FULL_SNAPSHOT"
+    assert result["items"][0]["support_assertion_ids"] == []
+
+
+def test_revision_impact_rejects_missing_revision():
+    graph = ImpactGraph()
+    graph.query = lambda *_args, **_kwargs: Result([])
+
+    with pytest.raises(SnapshotNotFoundError):
+        FalkorSnapshotStore(FakeClient(graph)).get_revision_impact("workspace-1", "missing")
 
 
 def test_query_result_lookup_is_scoped_to_authorized_workspace():
