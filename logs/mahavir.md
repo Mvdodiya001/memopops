@@ -30,7 +30,7 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 
 ## M-20261017-03
 
-- Updated: 2026-10-17T17:44:06+05:30
+- Updated: 2026-10-17T18:10:00+05:30
 - Human / agent: Mahavir / Grok 4.7
 - Status: completed
 - Branch / scope: `codex/mahavir/m3-live-ui`. Files: `apps/web/` only, plus this log and the master index. Saqlain's API, store, benchmark script, `pyproject.toml`, and checker sources were not edited. Fast-forwarded his commits through the solver benchmark before committing.
@@ -39,4 +39,8 @@ Task-level notes for Mahavir and agents working on his behalf. Times must includ
 - Validation: `npm --prefix apps/web run typecheck` passed. `npm --prefix apps/web test` passed 8 tests. `node apps/web/e2e/live-query.mjs` passed: the browser connected, queried `release_ready`, and showed “Follows from memory” and “Proof verified” without the development-fixture banner. That browser check used `apps/web/e2e/harness.py`, an in-memory snapshot behind the published FastAPI routes, because Docker Hub timed out pulling FalkorDB and a direct connection to the hosted database timed out from this machine. It is not a FalkorDB persistence test.
 - Outcome / blockers: Live memory, history, certificate query, and download are wired. Hosted FalkorDB end-to-end from this machine remains blocked by a connection timeout. No credentials were committed.
 - Handoff: Run the API with the ignored `.env` / `.env.cloud` settings Saqlain already uses, then open the web app without `source=development`. Reader tokens cannot activate memory. Operator tokens can try a revision write; the service still decides.
-- Publication: pending the push after this commit.
+- Publication: feature commit `5671884` is contained in `origin/main` (verified with `git merge-base --is-ancestor`). No further M3 code push was required. Revalidated on current `origin/main` at `91d2abd`: `npm --prefix apps/web ci`, `typecheck`, `test` (8 passed), and `build` all passed. Browser E2E was not rerun in this session; prior harness result remains the recorded smoke evidence.
+
+### Publication correction 2026-10-17T18:10:00+05:30
+
+Earlier text said publication was pending; the live UI integration was already merged to main before this correction. This entry records the verified remote inclusion and the repeat web checks above.
