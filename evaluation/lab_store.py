@@ -76,6 +76,7 @@ class LabSnapshotStore:
         self._revision_receipts: dict[str, tuple[str, dict[str, Any]]] = {}
         self._query_receipts: dict[str, tuple[str, dict[str, Any]]] = {}
         self._decision_receipts: dict[str, tuple[str, dict[str, Any]]] = {}
+        self._query_premises: dict[str, list[str]] = {}
         self.quarantined: list[dict[str, Any]] = []
 
     def ping(self) -> bool:
@@ -157,14 +158,53 @@ class LabSnapshotStore:
         with self._lock:
             self._require_members(workspace_id, revision_id)
             meta = self._meta[revision_id]
+            parent_revision_id = meta["parent_revision_id"]
+            changed_ids = set(meta["removed_assertion_ids"])
+            if parent_revision_id is None or not changed_ids:
+                return {
+                    "workspace_id": workspace_id,
+                    "revision_id": revision_id,
+                    "parent_revision_id": parent_revision_id,
+                    "changed_assertion_ids": sorted(changed_ids),
+                    "total_count": 0,
+                    "items": [],
+                    "next_cursor": None,
+                }
+            items = []
+            for _digest, result in self._query_receipts.values():
+                if result.get("revision_id") != parent_revision_id:
+                    continue
+                query_id = str(result.get("query_id", ""))
+                if before_query_id is not None and query_id <= before_query_id:
+                    continue
+                premises = set(self._query_premises.get(query_id, []))
+                affected = sorted(premises & changed_ids)
+                if not affected:
+                    continue
+                proof_status = result.get("proof_status", "NOT_REQUESTED")
+                items.append(
+                    {
+                        "query_id": query_id,
+                        "revision_id": parent_revision_id,
+                        "query_hash": result.get("query_hash"),
+                        "result": result.get("result"),
+                        "proof_status": proof_status,
+                        "dependency_basis": "CHECKED_SUPPORT" if proof_status == "VERIFIED" else "FULL_SNAPSHOT",
+                        "support_assertion_ids": result.get("support_assertion_ids", []),
+                        "changed_assertion_ids": affected,
+                        "freshness": "HISTORICAL",
+                    }
+                )
+            items.sort(key=lambda item: item["query_id"])
+            page = items[:limit]
             return {
                 "workspace_id": workspace_id,
                 "revision_id": revision_id,
-                "parent_revision_id": meta["parent_revision_id"],
-                "changed_assertion_ids": list(meta["removed_assertion_ids"]),
-                "total_count": 0,
-                "items": [],
-                "next_cursor": None,
+                "parent_revision_id": parent_revision_id,
+                "changed_assertion_ids": sorted(changed_ids),
+                "total_count": len(items),
+                "items": page,
+                "next_cursor": page[-1]["query_id"] if len(items) > limit else None,
             }
 
     def get_query_result(self, workspace_id: str, query_id: str) -> dict[str, Any] | None:
@@ -261,6 +301,7 @@ class LabSnapshotStore:
             stored = dict(result_payload)
             stored.setdefault("query_id", f"query_{uuid4().hex}")
             self._query_receipts[idempotency_key] = (request_hash, stored)
+            self._query_premises[stored["query_id"]] = list(uses_premise_ids)
             return stored
 
     def persist_quarantined_proposal(

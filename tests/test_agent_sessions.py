@@ -94,3 +94,31 @@ def test_acceptance_suite_writes_report(tmp_path: Path):
     report = run_acceptance(tmp_path / "acceptance-run")
     assert (tmp_path / "acceptance-run" / "report.json").exists()
     assert all(item["passed"] for item in report["cases"])
+
+
+def test_inconsistent_operator_proposal_is_quarantined(lab_env):
+    store, _reader, _writer, operator = lab_env
+    status, body = submit_revision(
+        operator,
+        expected_revision=REVISION_ID,
+        idempotency_key="quarantine-tests-failed",
+        reason="Attempt to add failing tests beside the passing report.",
+        mutations=inconsistent_failure_add(),
+    )
+    assert status == 200 and body.get("status") == "QUARANTINED"
+    proposals = store.list_quarantined_proposals(WORKSPACE_ID)
+    assert len(proposals) == 1
+
+
+def test_writer_cannot_activate_memory(lab_env, tmp_path: Path):
+    _store, _reader, writer, _operator = lab_env
+    session = AgentSession(
+        client=writer,
+        model=ScriptedFailureWriter(),
+        role="writer",
+        workspace_id=WORKSPACE_ID,
+        mode="scripted_replay",
+        journal_path=tmp_path / "writer.json",
+    )
+    result = session.run()
+    assert any(event.get("outcome") == "rejected" for event in result["events"])

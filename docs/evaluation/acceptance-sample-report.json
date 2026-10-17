@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "description": "Reader records PROCEED at r1 then BLOCK at r2 after correction",
+      "id": "A01",
+      "passed": true
+    },
+    {
+      "description": "Naive cache labels stale answer as current",
+      "id": "baseline_naive_stale",
+      "passed": true
+    },
+    {
+      "description": "Solver-only ablation returns REFUTED at r2 without revision guard",
+      "id": "baseline_solver_only",
+      "passed": true
+    },
+    {
+      "description": "Revision impact lists the prior release_ready query after tests_pass is replaced",
+      "id": "C09",
+      "passed": true
+    }
+  ],
+  "mode": "scripted_replay",
+  "workspace_id": "workspace_demo"
+}

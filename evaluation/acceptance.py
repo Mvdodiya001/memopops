@@ -88,6 +88,7 @@ def run_acceptance(output_dir: Path) -> dict[str, Any]:
     ablation_result = ablation.query(RELEASE_QUERY)
     parse_formula(RELEASE_QUERY, snapshot.atom_ids)
 
+    impact = store.get_revision_impact(WORKSPACE_ID, rev2)
     report = {
         "mode": "scripted_replay",
         "workspace_id": WORKSPACE_ID,
@@ -106,6 +107,12 @@ def run_acceptance(output_dir: Path) -> dict[str, Any]:
                 "id": "baseline_solver_only",
                 "description": "Solver-only ablation returns REFUTED at r2 without revision guard",
                 "passed": ablation_result["result"] == "REFUTED",
+            },
+            {
+                "id": "C09",
+                "description": "Revision impact lists the prior release_ready query after tests_pass is replaced",
+                "passed": impact["total_count"] >= 1
+                and any(item.get("result") == "PROVED" for item in impact["items"]),
             },
         ],
     }
