@@ -43,3 +43,8 @@ An UNSAT core explains a conflict but is not a complete proof certificate. Z3 wa
 ## Next decisions
 
 Agree the implementation language/solver, minimal assertion/query/revision API, graph schema, commit protocol, and task split. Then build one vertical scenario before expanding UI, frameworks, or benchmarks. Saqlain and Mahavir have not yet accepted module assignments. Registration, submission, licensing, deployment, and branch protection are not established by this documentation.
+
+
+## Implementation planning update — October 17, 2026
+
+The [detailed plan](IMPLEMENTATION_PLAN.md) now proposes Python/FastAPI/Z3, FalkorDB revisions, a React inspector, an independent proof checker, and temporary parallel ownership for Saqlain and Mahavir. Follow its G0 contract/environment validation before implementation. These are planned defaults, not implemented or benchmarked capabilities. Mahavir has not yet started or accepted a task in this chat.
