@@ -51,6 +51,75 @@ def load_local_env() -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
+def verify_existing_seed_records(graph, formulas: list[dict[str, str]], revision_hash: str) -> None:
+    """Refuse to merge the fixture into pre-existing records with different contents."""
+    atom_ids = [item["id"] for item in ATOM_DEFINITIONS]
+    atom_rows = graph.query(
+        "MATCH (a:Atom) WHERE a.id IN $ids "
+        "RETURN a.id, a.label, a.meaning, a.scope",
+        {"ids": atom_ids},
+    ).result_set
+    expected_atoms = {item["id"]: item for item in ATOM_DEFINITIONS}
+    for atom_id, label, meaning, scope in atom_rows:
+        expected = expected_atoms[atom_id]
+        if (label, meaning, scope) != (expected["label"], expected["meaning"], expected["scope"]):
+            raise RuntimeError(f"Existing demo atom {atom_id} has different immutable meaning.")
+
+    formula_rows = graph.query(
+        "MATCH (f:Formula) WHERE f.hash IN $hashes RETURN f.hash, f.canonical_json",
+        {"hashes": [item["formula_hash"] for item in formulas]},
+    ).result_set
+    expected_formulas = {item["formula_hash"]: item["canonical_json"] for item in formulas}
+    for digest, canonical in formula_rows:
+        if expected_formulas.get(digest) != canonical:
+            raise RuntimeError("Existing demo formula hash has different canonical contents.")
+
+    assertion_rows = graph.query(
+        "MATCH (a:Assertion) WHERE a.id IN $ids "
+        "OPTIONAL MATCH (a)-[:ENCODES]->(f:Formula) "
+        "RETURN a.id, a.formula_hash, f.hash",
+        {"ids": [item["assertion_id"] for item in formulas]},
+    ).result_set
+    expected_assertions = {item["assertion_id"]: item["formula_hash"] for item in formulas}
+    found_assertions: dict[str, tuple[str, set[str]]] = {}
+    for assertion_id, stored_hash, formula_digest in assertion_rows:
+        previous_hash, linked_hashes = found_assertions.setdefault(assertion_id, (stored_hash, set()))
+        if previous_hash != stored_hash:
+            raise RuntimeError(f"Existing demo assertion {assertion_id} has conflicting hashes.")
+        if formula_digest is not None:
+            linked_hashes.add(formula_digest)
+    for assertion_id, (stored_hash, linked_hashes) in found_assertions.items():
+        if stored_hash != expected_assertions[assertion_id] or linked_hashes != {stored_hash}:
+            raise RuntimeError(f"Existing demo assertion {assertion_id} has conflicting formula links.")
+
+    expected_evidence = {
+        item["evidence_id"]: (item["uri"], item["excerpt"], item["content_digest"])
+        for item in formulas
+    }
+    evidence_rows = graph.query(
+        "MATCH (e:Evidence) WHERE e.id IN $ids "
+        "RETURN e.id, e.uri, e.excerpt, e.observed_at, e.content_digest",
+        {"ids": list(expected_evidence)},
+    ).result_set
+    for evidence_id, uri, excerpt, observed_at, digest in evidence_rows:
+        expected = expected_evidence[evidence_id]
+        if (uri, excerpt, observed_at, digest) != (*expected[:2], "2026-10-17T00:00:00Z", expected[2]):
+            raise RuntimeError(f"Existing demo evidence {evidence_id} has different immutable contents.")
+
+    revision_rows = graph.query(
+        "MATCH (r:Revision {id: $revision_id}) "
+        "OPTIONAL MATCH (r)-[:INCLUDES]->(a:Assertion) "
+        "RETURN r.knowledge_hash, a.id",
+        {"revision_id": REVISION_ID},
+    ).result_set
+    if revision_rows:
+        stored_hash = revision_rows[0][0]
+        members = {row[1] for row in revision_rows if row[1] is not None}
+        expected_members = set(expected_assertions)
+        if stored_hash != revision_hash or members != expected_members:
+            raise RuntimeError("Existing demo revision has a different manifest or membership.")
+
+
 def main() -> None:
     load_local_env()
     store = FalkorSnapshotStore.from_env()
@@ -60,11 +129,8 @@ def main() -> None:
         "MATCH (w:Workspace {id: $workspace_id}) RETURN w.head_revision AS head_revision LIMIT 1",
         {"workspace_id": WORKSPACE_ID},
     ).result_set
-    if head_rows:
-        if head_rows[0][0] == REVISION_ID:
-            print("Demo workspace is already seeded at rev_001; no changes made.")
-            store.close()
-            return
+    already_seeded = bool(head_rows)
+    if already_seeded and head_rows[0][0] != REVISION_ID:
         raise RuntimeError("Demo workspace already has a different head; refusing to reset it.")
 
     formulas = []
@@ -85,6 +151,16 @@ def main() -> None:
         )
         records.append(AssertionRecord(assertion_id, formula, digest))
     revision_hash = calculate_knowledge_hash(records)
+    verify_existing_seed_records(graph, formulas, revision_hash)
+    if already_seeded:
+        snapshot = store.load_snapshot(WORKSPACE_ID, REVISION_ID)
+        expected_ids = {item[0] for item in ASSERTION_INPUTS}
+        actual_ids = {item.id for item in snapshot.assertions}
+        if snapshot.knowledge_hash != revision_hash or actual_ids != expected_ids:
+            raise RuntimeError("Existing demo snapshot does not match the expected seed.")
+        store.close()
+        print("Demo workspace is already seeded and verified at rev_001; no changes made.")
+        return
 
     graph.query(
         "UNWIND $atoms AS item MERGE (a:Atom {id: item.id}) "
