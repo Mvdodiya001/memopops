@@ -163,3 +163,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: smoke run passed at all four sizes. Full command `uv run --frozen --no-sync python scripts/benchmark_solver.py --output docs/performance/solver-baseline-2026-10-17.json` completed 10 warm-ups and 3×100 samples at 10, 50, 100, and 256 assertions. Every result was PROVED and no solver timed out. Combined nearest-rank p95 values were 12.220, 15.972, 19.260, and 29.591 ms respectively; p50 values were 8.591, 10.799, 12.522, and 20.513 ms. Recorded OS, CPU, Python, Z3 and benchmark source commit in the raw artifact. This excludes FalkorDB, API, certificate generation and independent checking.
 - Handoff: after this measurement, integrate Mahavir's UI/model/evaluation changes when available and complete local release checks before retrying hosted database work.
 - Publication: benchmark source `7c30d39` and report/raw samples `0d3dbd7` were pushed directly to `origin/main`; fetch confirmed `0d3dbd7` is an ancestor. No PR was created.
+
+## S-20261017-13
+
+- Updated: 2026-10-17T17:46:57+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Branch / scope: `codex/saqlain/logic-core`; new `.github/workflows/backend.yml` plus Saqlain/master logs. Existing Mahavir web/checker workflow will remain untouched.
+- Objective and success criteria: run locked backend dependencies and meaningful backend tests on main pushes and pull requests, with read-only workflow permissions and no secrets.
+- Actions and decisions: use the supported Python 3.12 project range and locked `uv` workflow. Include pytest, compile, checker suite and wheel/sdist build; do not require Docker or live FalkorDB credentials in CI.
+- Validation: pending workflow syntax review and local equivalent checks.
+- Handoff: actual hosted GitHub Actions run will provide the final CI execution evidence after push.
+- Publication: planned-work log commit pending; no PR.
