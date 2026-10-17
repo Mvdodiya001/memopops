@@ -240,6 +240,31 @@ def test_workspace_discovery_requires_bearer_authentication(client):
     assert client.get("/api/v1/workspaces/demo").status_code == 401
 
 
+def test_workspace_discovery_reports_database_unavailability(client):
+    def unavailable(_workspace_id):
+        raise ConnectionError("database is offline")
+
+    client._app.state.memory_store.current_head = unavailable
+    headers = {"Authorization": "Bearer reader-token"}
+
+    listed = client.get("/api/v1/workspaces", headers=headers)
+    details = client.get("/api/v1/workspaces/demo", headers=headers)
+
+    assert listed.status_code == details.status_code == 503
+    assert listed.json() == details.json() == {"detail": "Workspace is unavailable"}
+
+
+def test_workspace_discovery_hides_workspaces_without_a_head(client):
+    client._app.state.memory_store.head = None
+
+    listed = client.get("/api/v1/workspaces", headers={"Authorization": "Bearer reader-token"})
+    details = client.get("/api/v1/workspaces/demo", headers={"Authorization": "Bearer reader-token"})
+
+    assert listed.status_code == 200
+    assert listed.json() == {"workspaces": []}
+    assert details.status_code == 404
+
+
 def revision_body(key="revision-1"):
     return {
         "expected_revision": "rev_1",

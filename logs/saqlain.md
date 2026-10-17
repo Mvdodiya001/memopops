@@ -140,3 +140,14 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: `uv run --frozen --no-sync pytest -q` (124 passed); `git diff --check` passed. Tests cover authenticated listing/details, role capability, workspace isolation and missing bearer credentials. Frontend integration cannot yet succeed until its API client supplies an authorized bearer token.
 - Handoff: Mahavir can integrate `listWorkspaces` and `getWorkspace` against these exact routes. Remaining UI work includes bearer-token session wiring, proposal review endpoint/UI, certificate download, impact display, and the end-to-end correction walkthrough. Reproduce backend checks with `uv run --frozen --no-sync pytest -q`.
 - Publication: commit `ad5d9e2` and S09 commit `47882c9` were pushed directly to `origin/main`; fetching and confirming `ad5d9e2` as an ancestor of origin/main succeeded. No PR was created.
+
+## S-20261017-11
+
+- Updated: 2026-10-17T17:39:01+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; `tests/test_api.py` and Saqlain/master logs.
+- Objective: cover the new workspace discovery routes when FalkorDB is unavailable or the authorized workspace has no current head.
+- Validation: `uv run --frozen --no-sync pytest -q` (126 passed). A read-only live smoke using `.env.cloud` returned HTTP 503 from both routes; an isolated `FalkorSnapshotStore.ping()` failed with `TimeoutError`, confirming this session cannot reach the database endpoint now. Credentials and endpoint values were not printed. No live workspace data was changed.
+- Handoff: retry live workspace-list/detail smoke when the database endpoint is reachable; use the same authenticated GET requests as the S10 contract. Backend failure handling is covered and returns a generic 503.
+- Publication: commit, direct push and remote verification pending; no PR.
