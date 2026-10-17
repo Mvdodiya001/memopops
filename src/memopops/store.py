@@ -167,6 +167,77 @@ class FalkorSnapshotStore:
         """Return a committed revision receipt for an identical retry."""
         return self.get_query_receipt(workspace_id, idempotency_key, request_hash)
 
+    def get_decision_receipt(
+        self, workspace_id: str, idempotency_key: str, request_hash: str
+    ) -> dict[str, Any] | None:
+        """Return a prior decision for an identical actor-scoped retry."""
+        return self.get_query_receipt(workspace_id, idempotency_key, request_hash)
+
+    def persist_decision(
+        self,
+        workspace_id: str,
+        expected_revision_id: str,
+        query_id: str,
+        idempotency_key: str,
+        request_hash: str,
+        decision: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Atomically bind a decision receipt to the current revision and its query."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        result = {
+            "decision_id": decision["id"],
+            "workspace_id": workspace_id,
+            "revision_id": expected_revision_id,
+            "query_id": query_id,
+            "outcome": decision["outcome"],
+            "rationale": decision["rationale"],
+            "actor_id": decision["actor_id"],
+            "created_at": decision["created_at"],
+        }
+        result_json = json.dumps(
+            result, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+        )
+        created = graph.query(
+            "MATCH (w:Workspace {id: $workspace_id}) "
+            "MATCH (r:Revision {id: $revision_id}) "
+            "MATCH (q:QueryResult {id: $query_id, workspace_id: $workspace_id, revision_id: $revision_id}) "
+            "WHERE w.head_revision = $revision_id "
+            "OPTIONAL MATCH (prior:RequestReceipt {key: $key}) "
+            "WITH w, r, q, prior WHERE prior IS NULL "
+            "CREATE (d:Decision {id: $decision_id, workspace_id: $workspace_id, "
+            "revision_id: $revision_id, query_id: $query_id, actor_id: $actor_id, "
+            "outcome: $outcome, rationale: $rationale, created_at: $created_at}) "
+            "CREATE (d)-[:AT_REVISION]->(r) CREATE (d)-[:BASED_ON]->(q) "
+            "CREATE (receipt:RequestReceipt {key: $key, payload_hash: $request_hash, "
+            "result_id: $decision_id, result_json: $result_json}) "
+            "CREATE (receipt)-[:REFERS_TO]->(d) RETURN d.id AS decision_id",
+            {
+                "workspace_id": workspace_id,
+                "revision_id": expected_revision_id,
+                "query_id": query_id,
+                "key": idempotency_key,
+                "decision_id": decision["id"],
+                "actor_id": decision["actor_id"],
+                "outcome": decision["outcome"],
+                "rationale": decision["rationale"],
+                "created_at": decision["created_at"],
+                "request_hash": request_hash,
+                "result_json": result_json,
+            },
+        ).result_set
+        if created:
+            return result
+
+        prior = self.get_decision_receipt(workspace_id, idempotency_key, request_hash)
+        if prior is not None:
+            return prior
+        actual_revision = self.current_head(workspace_id)
+        if actual_revision != expected_revision_id:
+            raise RevisionHeadConflictError(expected_revision_id, actual_revision)
+        if self.get_query_result(workspace_id, query_id) is None:
+            raise SnapshotNotFoundError(query_id)
+        raise SnapshotNotFoundError(expected_revision_id)
+
     def publish_revision(
         self,
         workspace_id: str,

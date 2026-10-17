@@ -303,6 +303,69 @@ class RevisionWriteGraph:
         raise AssertionError("unexpected graph query")
 
 
+class DecisionWriteGraph:
+    def __init__(self, *, head="rev_1", query_revision="rev_1"):
+        self.head = head
+        self.query_revision = query_revision
+        self.receipts = {}
+        self.write_queries = []
+
+    def query(self, query, params=None):
+        params = params or {}
+        if "RETURN d.id AS decision_id" in query:
+            self.write_queries.append((query, params))
+            if self.head != params["revision_id"] or self.query_revision != params["revision_id"]:
+                return Result([])
+            if params["key"] in self.receipts:
+                return Result([])
+            self.receipts[params["key"]] = (params["request_hash"], params["result_json"])
+            return Result([[params["decision_id"]]])
+        if "RETURN receipt.payload_hash AS payload_hash" in query:
+            receipt = self.receipts.get(params["key"])
+            return Result([list(receipt)] if receipt else [])
+        if "RETURN w.head_revision AS head_revision" in query:
+            return Result([[self.head]])
+        if "RETURN q.result_json AS result_json" in query:
+            return Result([[json.dumps({"query_id": params["query_id"], "revision_id": self.query_revision})]])
+        raise AssertionError("unexpected graph query")
+
+
+def test_decision_write_binds_query_and_head_in_one_graph_write():
+    graph = DecisionWriteGraph()
+    store = FalkorSnapshotStore(FakeClient(graph))
+    decision = {
+        "id": "decision-1", "actor_id": "actor-1", "outcome": "BLOCK",
+        "rationale": "Review the correction", "created_at": "2026-10-17T00:00:00Z",
+    }
+
+    result = store.persist_decision(
+        "workspace-1", "rev_1", "query-1", "decision:actor-1:key-1", "hash-1", decision
+    )
+
+    query, params = graph.write_queries[0]
+    assert "w.head_revision = $revision_id" in query
+    assert "revision_id: $revision_id" in query
+    assert "CREATE (d)-[:BASED_ON]->(q)" in query
+    assert params["workspace_id"] == "workspace-1"
+    assert result["decision_id"] == "decision-1"
+    assert result["query_id"] == "query-1"
+    assert result["revision_id"] == "rev_1"
+
+
+def test_decision_write_rejects_stale_head_or_wrong_revision_query():
+    decision = {
+        "id": "decision-1", "actor_id": "actor-1", "outcome": "PROCEED",
+        "rationale": "Use current proof", "created_at": "2026-10-17T00:00:00Z",
+    }
+    stale = FalkorSnapshotStore(FakeClient(DecisionWriteGraph(head="rev_2")))
+    with pytest.raises(RevisionHeadConflictError):
+        stale.persist_decision("workspace-1", "rev_1", "query-1", "decision:actor-1:key", "hash", decision)
+
+    unrelated = FalkorSnapshotStore(FakeClient(DecisionWriteGraph(query_revision="rev_0")))
+    with pytest.raises(SnapshotNotFoundError):
+        unrelated.persist_decision("workspace-1", "rev_1", "query-1", "decision:actor-1:key", "hash", decision)
+
+
 def revision_inputs():
     return (
         {

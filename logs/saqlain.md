@@ -210,4 +210,16 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Actions and decisions: use the official v4.22.0 server image tag; do not start or connect a database while the user has it paused. Compose configuration parsing is the available local check.
 - Validation: `docker compose config --quiet` and `git diff --check` passed. Docker Compose configuration was parsed only; no database container was started.
 - Handoff: a Docker Engine start, seeded persistence/restart smoke, and hosted endpoint recheck remain required when the user resumes database work.
-- Publication: implementation and log commit pending direct push to `origin/main`; no PR.
+- Publication: commit `e079354` pushed directly to `origin/main` and confirmed by fetch; no PR.
+
+## S-20261017-17
+
+- Updated: 2026-10-17T18:05:00+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; backend decision endpoint/store, contract documentation and Saqlain/master logs.
+- Objective and success criteria: record an authenticated reader decision only when its query belongs to the expected current revision; make identical retries idempotent and changed retries conflict.
+- Actions and decisions: use bounded `PROCEED`/`BLOCK` outcomes with a required concise rationale, derive actor from bearer identity, and guard both head and query binding in the persisted graph write.
+- Validation: `uv run --locked pytest -q` (133 passed); `uv run python -m compileall -q src`; `git diff --check`. Tests cover authentication, tenant isolation, changed-key conflict, identical replay, stale head, missing query, and graph-write binding.
+- Handoff: decision receipt is audit metadata and does not execute an external action. Real FalkorDB transaction semantics remain part of later live DB validation.
+- Publication: pending direct push to `origin/main`; no PR. The live browser has not yet consumed the decision endpoint; UI integration is a Mahavir-owned follow-up.

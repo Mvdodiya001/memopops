@@ -80,6 +80,13 @@ class SnapshotReader(Protocol):
     def get_revision_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
     ) -> dict[str, Any] | None: ...
+    def get_decision_receipt(
+        self, workspace_id: str, idempotency_key: str, request_hash: str
+    ) -> dict[str, Any] | None: ...
+    def persist_decision(
+        self, workspace_id: str, expected_revision_id: str, query_id: str,
+        idempotency_key: str, request_hash: str, decision: dict[str, Any],
+    ) -> dict[str, Any]: ...
     def publish_revision(
         self,
         workspace_id: str,
@@ -117,6 +124,16 @@ class RevisionRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=500)
     acceptance: Literal["human_confirmed", "trusted_fixture"]
     mutations: list[dict[str, Any]] = Field(min_length=1, max_length=32)
+
+
+class DecisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    expected_revision: str = Field(min_length=1, max_length=128)
+    query_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+    outcome: Literal["PROCEED", "BLOCK"]
+    rationale: str = Field(min_length=1, max_length=500)
 
 
 class RequestBodyLimitMiddleware:
@@ -376,6 +393,67 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Revision not found") from exc
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Revision impact is unavailable") from exc
+
+    @app.post("/api/v1/workspaces/{workspace_id}/decisions", status_code=201)
+    def record_decision(
+        workspace_id: str,
+        request: DecisionRequest,
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> Any:
+        authorize_workspace(workspace_id, principal)
+        payload = {
+            "expected_revision": request.expected_revision,
+            "query_id": request.query_id,
+            "outcome": request.outcome,
+            "rationale": request.rationale,
+            "actor_id": principal["actor_id"],
+        }
+        request_digest = sha256(
+            json.dumps(
+                payload, sort_keys=True, separators=(",", ":"),
+                ensure_ascii=True, allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        try:
+            prior = memory_store.get_decision_receipt(
+                workspace_id,
+                f"decision:{principal['actor_id']}:{request.idempotency_key}",
+                request_digest,
+            )
+        except IdempotencyConflictError as exc:
+            raise HTTPException(status_code=409, detail="Idempotency key was used for another decision") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Decision receipt is unavailable") from exc
+        if prior is not None:
+            return JSONResponse(status_code=200, content=prior)
+
+        decision = {
+            "id": f"decision_{uuid4().hex}",
+            "actor_id": principal["actor_id"],
+            "outcome": request.outcome,
+            "rationale": request.rationale,
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"),
+        }
+        try:
+            return memory_store.persist_decision(
+                workspace_id,
+                request.expected_revision,
+                request.query_id,
+                f"decision:{principal['actor_id']}:{request.idempotency_key}",
+                request_digest,
+                decision,
+            )
+        except IdempotencyConflictError as exc:
+            raise HTTPException(status_code=409, detail="Idempotency key was used for another decision") from exc
+        except RevisionHeadConflictError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "REVISION_CONFLICT", "expected_revision": exc.expected, "actual_revision": exc.actual},
+            ) from exc
+        except SnapshotNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Revision or query result not found") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Decision could not be recorded") from exc
 
     @app.get("/api/v1/workspaces/{workspace_id}/queries/{query_id}")
     def read_query_result(

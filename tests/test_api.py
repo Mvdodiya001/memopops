@@ -29,6 +29,7 @@ class FakeStore:
             assertions=(assertion,),
         )
         self.saved = {}
+        self.decisions = {}
         self.revision_saved = {}
         self.head = "rev_1"
         self.published = []
@@ -165,6 +166,34 @@ class FakeStore:
         previous_hash, result = self.saved[key]
         if previous_hash != request_hash:
             raise IdempotencyConflictError(key)
+        return result
+
+    def get_decision_receipt(self, workspace, key, request_hash):
+        if key not in self.decisions:
+            return None
+        previous_hash, result = self.decisions[key]
+        if previous_hash != request_hash:
+            raise IdempotencyConflictError(key)
+        return result
+
+    def persist_decision(self, workspace, expected_revision, query_id, key, request_hash, decision):
+        prior = self.get_decision_receipt(workspace, key, request_hash)
+        if prior is not None:
+            return prior
+        if self.head != expected_revision:
+            raise RevisionHeadConflictError(expected_revision, self.head)
+        query = self.get_query_result(workspace, query_id)
+        if query is None or query.get("revision_id") != expected_revision:
+            from memopops.store import SnapshotNotFoundError
+
+            raise SnapshotNotFoundError(query_id)
+        result = {
+            "decision_id": decision["id"], "workspace_id": workspace,
+            "revision_id": expected_revision, "query_id": query_id,
+            "outcome": decision["outcome"], "rationale": decision["rationale"],
+            "actor_id": decision["actor_id"], "created_at": decision["created_at"],
+        }
+        self.decisions[key] = (request_hash, result)
         return result
 
     def persist_query_result(
@@ -338,6 +367,53 @@ def test_revision_impact_is_authenticated_and_workspace_scoped(client):
         "/api/v1/workspaces/other/impact?revision=rev_1",
         headers=headers,
     ).status_code == 404
+
+
+def test_reader_decision_is_bound_to_current_query_and_idempotent(client):
+    store = client._app.state.memory_store
+    store.saved["query-key"] = ("request-hash", {
+        "query_id": "query_1", "revision_id": "rev_1", "result": "PROVED"
+    })
+    path = "/api/v1/workspaces/demo/decisions"
+    payload = {
+        "expected_revision": "rev_1", "query_id": "query_1",
+        "idempotency_key": "reader-release-decision", "outcome": "BLOCK",
+        "rationale": "The release gate needs the operator to review the changed evidence.",
+    }
+    headers = {"Authorization": "Bearer reader-token"}
+
+    first = client.post(path, json=payload, headers=headers)
+    retry = client.post(path, json=payload, headers=headers)
+
+    assert first.status_code == 201
+    assert retry.status_code == 200
+    assert retry.json() == first.json()
+    assert first.json()["revision_id"] == "rev_1"
+    assert first.json()["query_id"] == "query_1"
+    changed = {**payload, "rationale": "A different decision record."}
+    assert client.post(path, json=changed, headers=headers).status_code == 409
+    assert client.post(path, json=payload).status_code == 401
+    assert client.post("/api/v1/workspaces/other/decisions", json=payload, headers=headers).status_code == 404
+
+
+def test_reader_decision_rejects_stale_head_and_unrelated_query(client):
+    store = client._app.state.memory_store
+    store.saved["query-key"] = ("request-hash", {
+        "query_id": "query_1", "revision_id": "rev_1", "result": "PROVED"
+    })
+    path = "/api/v1/workspaces/demo/decisions"
+    payload = {
+        "expected_revision": "rev_1", "query_id": "query_1",
+        "idempotency_key": "reader-decision-stale", "outcome": "PROCEED",
+        "rationale": "Use the verified result for this revision.",
+    }
+    headers = {"Authorization": "Bearer reader-token"}
+    store.head = "rev_2"
+    assert client.post(path, json=payload, headers=headers).status_code == 409
+
+    store.head = "rev_1"
+    payload["query_id"] = "query_missing"
+    assert client.post(path, json=payload, headers=headers).status_code == 404
 
 
 def test_query_requires_auth_and_returns_revision_bound_result(client):

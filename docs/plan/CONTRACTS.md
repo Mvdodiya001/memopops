@@ -1,6 +1,6 @@
 # Shared contracts v0.1
 
-This is the proposed implementation contract. At G0, Saqlain turns it into Pydantic/OpenAPI models and versioned fixtures; Mahavir checks the fixtures and generates TypeScript types. Freeze those files before parallel implementation. No endpoint described here is implemented yet.
+This is the shared implementation contract. Endpoint status is tracked in the implementation log; Pydantic/OpenAPI models and route tests are authoritative for implemented behavior. Freeze shared schema changes before parallel implementation.
 
 ## 1. Identity, IDs and boundaries
 
@@ -50,6 +50,8 @@ Atom registration includes `id`, `label`, `meaning`, `scope`. Register all four 
 | GET /workspaces/{w}/impact?revision={r} | Changed IDs and graph-derived affected query summaries for r versus its parent. |
 | GET /workspaces/{w}/events?after={sequence} | Ordered sanitized history, bounded pages; polling is enough for v1. |
 | POST /workspaces/{w}/decisions | Record a reader decision against an expected current revision and QueryResult; does not deploy anything. |
+
+Decision request: `{expected_revision, query_id, idempotency_key, outcome, rationale}`. `outcome` is `PROCEED` or `BLOCK`; rationale is 1–500 characters. The authenticated actor is derived from the bearer token. The service accepts a decision only if the query belongs to `expected_revision` and that revision is still the workspace head in the same graph write. Identical actor/key retries return the original receipt; reusing the key with different content returns 409. A decision is an audit record and never triggers an external action.
 
 Workspace creation, fixture seeding and resets are operator scripts for v1, not anonymous public endpoints. This avoids building a full onboarding/account product. `POST /queries` requires an idempotency key as well, so automatic retries do not duplicate result/event records. Its receipt protects audit identity, not knowledge revision publication.
 
