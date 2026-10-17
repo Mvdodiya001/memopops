@@ -4,7 +4,7 @@ These rules apply to Saqlain, Mahavir, and their coding agents. Human instructio
 
 ## Start each task
 
-- Identify the human you are working for. This session is Saqlain's; never infer identity from the machine's Git author. If unclear, ask before writing a personal log.
+- Identify the human you are working for from explicit session instructions; never infer identity from this shared file or the machine's Git author. If unclear, ask before writing a personal log.
 - Inspect `git status --short --branch`, remotes, and recent history. Preserve unrelated edits and never stage another person's work.
 - Fetch origin when online. Use one task branch per person: `codex/saqlain/<task>` or `codex/mahavir/<task>`, starting from current `origin/main`.
 - Each concurrent agent needs a separate checkout or worktree. Never run two writers in one working directory. People on different computers use their own clones. Worktrees share Git objects but do not merge changes automatically.
