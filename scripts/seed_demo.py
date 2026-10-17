@@ -77,18 +77,25 @@ def verify_existing_seed_records(graph, formulas: list[dict[str, str]], revision
     assertion_rows = graph.query(
         "MATCH (a:Assertion) WHERE a.id IN $ids "
         "OPTIONAL MATCH (a)-[:ENCODES]->(f:Formula) "
-        "RETURN a.id, a.formula_hash, f.hash",
+        "RETURN a.id, a.actor_id, a.acceptance, a.formula_hash, f.hash",
         {"ids": [item["assertion_id"] for item in formulas]},
     ).result_set
     expected_assertions = {item["assertion_id"]: item["formula_hash"] for item in formulas}
-    found_assertions: dict[str, tuple[str, set[str]]] = {}
-    for assertion_id, stored_hash, formula_digest in assertion_rows:
-        previous_hash, linked_hashes = found_assertions.setdefault(assertion_id, (stored_hash, set()))
-        if previous_hash != stored_hash:
-            raise RuntimeError(f"Existing demo assertion {assertion_id} has conflicting hashes.")
+    found_assertions: dict[str, tuple[str, str, str, set[str]]] = {}
+    for assertion_id, actor_id, acceptance, stored_hash, formula_digest in assertion_rows:
+        existing = found_assertions.setdefault(
+            assertion_id, (actor_id, acceptance, stored_hash, set())
+        )
+        previous_actor, previous_acceptance, previous_hash, linked_hashes = existing
+        if (actor_id, acceptance, stored_hash) != (
+            previous_actor, previous_acceptance, previous_hash
+        ):
+            raise RuntimeError(f"Existing demo assertion {assertion_id} has conflicting metadata.")
         if formula_digest is not None:
             linked_hashes.add(formula_digest)
-    for assertion_id, (stored_hash, linked_hashes) in found_assertions.items():
+    for assertion_id, (actor_id, acceptance, stored_hash, linked_hashes) in found_assertions.items():
+        if (actor_id, acceptance) != ("seed", "trusted_fixture"):
+            raise RuntimeError(f"Existing demo assertion {assertion_id} has different provenance.")
         if stored_hash != expected_assertions[assertion_id] or linked_hashes != {stored_hash}:
             raise RuntimeError(f"Existing demo assertion {assertion_id} has conflicting formula links.")
 

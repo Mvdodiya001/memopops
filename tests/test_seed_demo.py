@@ -76,7 +76,8 @@ def test_seed_preflight_refuses_formula_hash_content_conflict():
 def test_seed_preflight_refuses_assertion_link_conflict():
     items = expected_formulas()
     graph = PreflightGraph(
-        assertions=[[items[0]["assertion_id"], items[0]["formula_hash"], "wrong-hash"]]
+        assertions=[[items[0]["assertion_id"], "seed", "trusted_fixture",
+                     items[0]["formula_hash"], "wrong-hash"]]
     )
 
     with pytest.raises(RuntimeError, match="conflicting formula links"):
@@ -91,4 +92,15 @@ def test_seed_preflight_refuses_evidence_content_conflict():
     )
 
     with pytest.raises(RuntimeError, match="different immutable contents"):
+        verify_existing_seed_records(graph, expected_formulas(), "knowledge-hash")
+
+
+def test_seed_preflight_refuses_untrusted_existing_assertion():
+    item = expected_formulas()[0]
+    graph = PreflightGraph(
+        assertions=[[item["assertion_id"], "agent-1", "model_proposed",
+                     item["formula_hash"], item["formula_hash"]]]
+    )
+
+    with pytest.raises(RuntimeError, match="different provenance"):
         verify_existing_seed_records(graph, expected_formulas(), "knowledge-hash")
