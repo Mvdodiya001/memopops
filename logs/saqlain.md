@@ -154,12 +154,12 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 
 ## S-20261017-12
 
-- Updated: 2026-10-17T17:41:04+05:30
+- Updated: 2026-10-17T17:44:27+05:30
 - Human / agent: Saqlain / Codex
-- Status: in-progress
-- Branch / scope: `codex/saqlain/logic-core`; planned `scripts/benchmark_solver.py`, `docs/performance/` result artifact, and Saqlain/master logs.
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; `scripts/benchmark_solver.py`, `docs/performance/README.md`, raw result JSON, and Saqlain/master logs.
 - Objective and success criteria: create and run a reproducible benchmark following the verification plan's fixed workloads, warm-up, 100 samples and three independent runs; clearly identify solver-only scope and record actual runtime metadata/results.
 - Actions and decisions: keep database/API/certificate timing claims out of this report because FalkorDB is paused/unreachable and Docker is unavailable. Use a deterministic implication-chain workload and validate every answer as PROVED.
-- Validation: pending implementation and benchmark run.
+- Validation: smoke run passed at all four sizes. Full command `uv run --frozen --no-sync python scripts/benchmark_solver.py --output docs/performance/solver-baseline-2026-10-17.json` completed 10 warm-ups and 3×100 samples at 10, 50, 100, and 256 assertions. Every result was PROVED and no solver timed out. Combined nearest-rank p95 values were 12.220, 15.972, 19.260, and 29.591 ms respectively; p50 values were 8.591, 10.799, 12.522, and 20.513 ms. Recorded OS, CPU, Python, Z3 and benchmark source commit in the raw artifact. This excludes FalkorDB, API, certificate generation and independent checking.
 - Handoff: after this measurement, integrate Mahavir's UI/model/evaluation changes when available and complete local release checks before retrying hosted database work.
-- Publication: planned-work log commit pending; no PR.
+- Publication: benchmark source was pushed as `7c30d39`; results/report publication and verification pending. No PR.
