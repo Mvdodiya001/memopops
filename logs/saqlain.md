@@ -199,3 +199,15 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Validation: `uv run --locked pytest -q` (129 passed); `git diff --check` passed. Tests cover authenticated reads, role/workspace isolation, the 50-item bound, allowed status, request-data sanitization, and store query scoping/limit. The response excludes internal `actor_id` and does not invent conflicting assertion IDs.
 - Handoff: the endpoint is `GET /api/v1/workspaces/{workspace_id}/proposals?status=QUARANTINED&limit=50`, returning `{proposals:[{proposal_id,status,base_revision_id,reason,created_at,submitted_request}]}`. `apps/web/src/api/types.ts` still describes the earlier proposal shape and should be updated before UI consumes this route. Exact conflict cores and model-proposed submissions remain separate work.
 - Publication: endpoint and docs commit `6e2e25c` was pushed directly to `origin/main`; fetch confirmed it is an ancestor. No PR was created.
+
+## S-20261017-16
+
+- Updated: 2026-10-17T18:00:04+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/logic-core`; `compose.yaml`, `.env.example`, README and Saqlain/master logs.
+- Objective and success criteria: remove the moving `latest` database image from the local launch path and use the same FalkorDB release as the supplied hosted instance.
+- Actions and decisions: use the official v4.22.0 server image tag; do not start or connect a database while the user has it paused. Compose configuration parsing is the available local check.
+- Validation: `docker compose config --quiet` and `git diff --check` passed. Docker Compose configuration was parsed only; no database container was started.
+- Handoff: a Docker Engine start, seeded persistence/restart smoke, and hosted endpoint recheck remain required when the user resumes database work.
+- Publication: implementation and log commit pending direct push to `origin/main`; no PR.

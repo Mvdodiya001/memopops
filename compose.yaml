@@ -1,6 +1,6 @@
 services:
   falkordb:
-    image: ${FALKORDB_IMAGE:-falkordb/falkordb-server:latest}
+    image: ${FALKORDB_IMAGE:-falkordb/falkordb-server:v4.22.0}
     restart: unless-stopped
     environment:
       FALKORDB_PASSWORD: ${FALKORDB_PASSWORD:?Copy .env.example to .env and set FALKORDB_PASSWORD}
