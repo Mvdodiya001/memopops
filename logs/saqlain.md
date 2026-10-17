@@ -186,4 +186,16 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Actions and decisions: document only the command sequence actually exercised with the committed build and Chrome; do not conflate it with the hosted database restart gate.
 - Validation: the documented sequence passed locally: deterministic API harness, Vite preview, and Chrome CDP E2E query returned a verified `release_ready` result. The readme explicitly excludes FalkorDB persistence/restart and correction walkthrough claims.
 - Handoff: local smoke is repeatable; retain actual FalkorDB persistence and correction-flow rehearsal as separate release gates.
-- Publication: README and completion-log publication pending; no PR.
+- Publication: README/runbook commit `af58ed0` is on `origin/main`; fetch and ancestor verification succeeded. No PR was created.
+
+## S-20261017-15
+
+- Updated: 2026-10-17T17:54:14+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Branch / scope: `codex/saqlain/logic-core`; planned `src/memopops/store.py`, `src/memopops/api.py`, API/store tests, contract/README and Saqlain/master logs. No frontend edits.
+- Objective and success criteria: implement a bounded, workspace-scoped read endpoint for existing quarantined revision submissions so a review client can inspect the exact submitted request without exposing credentials or suggesting that a proposal is accepted.
+- Actions and decisions: return original validated mutation data as a pending submission; do not fabricate a minimal conflict core because the persistence format does not calculate one. Limit pages to 50 and restrict status to QUARANTINED.
+- Validation: pending.
+- Handoff: frontend review UI can consume the new `proposals` array and render the quarantined mutation/request reason; the route will not claim exact conflicting assertions.
+- Publication: planned-work log commit pending; no PR.
