@@ -18,7 +18,7 @@ export function App() {
     window.history[replace ? "replaceState" : "pushState"](null, "", next)
     setHref(window.location.href)
   }
-  if (location.source === "development") {
+  if (location.source === "development" && location.section !== "run") {
     return (
       <Suspense fallback={<p className="main">Loading development fixtures…</p>}>
         <FixtureApp location={location} navigate={navigate} />

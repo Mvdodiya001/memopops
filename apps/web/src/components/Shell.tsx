@@ -21,6 +21,7 @@ export function Shell(props: {
 }) {
   const [navOpen, setNavOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [focused, setFocused] = useState(false)
   const toneClass = props.connectionTone === "ok" ? "tone-positive" : props.connectionTone === "bad" ? "tone-conflict" : "tone-pending"
 
   function follow(event: MouseEvent<HTMLAnchorElement>, href: string) {
@@ -33,21 +34,21 @@ export function Shell(props: {
     <>
       <a className="skip" href="#content">Skip to content</a>
       {props.banner}
-      <div className="app">
+      <div className={`app ${focused ? "focus-mode" : ""}`}>
         <nav className={navOpen ? "nav open" : "nav"} aria-label="Workspace">
           <a className="brand" href={props.hrefForSection("memory")} onClick={(event) => follow(event, props.hrefForSection("memory"))}>
             <strong>memopops</strong>
             <span>Shared memory, with reasons.</span>
           </a>
           <ul className="nav-list">
-            {(["memory", "queries", "history"] as const).map((section) => (
+            {(["run", "memory", "queries", "history"] as const).map((section) => (
               <li key={section}>
                 <a
                   href={props.hrefForSection(section)}
                   aria-current={props.section === section ? "page" : undefined}
                   onClick={(event) => follow(event, props.hrefForSection(section))}
                 >
-                  {section === "memory" ? "Memory" : section === "queries" ? "Queries" : "History"}
+                  {section === "run" ? "Walkthrough" : section === "memory" ? "Memory graph" : section === "queries" ? "Queries" : "History"}
                 </a>
               </li>
             ))}
@@ -67,6 +68,7 @@ export function Shell(props: {
             <p className="meta">{props.subtitle}</p>
           </div>
           <div className="header-actions">
+            <button type="button" aria-pressed={focused} onClick={() => setFocused((value) => !value)}>{focused ? "Exit focus" : "Focus mode"}</button>
             <button className="menu-button" type="button" aria-expanded={navOpen} onClick={() => setNavOpen((open) => !open)}>
               Menu
             </button>
@@ -83,7 +85,7 @@ export function Shell(props: {
                 ))}
               </select>
             </label>
-            {props.historical ? <span className="pill historical">Earlier revision</span> : <span className="pill tone-neutral">Current</span>}
+            {props.section === "run" ? <span className="pill tone-neutral">Recorded run</span> : props.historical ? <span className="pill historical">Earlier revision</span> : <span className="pill tone-neutral">Observed current</span>}
             <button className="details-button" type="button" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
               Details
             </button>

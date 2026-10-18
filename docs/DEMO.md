@@ -1,5 +1,7 @@
 # Demo storyboard (about 3.5 minutes)
 
+The [visual frontend guide](FRONTEND_GUIDE.md) explains the live graph, recorded-run chapters, Focus mode, and how to import a completed take for the video. Preserve actual mode/source labels when recording.
+
 Use the expanded [recording plan and implementation notes](plan/VIDEO_DEMO_PLAN.md), [3:30 narration](submission/VIDEO.md), and [execution gates](submission/PLAN.md) for final production. Full local startup is in [LOCAL_SETUP.md](submission/LOCAL_SETUP.md).
 
 `scripts/demo_video.py` now stages the complete correction flow. With `--model live`, Gemini Flash chooses calls from the bounded reader/writer tool declarations and the existing `AgentSession` validates and executes them. If the model is unavailable, that scene falls back to deterministic replay and prints **Scripted replay**. Keep the printed mode label visible in the recording; never describe fallback footage as live model output.

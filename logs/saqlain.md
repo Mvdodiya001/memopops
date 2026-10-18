@@ -263,3 +263,18 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Outcome: created docs/plan/FRONTEND_VISUALIZATION_PLAN.md with screen specifications, Apple-inspired visual tokens, truthful live/API versus recorded-artifact provenance, exact producer mappings, graph projection/layout rules, polling/cache requirements, file-level packets, optional two-agent ownership, acceptance matrix, and a four-minute recording storyboard. No application files changed.
 - Validation: current base passed 154 pytest tests, 40 checker tests, 8 web tests, TypeScript checking, production build, and 4/4 in-memory lab acceptance. No new browser review, exhaustive code audit, or live FalkorDB/Gemini run was performed. Documentation diff and scoped publication checked separately.
 - Handoff: implementation remains pending user instruction; use the new plan's final handoff prompt. Preserved the pre-existing submission-flow documentation stash without applying it.
+
+## S-20261018-04
+
+- Updated: 2026-10-18T14:26:37+05:30
+- Human / agent: Saqlain / Codex
+- Status: in-progress
+- Branch: codex/saqlain/frontend-visualization
+- Scope: apps/web frontend models, read adapters, live graph, recorded walkthrough, browser tests and documentation; no backend or terminal behavior changes.
+- Success criteria: implement the approved visualization plan, verify graph/replay provenance and regression gates, visually inspect, and directly publish validated work.
+- Completion: 2026-10-18T14:56:37+05:30. Status: completed (implementation and local verification).
+- Changes: deterministic API-record graph with evidence/formula views, exact query-support joins, recorded persisted decision links, accessible record browser, revision membership comparison and paginated impact/history. Added visible-page polling with bounded failure backoff, protected cache isolation, pin/follow behavior and explicit refresh recovery. Existing query controls retain their submitted formula and historical context.
+- Recorded walkthrough: bounded local import of current runner artifacts, nine manually navigable chapters, actual scene mode/fallback labels, partial/malformed/conflicting input handling, offline snapshots and guarded API enrichment. Unknown abstention creates no visual persisted decision. Focus mode, responsive layouts, reduced motion, and a recording guide complete the presentation workflow.
+- Verification: 154 pytest tests; 40 checker tests; 28 frontend tests; TypeScript check; production build; compileall; 4/4 lab acceptance passed. Original Chrome live-query smoke and the new guarded visualization browser check passed. The latter exercised quarantine without a head change, head following, pinned history, impact, all nine chapters, malformed-import recovery, widths 1920/1440/1024/390, reduced motion, no browser exceptions, and zero replay mutation requests. Screenshots were visually inspected under ignored .artifacts/frontend-browser.
+- Boundaries: production backend, agent/terminal runner, solver/checker, database schema, and dependency locks unchanged. Browser integration uses isolated synthetic LabSnapshotStore data and actual DemoRunner-generated artifacts. A separate read-only FalkorDB check returned ConnectionError; real-service recording/rehearsal remains unverified here. No database reset, deployment, uploaded media, PR, or secret/config publication occurred.
+- Handoff: docs/FRONTEND_GUIDE.md documents startup, explicit API origin, importing a take, Focus mode, and guarded browser checks. User can connect to the live API or open /run offline. Optional automatic playback, directory watching, AST trees, and large-graph layout remain deferred as planned. Existing submission-flow documentation stash is preserved.

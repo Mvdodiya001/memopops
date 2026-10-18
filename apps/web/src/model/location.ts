@@ -1,4 +1,4 @@
-export type Section = "memory" | "queries" | "history"
+export type Section = "run" | "memory" | "queries" | "history"
 export type DataSource = "api" | "development"
 export type FixturePreview = "empty" | "error"
 
@@ -11,12 +11,13 @@ export type AppLocation = {
   preview: FixturePreview | null
 }
 
-const SECTIONS: readonly Section[] = ["memory", "queries", "history"]
+const SECTIONS: readonly Section[] = ["run", "memory", "queries", "history"]
 
 export function parseLocation(url: URL): AppLocation {
   const parts = url.pathname.split("/").filter(Boolean)
   let workspaceId: string | null = null
   let section: Section = "memory"
+  if (parts[0] === "run") section = "run"
   if (parts[0] === "w" && parts[1]) {
     workspaceId = decodeURIComponent(parts[1])
     if (isSection(parts[2])) section = parts[2]
@@ -37,7 +38,7 @@ export function parseLocation(url: URL): AppLocation {
 export function hrefFor(current: URL, patch: Partial<AppLocation>): string {
   const next: AppLocation = { ...parseLocation(current), ...patch }
   const url = new URL(current.origin)
-  url.pathname = next.workspaceId ? `/w/${encodeURIComponent(next.workspaceId)}/${next.section}` : "/"
+  url.pathname = next.workspaceId ? `/w/${encodeURIComponent(next.workspaceId)}/${next.section}` : next.section === "run" ? "/run" : "/"
   if (next.revisionId) url.searchParams.set("revision", next.revisionId)
   if (next.selectedId) url.searchParams.set("selected", next.selectedId)
   if (next.source === "development") url.searchParams.set("source", "development")

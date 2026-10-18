@@ -112,9 +112,9 @@ export async function getMemory(workspaceId: string, revisionId: string, options
   return normalizeMemory(payload)
 }
 
-export async function getHistory(workspaceId: string, options?: RequestOptions): Promise<HistoryDocument> {
+export async function getHistory(workspaceId: string, options?: RequestOptions, beforeSequence?: string): Promise<HistoryDocument> {
   const payload = await request<{ items?: RevisionRecord[]; revisions?: RevisionRecord[]; next_cursor?: number | string | null }>(
-    workspacePath(workspaceId, "/revisions"),
+    workspacePath(workspaceId, `/revisions${beforeSequence ? `?before_sequence=${encodeURIComponent(beforeSequence)}` : ""}`),
     options,
   )
   const items = payload.items ?? payload.revisions ?? []
@@ -132,12 +132,18 @@ export function getCertificate(workspaceId: string, queryId: string, options?: R
   return request(workspacePath(workspaceId, `/queries/${encodeURIComponent(queryId)}/certificate`), options)
 }
 
+export function getQueryResult(workspaceId: string, queryId: string, options?: RequestOptions): Promise<QueryResponse> {
+  return request(workspacePath(workspaceId, `/queries/${encodeURIComponent(queryId)}`), options)
+}
+
 export function getRevisionImpact(
   workspaceId: string,
   revisionId: string,
   options?: RequestOptions,
+  before?: string,
 ): Promise<ImpactDocument> {
   const query = new URLSearchParams({ revision: revisionId, limit: "50" })
+  if (before) query.set("before", before)
   return request(workspacePath(workspaceId, `/impact?${query}`), options)
 }
 

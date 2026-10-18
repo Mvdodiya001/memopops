@@ -1,6 +1,6 @@
 # Frontend visualization and recording plan
 
-Status: proposed; implementation awaits the user's next instruction. Owner: Saqlain. Task: S-20261018-03. Audited base: `8172f64` on October 18, 2026. This document is the handoff for the next implementation agent; it does not claim these screens already exist.
+Status: frontend implementation delivered in S-20261018-04 after user authorization. See the [frontend guide](../FRONTEND_GUIDE.md) and Saqlain's log for usage, verification, and live-service limitations. Planning owner: Saqlain. Planning task: S-20261018-03. Audited planning base: `8172f64` on October 18, 2026. The specification below preserves the intended design and optional enhancements.
 
 ## 1. Product direction and scope
 
@@ -374,4 +374,4 @@ Copy this prompt to the implementing agent:
 
 > Implement `docs/plan/FRONTEND_VISUALIZATION_PLAN.md` against the latest main. First read AGENTS.md, current handoffs, and the actual demo/API producers. Work for the human assigned in your chat and create the matching task branch. Keep backend, solver, checker, graph schema, agent logic, and terminal runner unchanged. Build the live memory graph and explicitly labelled recorded-run walkthrough in the existing React app. Follow the packet order and provenance rules, preserve old links/forms, and use runtime revisions. Run the specified checks, inspect the UI in a browser, and report separately what was tested with synthetic data versus real FalkorDB. Update your own log and the concise master log. When implementation is authorized, commit only scoped files and push directly to main following the integration rules; do not create a PR or deploy the app.
 
-Publication of this planning document authorizes no implementation by itself. The next agent should start implementation when instructed by the user.
+The user subsequently authorized implementation. Follow the frontend guide for the delivered experience; optional enhancements and real-service recording checks remain subject to the stated scope and evidence requirements.

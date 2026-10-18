@@ -4,6 +4,8 @@ import type { Formula, QueryResponse } from "../api/types"
 import { ConflictDialog } from "../components/ConflictDialog"
 import { ResultCard } from "../components/ResultCard"
 import { Shell } from "../components/Shell"
+import { GraphCanvas } from "../components/GraphCanvas"
+import { projectMemory } from "../visualization/graph"
 import {
   DEMO_WORKSPACE_ID,
   FIXTURE_NOTICE,
@@ -108,6 +110,8 @@ export function FixtureApp(props: {
               removed={diff.removed.map((item) => assertionTitle(item.formula, atoms))}
             />
           ) : (
+            <>
+            {memory && <GraphCanvas graph={projectMemory(memory, { source: "derived" })} title="Development memory graph" />}
             <MemorySection
               count={memory?.assertions.length ?? 0}
               assertions={memory?.assertions ?? []}
@@ -118,6 +122,7 @@ export function FixtureApp(props: {
               onSelect={(id) => go({ selectedId: id, section: "memory" })}
               onReview={() => setConflictOpen(true)}
             />
+            </>
           )
         }
         inspector={
