@@ -90,7 +90,7 @@ Earlier text said publication was pending; the live UI integration was already m
 
 ## M-20261018-02
 
-- Updated: 2026-10-18T13:46:45+05:30
+- Updated: 2026-10-18T13:47:59+05:30
 - Human / agent: Mahavir / Cursor
 - Status: ready-for-review
 - Branch / scope: `codex/mahavir/adaptive-video-demo`; `scripts/demo_video.py`, its focused tests, demo documentation, and logs. No API, store, solver, checker, or schema changes.
@@ -99,3 +99,4 @@ Earlier text said publication was pending; the live UI integration was already m
 - Actions and decisions: the runner now discovers and validates the current canonical baseline through the API, carries that revision through operator writes and graph queries, names certificate artifacts from the runtime revision, and exposes `--reset` to delete/reseed only `workspace_demo`. Canonical atom/assertion names remain intentional scenario inputs; endpoints, credentials, model mode, take, and baseline revision are runtime values.
 - Validation: adaptive focused tests passed (9); the complete scripted nine-scene flow passed against local FalkorDB/API using `--reset`, including quarantine, correction, impact, stale-decision recovery, valid/tampered proofcheck exits 0/1, and dynamic graph queries; the workspace was reset to the canonical baseline afterward. `./scripts/verify_release.sh` passed 153 pytest, 40 checker tests, web typecheck, 8 Vitest tests, production build, and 4/4 acceptance. Node 20 still emits the existing Vitest Node 22.12+ engine warning.
 - Handoff: for repeat takes use `scripts/demo_video.py ... --reset`; omit `--reset` to preserve the current graph. Environment variables intentionally override `.env`, so clear stale exported FalkorDB settings or pass the active host/port explicitly.
+- Publication: implementation committed locally as `6540ef3`; the branch was current with `origin/main` and passed the post-merge release gate, but push remains blocked because this checkout has no GitHub HTTPS credentials.
