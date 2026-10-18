@@ -64,9 +64,14 @@ $env:MEMOPOPS_AUTH_TOKENS = '{"reader-token":{"workspace_id":"workspace_demo","r
 uv run --locked python -m scripts.run_agent_demo --mode lab --output .artifacts/agent-demo
 ```
 
-This module invocation and explicit fixture configuration were checked on October 18. The current remote runner performs only the initial reader session; the full real-API correction/resume recording requires the staged work in the submission plan.
+This module invocation and explicit fixture configuration were checked on October 18. For the full real-API correction/resume recording, use the narrated runner:
 
-See [docs/evaluation/README.md](docs/evaluation/README.md). Live model calls stay off unless `MEMOPOPS_MODEL_API_KEY` is set in the gitignored `.env` file. A key alone selects `gemini-flash-latest` and POSTs to Google's `generateContent` API with `X-goog-api-key`. The reply is plain text; the reader and writer tool loop stays on scripted replay. Scripted replay remains the default when that key is absent.
+```bash
+PYTHONPATH=.:src:packages/proofcheck/src uv run --locked python scripts/demo_video.py \
+  --api-base http://127.0.0.1:8001 --model live --pause --take 1
+```
+
+See [docs/evaluation/README.md](docs/evaluation/README.md). Live model calls stay off unless `MEMOPOPS_MODEL_API_KEY` is set in the gitignored `.env` file. The video runner selects `gemini-flash-latest` and uses Google's native `generateContent` function-calling API with `X-goog-api-key`. Gemini can choose only the bounded functions declared for its reader or writer role; the existing `AgentSession` still validates every call, enforces role and revision guards, and caps tool steps. If the key or model is unavailable, the runner labels that scene **Scripted replay** and uses the deterministic fallback.
 
 The live web inspector can list quarantined proposals (`GET /proposals`) and record reader decisions after a verified query at the current head.
 
@@ -95,4 +100,4 @@ Each person should use their own clone and task branch. Do not run concurrent ag
 
 ## AI assistance and demonstration mode
 
-AI coding assistants supported planning, implementation, tests, UI, and documentation. The [activity logs](logs/MASTER.md) record the work and verification results. The team remains responsible for the submission and its technical claims. The agent workflow is scripted replay unless explicitly labeled otherwise; the optional live model client currently generates plain text rather than driving the tool loop. Demo observations are synthetic. A logical proof is conditional on accepted premises and does not establish their factual truth.
+AI coding assistants supported planning, implementation, tests, UI, and documentation. The [activity logs](logs/MASTER.md) record the work and verification results. The team remains responsible for the submission and its technical claims. Each demo scene is labeled live Gemini function calling or scripted replay; neither mode bypasses service validation. Demo observations are synthetic. A logical proof is conditional on accepted premises and does not establish their factual truth.

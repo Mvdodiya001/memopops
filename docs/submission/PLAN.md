@@ -4,7 +4,7 @@ Prepared October 18, 2026, around 11:50 IST, against implementation commit `e9bd
 
 ## Decision
 
-Submit **memopops — Proof-Carrying Memory for AI Agents** to **Track 02: Agent Memory and Coordination**. Tell one story: a reader makes a decision from shared memory, a test report is corrected, and the reader must reconsider using the new revision. Use a local FalkorDB-backed application and explicitly labeled scripted agents. The current model client generates plain text; it is not a live tool-calling writer/reader loop.
+Submit **memopops — Proof-Carrying Memory for AI Agents** to **Track 02: Agent Memory and Coordination**. Tell one story: a reader makes a decision from shared memory, a test report is corrected, and the reader must reconsider using the new revision. Use the configured hosted FalkorDB-backed application. `scripts/demo_video.py --model live` uses Gemini Flash native function calling through the guarded `AgentSession`; every scene prints a truthful live-model or scripted-replay label.
 
 Deliver a 3:30 narrated YouTube demonstration, a public technical blog, complete local setup, an implemented graph model with Cypher examples, and concise form answers. Video duration is our editorial choice, not an organizer-imposed limit.
 
@@ -22,7 +22,7 @@ The [official rules](https://www.wemakedevs.org/hackathons/falkordb/rules) allow
 | Graph model | Implemented storage differs from the original planned operator-node model | Use [GRAPH_MODEL.md](GRAPH_MODEL.md) |
 | Local launch | Compose starts database/API; web runs separately | Rehearse [LOCAL_SETUP.md](LOCAL_SETUP.md) from a clean clone |
 | Demo startup | Direct-file runner fails importing `agents`; bare module invocation checks tokens before lab defaults | README now has a tested module + explicit synthetic-token workaround; improve default startup separately |
-| Remote replay | Only the first reader run executes; correction/resume is lab-only | Add real-API stages or rehearse separate operator/reader calls |
+| Narrated runner | `scripts/demo_video.py` includes reader, uncertainty, writer denial/operator quarantine, correction, resume, checker, and graph stages | Rehearse scripted and live modes against the hosted instance |
 | UI correction | UI adds atom assertions and displays proposals/history/impact | Use an operator API call for replacement; no replace UI exists |
 | Database | This audit did **not** start or contact one | Complete real correction/persistence checks before recording |
 | Video/blog | No public URLs created by this task | Record, upload, publish, check signed out |
@@ -32,7 +32,7 @@ The [official rules](https://www.wemakedevs.org/hackathons/falkordb/rules) allow
 
 - Keep the title above; avoid another concept rename.
 - Use synthetic release demo-42 data. Show both explicit policies: API availability plus passing tests implies readiness; failing tests implies not ready. The second rule is not inferred from the first.
-- Label automated roles as scripted replay. An operator activates trusted observations; writer credentials cannot promote accepted memory. A denied writer request is not a persisted quarantined proposal.
+- Keep the runner's per-scene label visible. An operator activates trusted observations; writer credentials cannot promote accepted memory. The runner shows writer denial, then a distinct operator validation call that persists the conflicting proposal as quarantined.
 - PROCEED/BLOCK receipts record decisions; they do not ship software.
 - Use separate checkouts. This is a proposed division of work, not a record of delegation or messages sent.
 
@@ -48,7 +48,7 @@ Saqlain prepares the real DB/API path and operator correction calls. Mahavir fix
 6. Run agent tooling on the **host**. The current API Dockerfile copies neither `agents/` nor `evaluation/`; do not document agent commands inside that image without updating and testing it.
 7. Set `MEMOPOPS_API_ORIGIN` to Compose's API port **8000**. Vite defaults to **8010**, the synthetic browser harness port.
 
-These are pre-recording tasks, not implementation changes made by this plan. Do not build a new live model framework today.
+The focused function-calling adapter and narrated runner are implemented in this branch. Do not expand them into a multi-provider model framework.
 
 ## 3. Establish real FalkorDB behavior — 60 minutes
 
@@ -107,6 +107,6 @@ Starting later: preserve the dependency order. Cut optional live model calls, gr
 ## Completion definitions
 
 - **Repository:** public access verified; local recipe rehearsed; implemented schema/core Cypher linked; AI disclosure present; claims match final code.
-- **Video:** real database flow, labeled replay mode, visible revision change, clear audio, accessible YouTube URL.
+- **Video:** real database flow, truthful live/replay labels, visible revision change, clear audio, accessible YouTube URL.
 - **Blog:** public post, original problem/story, implemented details, real images, evidence limits, source/video links, human review.
 - **Submission:** organizer confirmation retained and both humans checked all final fields. None of these becomes complete merely by having this plan.

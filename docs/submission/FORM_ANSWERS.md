@@ -14,7 +14,7 @@ memopops gives developers building multi-agent workflows a shared memory of acce
 
 FalkorDB stores revision membership, provenance, and the premise relationships used to find queries affected by a correction. An operator can replace an observation without deleting history, while a stale reader must refresh before recording a current decision.
 
-Our release-readiness example uses synthetic data and explicitly scripted agents. It demonstrates the intended workflow without claiming autonomous live model tool use. The repository includes the local setup, graph model, core Cypher, and reproducible checks.
+Our release-readiness example uses synthetic data. Labeled live scenes use Gemini Flash through bounded native function calls; any unavailable-model fallback is explicitly labeled scripted replay. The same guarded session and API validate both modes. The repository includes the setup, graph model, core Cypher, and reproducible checks.
 
 ## Track
 
@@ -64,7 +64,7 @@ The team should review these feedback drafts against its own experience before s
 
 Include this in README and the blog; the form currently has no separate disclosure field:
 
-> AI coding assistants supported planning, implementation, tests, UI, and documentation. The repository records the work and verification results in its activity logs. We remain responsible for the submission and its technical claims. The demonstrated agent workflow is scripted replay unless explicitly labeled otherwise.
+> AI coding assistants supported planning, implementation, tests, UI, and documentation. The repository records the work and verification results in its activity logs. We remain responsible for the submission and its technical claims. Each demonstrated agent scene is labeled live Gemini function calling or scripted replay.
 
 Both humans must understand and be able to explain the graph model, queries, revision guard, reasoning/checker boundary, and limits. Do not substitute an unsupported statement that every generated line was personally reviewed.
 

@@ -39,7 +39,7 @@ Do not say this is a real customer's release incident. The scenario is synthetic
 | 5. Correct the observation without rewriting history | 190 | Quarantine first, operator replacement, current-head guard, idempotent retry, stale decision rejection; real r2 impact screenshot |
 | 6. What a certificate establishes | 150 | Independent checker, witness/formula/context checks, tampering rejection; CLI provenance boundary |
 | 7. Verification and implementation lessons | 180 | Actual test table, lab-vs-DB distinction, honest weak-baseline scope, fresh-process runner bug and port mismatch found in audit |
-| 8. Limits and next steps | 100 | Bounded propositional model, trusted observations, scripted agents, no public deployment; repo/video/local-setup links and AI disclosure |
+| 8. Limits and next steps | 100 | Bounded propositional model, trusted observations, labeled Gemini/replay scenes, no public deployment; repo/video/local-setup links and AI disclosure |
 
 ## Technical facts to get right
 
@@ -57,7 +57,7 @@ Implementation details must match [GRAPH_MODEL.md](GRAPH_MODEL.md): formulas are
 
 The impact query examines results at the immediate parent revision. An affected old proof is still a historical proof of its original snapshot. Recomputing the new revision decides what changed; impact alone does not establish falsehood.
 
-The production memory path depends on FalkorDB; an explicit in-memory lab is used for tests. Do not claim lab passes prove database persistence. The optional Gemini client currently generates plain text; the constrained demo actions remain scripted. A model key does not turn this into a live autonomous workflow.
+The production memory path depends on FalkorDB; an explicit in-memory lab is used for tests. Do not claim lab passes prove database persistence. The video runner can use Gemini Flash through a bounded native function-calling adapter, but the service still validates roles, revisions, arguments, proofs, and decisions. Any model outage fallback is labeled scripted replay; neither mode is unrestricted autonomy.
 
 ## Evidence table for the draft
 
@@ -84,7 +84,7 @@ Use neutral backgrounds, readable labels, a single restrained accent, and descri
 
 1. Mahavir drafts the narrative and implemented UI/agent workflow while Saqlain establishes the real DB path.
 2. Saqlain reviews the Cypher, logic truth conditions, guarded write, and checker/context explanation against code.
-3. Add screenshots and a short observed-run paragraph only after the real rehearsal. State scripted mode and synthetic data in the article itself, not just a footer.
+3. Add screenshots and a short observed-run paragraph only after the real rehearsal. State each scene's live/replay mode and synthetic data in the article itself, not just a footer.
 4. Both humans replace generic language with their actual technical decisions and observations. Do not invent personal experiences, customer stories, pain points, or claims that every generated line was manually reviewed.
 5. Add the source repository, final YouTube link, local setup, and AI-assistance paragraph from [FORM_ANSWERS.md](FORM_ANSWERS.md).
 6. Read the post aloud once. Remove repetition, promotional adjectives, duplicated architecture summaries, and unmeasured superlatives.

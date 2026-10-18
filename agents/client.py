@@ -42,9 +42,30 @@ class MemoryClient:
             path += f"?revision_id={revision_id}"
         return self._request("GET", path)
 
+    def revisions(self) -> tuple[int, dict[str, Any]]:
+        return self._request("GET", f"/api/v1/workspaces/{self.workspace_id}/revisions")
+
+    def proposals(self) -> tuple[int, dict[str, Any]]:
+        return self._request(
+            "GET",
+            f"/api/v1/workspaces/{self.workspace_id}/proposals?status=QUARANTINED",
+        )
+
+    def impact(self, revision_id: str) -> tuple[int, dict[str, Any]]:
+        return self._request(
+            "GET",
+            f"/api/v1/workspaces/{self.workspace_id}/impact?revision={revision_id}&limit=50",
+        )
+
     def query_result(self, query_id: str) -> tuple[int, dict[str, Any]]:
         return self._request(
             "GET", f"/api/v1/workspaces/{self.workspace_id}/queries/{query_id}"
+        )
+
+    def certificate(self, query_id: str) -> tuple[int, dict[str, Any]]:
+        return self._request(
+            "GET",
+            f"/api/v1/workspaces/{self.workspace_id}/queries/{query_id}/certificate",
         )
 
     def submit_query(self, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:

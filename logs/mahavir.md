@@ -72,3 +72,17 @@ Earlier text said publication was pending; the live UI integration was already m
 
 - Active implementation tasks: **none** (M-20261017-01 through M-20261017-05 are **completed** and on `origin/main`).
 - Out of scope for this lane: hackathon registration, demo video/screenshots, optional FalkorDB restart smoke, optional live model demo — see `docs/SUBMISSION.md` and `docs/DEMO.md`.
+
+## M-20261018-01
+
+- Updated: 2026-10-18T13:03:05+05:30
+- Human / agent: Mahavir / Cursor
+- Status: ready-for-review
+- Branch / scope: `codex/mahavir/video-demo`; `agents/gemini_tools.py`, `scripts/demo_video.py`, `scripts/reset_demo_workspace.py`, focused tests, demo/readme documentation, and logs. Existing API, solver, store, checker, and UI behavior remain unchanged.
+- Objective: implement the approved video plan in `docs/plan/VIDEO_DEMO_PLAN.md`: Gemini Flash native function calling through the existing guarded `AgentSession`, a deterministic narrated scene runner with truthful scripted fallback, a safe retake reset, and reproducible demo documentation.
+- Success criteria: live and scripted scenes use the published service contracts; secrets never enter artifacts or tracked files; model calls remain bounded and role-scoped; tests cover adapter mapping and the scripted correction flow; `scripts/verify_release.sh` passes.
+- Actions and decisions: added a native Gemini function-calling adapter with per-role allowlists, function-response chaining, bounded retry/backoff, argument mapping into the unchanged `AgentSession` contract, and redacted transcript summaries. Added a nine-scene narrated runner, guarded reset of only `workspace_demo`, certificate tamper check, and graph-query artifacts. Writer credentials remain unable to activate memory; the demo shows denial followed by a distinct operator validation that quarantines the conflict. The uncertainty scene uses solver mode because UNKNOWN has no decisive certificate.
+- Validation: focused adapter/runner/agent tests passed (13); full pytest passed **152** tests; independent checker suite passed 40; web typecheck, 8 Vitest tests, production build, and 4/4 lab acceptance passed through `./scripts/verify_release.sh`. A live Gemini reader used `inspect_memory`, `query_conclusion`, and `record_decision` to produce `ship`/PROVED with no fallback. A full scripted run against real local FalkorDB covered all nine scenes, proofcheck exit 0, tampered proofcheck exit 1, and both Cypher queries; the guarded reset returned the demo graph to `rev_001`.
+- Known gap: a multi-scene live-model lab rehearsal completed the product outcomes but truthfully used scripted fallback for some scenes after transient model runtime errors; a separate live uncertainty scene completed UNKNOWN/abstain. Recording day must run the live dry run first and keep every live/replay banner visible.
+- Files: `agents/gemini_tools.py`, `agents/client.py`, `scripts/demo_video.py`, `scripts/reset_demo_workspace.py`, `tests/test_gemini_tools.py`, `tests/test_demo_video.py`, demo/submission/readme docs, `.env.example`, and logs. No secret file or key was changed or staged.
+- Handoff: review the terminal verbosity and narration, configure the hosted FalkorDB values privately, run reset plus scripted/live dry runs, then record with `--pause`. The video itself, screenshots, upload, signed-out check, and organizer submission remain human tasks.

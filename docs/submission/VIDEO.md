@@ -1,11 +1,11 @@
 # Video production plan and narration
 
-Target: **3 minutes 30 seconds**, 1920×1080, 30 fps, clear human narration. This is our chosen length; no fixed limit was found in the checked organizer rules. Use the real local API/FalkorDB stack. Keep a small label visible in automated segments: **Scripted replay · synthetic release data · FalkorDB local**.
+Target: **3 minutes 30 seconds**, 1920×1080, 30 fps, clear human narration. This is our chosen length; no fixed limit was found in the checked organizer rules. Use the real API with the configured hosted FalkorDB instance. Run `scripts/demo_video.py --model live --pause`; keep its **Live model: Gemini Flash, function calling** banner visible. If any scene falls back, its banner changes to **Scripted replay** and the edit/caption must preserve that label. All observations are synthetic.
 
 ## Prerequisites
 
 - All real-DB gates in [PLAN.md](PLAN.md) have passed, including correction, reader resume, and restart.
-- The staged real-API driver works. The current unmodified remote runner alone cannot perform the full sequence.
+- `scripts/demo_video.py` completes a scripted dry run and a live dry run against the prepared workspace. Its `summary.json` records whether a model fallback occurred.
 - Prepare browser tabs: live inspector, history/impact, repository graph notes. Prepare a terminal for concise sanitized stage output and certificate checking.
 - Connect reader/operator identities off camera. Keep private `.env`, bearer/API keys, database passwords, auth panels, and unrelated browser tabs outside the captured area.
 - Use a fresh deliberate demo environment or saved historical views. Do not delete the working graph/volume to get another take.
@@ -23,7 +23,7 @@ Target: **3 minutes 30 seconds**, 1920×1080, 30 fps, clear human narration. Thi
 | 2:00–2:30 | New reader process resumes saved journal. Show stale r1 decision rejected, reread r2, REFUTED + VERIFIED, BLOCK receipt. | “The reader resumes in a new process. Recording a current decision against the old head is rejected. After reading revision two, the readiness query is refuted, because our policy explicitly says failing tests block readiness. The reader records BLOCK against the new revision and query. No software deployment is performed.” |
 | 2:30–2:55 | Export certificate, run checker, show success; run against a separately corrupted copy and show rejection. | “The certificate is portable. The independent checker accepts the original mathematics and rejects a tampered copy. The standalone CLI labels provenance unverified unless it receives independently trusted context. The API's verified status also binds the proof to the revision it loaded.” |
 | 2:55–3:15 | Show implemented graph diagram/Cypher and a brief genuine post-restart retrieval. Cut labeled waiting time if necessary. | “FalkorDB holds revision membership, source evidence, and query-to-premise links. Those relationships power both memory reconstruction and correction impact. After restarting the local containers with the same volume, the new memory and the historical proof remain available.” |
-| 3:15–3:30 | Return to clean UI; repository and local-setup link in end frame. | “This demo uses scripted agents and synthetic observations. The logic is bounded and only as factual as its accepted premises. The public repository includes the graph queries, independent checker, measured checks, and complete local setup for reproducing the workflow.” |
+| 3:15–3:30 | Return to clean UI; repository and local-setup link in end frame. | “This demo uses Gemini Flash through bounded function calls, with clearly labeled scripted fallback if needed, and synthetic observations. The logic is bounded and only as factual as its accepted premises. The public repository includes the graph queries, independent checker, measured checks, and complete setup for reproducing the workflow.” |
 
 Only keep the restart sentence once that behavior is actually observed and captured. If a stage fails, fix/rehearse it; do not narrate a successful result over fixture footage.
 
@@ -66,7 +66,7 @@ Graph Hacks — Track 02: Agent Memory and Coordination
 Repository: https://github.com/Mvdodiya001/memopops
 Local setup: https://github.com/Mvdodiya001/memopops/blob/main/docs/submission/LOCAL_SETUP.md
 
-This demonstration uses synthetic release observations and explicitly scripted agent clients against a local FalkorDB-backed API. An operator corrects accepted memory; a resumed reader rechecks its decision against the new revision. No external release action or public application deployment is performed.
+This demonstration uses synthetic release observations. Labeled live scenes use Gemini Flash through bounded function calls; any fallback scene is labeled scripted replay. An operator corrects accepted memory; a resumed reader rechecks its decision against the new revision. No external release action or public application deployment is performed.
 
 FalkorDB stores memory revisions, provenance, and premise dependencies. Z3 supplies propositional reasoning, and a separate checker validates bounded certificates.
 

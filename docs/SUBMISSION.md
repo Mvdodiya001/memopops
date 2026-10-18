@@ -36,4 +36,4 @@ README discloses AI assistance for planning, implementation, tests, UI, and docu
 
 - Team registration on the organizer site.
 - Public deployment (local Compose + video is the supported fallback).
-- Live model tool-calling writer/reader. The current optional model client returns plain text; the demo tool loop is scripted.
+- A recorded and uploaded final video. The repository now includes a Gemini function-calling adapter and narrated runner; each recorded scene must retain its live-model or scripted-replay banner.
