@@ -21,6 +21,7 @@ Vite still defaults to port 8010 for the synthetic test harness. Set the origin 
 - **Show support:** open an existing query ID from the terminal or impact results. There is no query-list endpoint or feed of all agent calls. Only matching workspace/revision support is overlaid.
 - **Follow current head:** reads the next snapshot before changing the visible revision. Selecting a revision pins it. Refresh checks workspace, memory, quarantine, and history. Hidden-page polling pauses; failures back off.
 - **Queries:** retain existing submission, decision and certificate controls, with a new support graph. Results display the formula actually submitted, even after the input changes.
+- **Operator additions:** choose List with an operator connection, then supply an atom, reason, evidence URI, source excerpt, and observation time. Local time is converted to UTC. Evidence IDs are assigned by the service. Decision suggestions are withheld when certificate generation fails/exceeds budget; retries reuse the same decision identity.
 - **History:** compares a revision with its actual parent, then lists affected stored query dependencies with pagination. An affected result needs rechecking; a historical certificate remains bound to its original premises.
 
 Relationships are projections of available records, not a proof-step execution animation. Quarantine is outside accepted membership. Impact covers the selected revision's immediate parent according to the existing service semantics.

@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest"
 import { hrefFor, parseLocation } from "./location"
 
 describe("parseLocation", () => {
+  it("keeps malformed percent escapes from crashing the application", () => {
+    expect(parseLocation(new URL("http://localhost/w/%ZZ/memory")).workspaceId).toBeNull()
+    expect(parseLocation(new URL("http://localhost/w/team%20one/memory")).workspaceId).toBe("team one")
+  })
   it("opens a recorded run without an authenticated workspace and preserves existing routes", () => {
     expect(parseLocation(new URL("http://localhost/run")).section).toBe("run")
     expect(hrefFor(new URL("http://localhost/"), { section: "run" })).toBe("/run")

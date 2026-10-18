@@ -8,6 +8,7 @@ from agents.demo_memory import REVISION_ID, WORKSPACE_ID
 from agents.operator import inconsistent_failure_add, replace_passing_tests, submit_revision
 from agents.scripts import ScriptedFailureWriter, ScriptedReleaseReader
 from agents.session import AgentSession
+from agents.model import ScriptedActions
 from agents.transport import AsgiTransport
 from evaluation.acceptance import run_acceptance
 from evaluation.lab_store import LabSnapshotStore
@@ -32,6 +33,19 @@ def lab_env(monkeypatch):
     writer = MemoryClient(AsgiTransport(app), "writer-token", WORKSPACE_ID)
     operator = MemoryClient(AsgiTransport(app), "operator-token", WORKSPACE_ID)
     return store, reader, writer, operator
+
+
+@pytest.mark.parametrize("action", [
+    {"type": []},
+    {"type": "tool", "name": "query_conclusion", "arguments": {"revision_id": REVISION_ID, "query": {"op": "atom", "id": "release_ready"}, "proof_mode": []}},
+    {"type": "tool", "name": "record_decision", "arguments": {"expected_revision_id": REVISION_ID, "query_id": "missing", "choice": {}}},
+])
+def test_malformed_model_actions_are_rejected_without_crashing(lab_env, tmp_path, action):
+    store, reader, _writer, _operator = lab_env
+    session = AgentSession(client=reader, model=ScriptedActions([action]), role="reader", workspace_id=WORKSPACE_ID, mode="scripted_replay", journal_path=tmp_path / "malformed.json")
+    report = session.run()
+    assert report["events"][0]["outcome"] == "rejected"
+    assert not store._decision_receipts
 
 
 def test_scripted_reader_persists_proceed_decision(lab_env, tmp_path: Path):

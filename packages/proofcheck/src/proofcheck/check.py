@@ -199,7 +199,7 @@ def _parse_bundle(bundle: object, math: list[CheckError]) -> _Parsed | None:
     if bundle.get("semantics_version") != SEMANTICS_VERSION:
         math.append(CheckError("unsupported_version", "semantics_version must be boolean-v1."))
     result = bundle.get("result")
-    if result not in {"PROVED", "REFUTED"}:
+    if not isinstance(result, str) or result not in {"PROVED", "REFUTED"}:
         math.append(CheckError("malformed", "Certificate result must be PROVED or REFUTED."))
         return None
     workspace_id = require_id(bundle.get("workspace_id"), "workspace_id")

@@ -131,7 +131,7 @@ class AgentSession:
         stopped = "model_stop"
         while True:
             action = self.model.next_action(observation)
-            if not isinstance(action, dict) or action.get("type") in {None, "stop"}:
+            if not isinstance(action, dict) or action.get("type") in (None, "stop"):
                 break
             if self.executed_steps >= MAX_STEPS:
                 self._record(
@@ -288,7 +288,7 @@ class AgentSession:
                 "detail": "query requires a revision id and a Boolean AST",
             }
         proof_mode = arguments.get("proof_mode", "certificate")
-        if proof_mode not in {"certificate", "solver"}:
+        if not isinstance(proof_mode, str) or proof_mode not in {"certificate", "solver"}:
             return {"outcome": "rejected", "tool": "query_conclusion", "detail": "unknown proof mode"}
         key = arguments.get("idempotency_key") or f"q{self.executed_steps}{self.session_id[:8]}"
         if not isinstance(key, str) or _KEY_PATTERN.fullmatch(key) is None:
@@ -385,7 +385,7 @@ class AgentSession:
         choice = arguments["choice"]
         if not isinstance(expected, str) or not isinstance(query_id, str):
             return {"outcome": "rejected", "tool": "record_decision", "detail": "ids must be strings"}
-        if choice not in {"ship", "hold", "abstain"}:
+        if not isinstance(choice, str) or choice not in {"ship", "hold", "abstain"}:
             return {"outcome": "rejected", "tool": "record_decision", "detail": "choice must be ship, hold, or abstain"}
         status, workspace = self.client.workspace()
         if status != 200:

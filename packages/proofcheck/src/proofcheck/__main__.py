@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
         context = None
         if args.expected_context:
             context = json.loads(Path(args.expected_context).read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError, RecursionError) as exc:
         report = CheckReport(
             logical_valid=False,
             context_binding="UNVERIFIED",

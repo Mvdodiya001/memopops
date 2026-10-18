@@ -42,29 +42,30 @@ def main() -> None:
 
     if args.mode == "acceptance":
         report = run_acceptance(args.output)
-        print(json.dumps({"passed": sum(1 for c in report["cases"] if c["passed"]), "total": len(report["cases"])}, sort_keys=True))
+        passed = sum(1 for c in report["cases"] if c["passed"])
+        total = len(report["cases"])
+        print(json.dumps({"passed": passed, "total": total}, sort_keys=True))
+        if not total or passed != total:
+            raise SystemExit(1)
         return
 
-    tokens = _tokens_from_env()
-    reader_entry = tokens.get(args.reader_token_name)
-    if not isinstance(reader_entry, dict):
-        raise SystemExit(f"missing token {args.reader_token_name} in MEMOPOPS_AUTH_TOKENS")
-
     if args.mode == "lab":
-        os.environ.setdefault(
-            "MEMOPOPS_AUTH_TOKENS",
-            json.dumps(
-                {
-                    "reader-token": {"workspace_id": WORKSPACE_ID, "role": "reader"},
-                    "operator-token": {"workspace_id": WORKSPACE_ID, "role": "operator"},
-                }
-            ),
+        # This process uses only a local synthetic store, never the caller's identity.
+        os.environ["MEMOPOPS_AUTH_TOKENS"] = json.dumps(
+            {
+                "reader-token": {"workspace_id": WORKSPACE_ID, "role": "reader"},
+                "operator-token": {"workspace_id": WORKSPACE_ID, "role": "operator"},
+            }
         )
         store = LabSnapshotStore()
         app = create_app(store)
         reader = MemoryClient(AsgiTransport(app), "reader-token", WORKSPACE_ID)
         operator = MemoryClient(AsgiTransport(app), "operator-token", WORKSPACE_ID)
     else:
+        tokens = _tokens_from_env()
+        reader_entry = tokens.get(args.reader_token_name)
+        if not isinstance(reader_entry, dict):
+            raise SystemExit("The requested reader token is missing from MEMOPOPS_AUTH_TOKENS")
         reader = MemoryClient(UrlTransport(args.api_base), args.reader_token_name, reader_entry["workspace_id"])
         operator = MemoryClient(
             UrlTransport(args.api_base),

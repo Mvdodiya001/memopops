@@ -46,7 +46,7 @@ def generate_content_url(base_url: str | None, model_name: str) -> str:
     raw = (base_url or "").strip().rstrip("/")
     if raw.endswith(":generateContent"):
         return raw
-    if not raw or raw.endswith("/openai") or raw.endswith("/models"):
+    if not raw or raw.endswith("/openai"):
         root = DEFAULT_LIVE_BASE_URL
     else:
         root = raw

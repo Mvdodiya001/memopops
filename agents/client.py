@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Protocol
+from urllib.parse import quote, urlencode
 
 
 class MemoryTransport(Protocol):
@@ -21,6 +22,9 @@ class MemoryClient:
         self.token = token
         self.workspace_id = workspace_id
 
+    def _path(self, suffix: str = "") -> str:
+        return f"/api/v1/workspaces/{quote(self.workspace_id, safe='')}{suffix}"
+
     def _request(
         self, method: str, path: str, body: dict[str, Any] | None = None
     ) -> tuple[int, dict[str, Any]]:
@@ -34,51 +38,51 @@ class MemoryClient:
         raise last_error
 
     def workspace(self) -> tuple[int, dict[str, Any]]:
-        return self._request("GET", f"/api/v1/workspaces/{self.workspace_id}")
+        return self._request("GET", self._path())
 
     def memory(self, revision_id: str | None = None) -> tuple[int, dict[str, Any]]:
-        path = f"/api/v1/workspaces/{self.workspace_id}/memory"
+        path = self._path("/memory")
         if revision_id:
-            path += f"?revision_id={revision_id}"
+            path += "?" + urlencode({"revision_id": revision_id})
         return self._request("GET", path)
 
     def revisions(self) -> tuple[int, dict[str, Any]]:
-        return self._request("GET", f"/api/v1/workspaces/{self.workspace_id}/revisions")
+        return self._request("GET", self._path("/revisions"))
 
     def proposals(self) -> tuple[int, dict[str, Any]]:
         return self._request(
             "GET",
-            f"/api/v1/workspaces/{self.workspace_id}/proposals?status=QUARANTINED",
+            self._path("/proposals?status=QUARANTINED"),
         )
 
     def impact(self, revision_id: str) -> tuple[int, dict[str, Any]]:
         return self._request(
             "GET",
-            f"/api/v1/workspaces/{self.workspace_id}/impact?revision={revision_id}&limit=50",
+            self._path("/impact?") + urlencode({"revision": revision_id, "limit": 50}),
         )
 
     def query_result(self, query_id: str) -> tuple[int, dict[str, Any]]:
         return self._request(
-            "GET", f"/api/v1/workspaces/{self.workspace_id}/queries/{query_id}"
+            "GET", self._path(f"/queries/{quote(query_id, safe='')}")
         )
 
     def certificate(self, query_id: str) -> tuple[int, dict[str, Any]]:
         return self._request(
             "GET",
-            f"/api/v1/workspaces/{self.workspace_id}/queries/{query_id}/certificate",
+            self._path(f"/queries/{quote(query_id, safe='')}/certificate"),
         )
 
     def submit_query(self, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         return self._request(
-            "POST", f"/api/v1/workspaces/{self.workspace_id}/queries", body
+            "POST", self._path("/queries"), body
         )
 
     def submit_revision(self, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         return self._request(
-            "POST", f"/api/v1/workspaces/{self.workspace_id}/revisions", body
+            "POST", self._path("/revisions"), body
         )
 
     def submit_decision(self, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         return self._request(
-            "POST", f"/api/v1/workspaces/{self.workspace_id}/decisions", body
+            "POST", self._path("/decisions"), body
         )

@@ -23,6 +23,8 @@ def main() -> None:
     passed = sum(1 for item in report["cases"] if item.get("passed"))
     total = len(report["cases"])
     print(json.dumps({"suite": args.suite, "passed": passed, "total": total}, sort_keys=True))
+    if not total or passed != total:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

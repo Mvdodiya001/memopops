@@ -7,6 +7,12 @@ def atom(atom_id: str = "p") -> dict[str, str]:
     return {"op": "atom", "id": atom_id}
 
 
+@pytest.mark.parametrize("operator", [[], {}, ["and"], None, True, 17])
+def test_parser_rejects_non_string_operators_without_crashing(operator):
+    with pytest.raises(FormulaValidationError):
+        parse_formula({"op": operator}, {"p"})
+
+
 def test_parser_accepts_registered_atoms_and_canonicalizes_stably() -> None:
     value = {"op": "implies", "args": [atom("p"), atom("q")]}
     first = parse_formula(value, {"p", "q"})

@@ -176,7 +176,7 @@ export type MutationRequest = {
   expected_revision: string
   idempotency_key: string
   reason: string
-  acceptance: "human_confirmed" | "trusted_fixture" | "model_proposed"
+  acceptance: "human_confirmed" | "trusted_fixture"
   mutations: Array<
     | { op: "add"; assertion: MutationAssertion }
     | { op: "retract"; target_assertion_id: string }
@@ -187,7 +187,7 @@ export type MutationRequest = {
 export type MutationAssertion = {
   client_ref: string
   formula: Formula
-  evidence: Evidence[]
+  evidence: Array<Omit<Evidence, "id">>
 }
 
 export type MutationReceipt = {

@@ -19,7 +19,11 @@ export function parseLocation(url: URL): AppLocation {
   let section: Section = "memory"
   if (parts[0] === "run") section = "run"
   if (parts[0] === "w" && parts[1]) {
-    workspaceId = decodeURIComponent(parts[1])
+    try {
+      workspaceId = decodeURIComponent(parts[1])
+    } catch {
+      workspaceId = null
+    }
     if (isSection(parts[2])) section = parts[2]
   }
   const source: DataSource = url.searchParams.get("source") === "development" ? "development" : "api"

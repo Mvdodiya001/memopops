@@ -432,6 +432,57 @@ def test_query_requires_auth_and_returns_revision_bound_result(client):
     assert response.json()["created_at"].endswith("Z")
 
 
+def test_unknown_certificate_mode_checks_both_witnesses(client):
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json={**request_body({"op": "atom", "id": "q"}), "proof_mode": "certificate"},
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["result"] == "UNKNOWN"
+    assert body["witnesses_verified"] is True
+    assert body["certificate_id"] is None
+    assert body["proof_status"] == "NOT_REQUESTED"
+    assert body["witnesses"]["query_true"]["q"] is True
+    assert body["witnesses"]["query_false"]["q"] is False
+
+
+def test_unknown_certificate_mode_rejects_a_false_knowledge_witness(client, monkeypatch):
+    from concurrent.futures import Future
+    from memopops.solver import QueryEvaluation, QueryStatus
+
+    future = Future()
+    future.set_result(QueryEvaluation(
+        result=QueryStatus.UNKNOWN,
+        witnesses={"knowledge": {"p": True, "q": True}, "query_true": {"p": False, "q": True}, "query_false": {"p": True, "q": False}},
+    ))
+    monkeypatch.setattr(client._app.state.solver_executor, "submit", lambda *_args, **_kwargs: future)
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json={**request_body({"op": "atom", "id": "q"}), "proof_mode": "certificate"},
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    assert response.status_code == 500
+    assert "witness verification failed" in response.json()["detail"]
+    assert not client._app.state.memory_store.saved
+
+
+@pytest.mark.parametrize("operator", [[], {}])
+def test_malformed_query_operator_is_a_validation_error(client, operator):
+    response = client.post(
+        "/api/v1/workspaces/demo/queries",
+        json=request_body({"op": operator}),
+        headers={"Authorization": "Bearer reader-token"},
+    )
+    assert response.status_code == 422
+
+
+def test_unicode_workspace_mismatch_returns_not_found(client):
+    response = client.get("/api/v1/workspaces/%E6%B5%8B%E8%AF%95", headers={"Authorization": "Bearer reader-token"})
+    assert response.status_code == 404
+
+
 def test_certificate_query_is_independently_checked_and_exportable(client):
     headers = {"Authorization": "Bearer reader-token"}
     payload = request_body({"op": "atom", "id": "p"})

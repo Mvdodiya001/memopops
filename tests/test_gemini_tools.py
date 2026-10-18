@@ -43,6 +43,13 @@ def _actor(responses: list[dict], *, role: str = "reader") -> tuple[GeminiFuncti
     )
 
 
+@pytest.mark.parametrize("value", ["false", "true", 0, 1, None, [], {}])
+def test_rejects_non_boolean_negation_in_model_tool_arguments(value):
+    actor, _captured = _actor([_response("query_conclusion", {"revision_id": "rev_001", "atom_id": "release_ready", "negated": value})])
+    with pytest.raises(ValueError, match="negated"):
+        actor.next_action({"type": "start"})
+
+
 def test_maps_query_and_strips_rationale():
     actor, captured = _actor(
         [

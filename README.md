@@ -57,14 +57,13 @@ Scripted reader/writer sessions live in `agents/` and call the same published ro
 uv run --locked python -m evaluation.run --suite acceptance --output docs/evaluation/acceptance-run
 ```
 
-For the synthetic lab replay, run this from the repository root in a dedicated PowerShell terminal. These are local fixture tokens, not production credentials:
+For the synthetic lab replay, run this from the repository root. Lab mode configures its own process-local fixture identities and does not need production credentials:
 
 ```powershell
-$env:MEMOPOPS_AUTH_TOKENS = '{"reader-token":{"workspace_id":"workspace_demo","role":"reader"},"operator-token":{"workspace_id":"workspace_demo","role":"operator"}}'
 uv run --locked python -m scripts.run_agent_demo --mode lab --output .artifacts/agent-demo
 ```
 
-This module invocation and explicit fixture configuration were checked on October 18. For the full real-API correction/resume recording, use the narrated runner:
+This module invocation was checked on October 18. For the full real-API correction/resume recording, use the narrated runner:
 
 ```bash
 PYTHONPATH=.:src:packages/proofcheck/src uv run --locked python scripts/demo_video.py \

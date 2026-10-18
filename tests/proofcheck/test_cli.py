@@ -16,6 +16,14 @@ from bundles import chain_proved_bundle, context_for  # noqa: E402
 
 
 class CliTests(unittest.TestCase):
+    def test_excessive_json_nesting_is_reported_as_invalid_input(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "deep.json"
+            path.write_text("[" * 20000 + "0" + "]" * 20000, encoding="utf-8")
+            completed = self._command([str(path)])
+        self.assertEqual(completed.returncode, 2)
+        self.assertFalse(json.loads(completed.stdout)["logical_valid"])
+        self.assertNotIn("Traceback", completed.stderr)
     def test_valid_certificate_without_context_reports_unverified_provenance(self) -> None:
         report, code = self._run(chain_proved_bundle())
         self.assertEqual(code, 0)

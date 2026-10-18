@@ -64,6 +64,8 @@ def parse_formula(
             raise FormulaValidationError("each formula node must be an object with string keys")
 
         op = node.get("op")
+        if not isinstance(op, str):
+            raise FormulaValidationError("formula op must be a string")
         if op == "atom":
             if node.keys() != {"op", "id"}:
                 raise FormulaValidationError("atom nodes require exactly 'op' and 'id'")

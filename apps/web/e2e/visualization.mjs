@@ -133,6 +133,35 @@ try {
     "document.body.innerText.includes('Proof verified') && document.body.innerText.includes('Support for this result')",
   )
   await shot("query-support-1440")
+  // Lose one successful response: retry must reuse the original decision identity.
+  await evaluate(
+    `(() => { const original = window.fetch; let lose = true; window.__decisionKeys = []; window.fetch = async (input, init) => { if (init?.method === 'POST' && String(input).endsWith('/decisions')) { window.__decisionKeys.push(JSON.parse(init.body).idempotency_key); const response = await original(input, init); if (lose) { lose = false; throw new TypeError('Synthetic lost response'); } return response; } return original(input, init); }; })()`,
+  )
+  await click("button", "Record PROCEED decision")
+  await wait("document.body.innerText.includes('could not be reached')")
+  await click("button", "Record PROCEED decision")
+  await wait("document.body.innerText.includes('Recorded PROCEED')")
+  if (
+    !(await evaluate(
+      "window.__decisionKeys.length === 2 && window.__decisionKeys[0] === window.__decisionKeys[1]",
+    ))
+  )
+    throw new Error("Decision retry changed idempotency key")
+  // Inject a conservative certificate-budget response at the browser boundary.
+  await evaluate(
+    `(() => { const original = window.fetch; let pending = true; window.fetch = async (input, init) => { const response = await original(input, init); if (pending && init?.method === 'POST' && String(input).endsWith('/queries')) { pending = false; const body = await response.json(); body.proof_status = 'BUDGET_EXCEEDED'; body.certificate_id = null; return new Response(JSON.stringify(body), { status: response.status, headers: {'Content-Type': 'application/json'} }); } return response; }; })()`,
+  )
+  await click("button", "Check")
+  await wait("document.body.innerText.includes('A complete certificate was not generated')")
+  if (
+    await evaluate(
+      "[...document.querySelectorAll('button')].some(n => n.innerText.includes('Record PROCEED decision'))",
+    )
+  )
+    throw new Error("Unchecked certificate enabled a decision")
+  await fill("Atom", "docs_signed")
+  await click("button", "Check")
+  await wait("document.body.innerText.includes('Not established')")
   await click("a", "Memory graph")
   const auth = { "Content-Type": "application/json", Authorization: "Bearer local-operator-token" }
   const write = async (body) => {
@@ -216,6 +245,26 @@ try {
   await wait(
     `document.querySelector('.revision-control select').value === ${JSON.stringify(next.revision_id)}`,
   )
+  await click("button", "Disconnect")
+  await wait("document.body.innerText.includes('Connect to the memory service')")
+  await fill("Bearer token", "local-operator-token")
+  await click("button", "Connect")
+  await wait("document.body.innerText.includes('Accepted memory and its sources')")
+  await click("button", "List")
+  await wait("document.body.innerText.includes('Add memory')")
+  await fill("Reason", "Synthetic operator form observation")
+  await fill("Evidence URI", "fixture://browser/operator-form")
+  await evaluate(
+    `(() => { const input = [...document.querySelectorAll('label')].find(n => n.innerText.trim() === 'Evidence excerpt').querySelector('textarea'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, 'Synthetic observed source'); input.dispatchEvent(new Event('input', {bubbles:true})); })()`,
+  )
+  await fill("Observed at (local time)", "2026-10-18T12:00")
+  await click("button", "Submit for check")
+  await wait("document.body.innerText.includes('Synthetic observed source')")
+  const mutationBody = requests
+    .filter((r) => r.method === "POST" && r.url.endsWith("/revisions"))
+    .at(-1)?.postData
+  if (!mutationBody || JSON.parse(mutationBody).mutations[0].assertion.evidence.length !== 1)
+    throw new Error("Operator form omitted evidence")
   await click("button", "Disconnect")
   await wait("document.body.innerText.includes('Connect to the memory service')")
   await click("a", "Open a recorded walkthrough →")
@@ -311,6 +360,12 @@ try {
         passed: true,
         replayMutationRequests: mutations.length,
         browserExceptions: errors,
+        auditScenarios: [
+          "unknown-certificate-mode",
+          "unchecked-certificate-gate",
+          "decision-lost-response-idempotency",
+          "operator-evidence-form",
+        ],
         widths: [1920, 1440, 1024, 390],
         source: "synthetic LabSnapshotStore and scripted DemoRunner artifacts",
       },
@@ -319,7 +374,7 @@ try {
     ),
   )
   console.log(
-    "Visualization browser checks passed: live query/support, quarantine polling, head following, history impact, all recorded chapters, malformed import recovery, responsive focus, reduced motion and zero replay mutations.",
+    "Visualization browser checks passed: UNKNOWN certificate mode, decision retry identity, unchecked-certificate gating, operator evidence, live support, quarantine/head/history, recorded chapters, responsive focus, and zero replay mutations.",
   )
 } finally {
   socket?.close()

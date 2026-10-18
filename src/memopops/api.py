@@ -238,19 +238,19 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
         if not isinstance(configured, dict):
             raise HTTPException(status_code=503, detail="Authentication is misconfigured")
         for token, principal in configured.items():
-            if isinstance(token, str) and hmac.compare_digest(token, credentials.credentials):
+            if isinstance(token, str) and hmac.compare_digest(token.encode("utf-8"), credentials.credentials.encode("utf-8")):
                 if not isinstance(principal, dict):
                     break
                 workspace_id = principal.get("workspace_id")
                 role = principal.get("role")
-                if isinstance(workspace_id, str) and role in {"reader", "writer", "operator"}:
+                if isinstance(workspace_id, str) and isinstance(role, str) and role in {"reader", "writer", "operator"}:
                     actor_id = "actor_" + sha256(credentials.credentials.encode("utf-8")).hexdigest()[:16]
                     return {"workspace_id": workspace_id, "role": role, "actor_id": actor_id}
                 break
         raise HTTPException(status_code=401, detail="Invalid bearer token")
 
     def authorize_workspace(workspace_id: str, principal: dict[str, str]) -> None:
-        if not hmac.compare_digest(principal["workspace_id"], workspace_id):
+        if not hmac.compare_digest(principal["workspace_id"].encode("utf-8"), workspace_id.encode("utf-8")):
             raise HTTPException(status_code=404, detail="Workspace not found")
 
     @app.get("/api/v1/health/live")
@@ -795,7 +795,14 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             elif evaluation.result.value == "UNKNOWN":
                 check_started = monotonic()
                 report = check_witness_pair(
-                    [item["formula"] for item in trusted_memory["assertions"]],
+                    [
+                        {
+                            "id": item["id"],
+                            "formula": item["formula"],
+                            "evidence_ids": [evidence["id"] for evidence in item["evidence"]],
+                        }
+                        for item in trusted_memory["assertions"]
+                    ],
                     formula_to_json(formula),
                     evaluation.witnesses.get("query_true"),
                     evaluation.witnesses.get("query_false"),

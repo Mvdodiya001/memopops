@@ -21,6 +21,10 @@ def _clear_model_env(monkeypatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
+def test_custom_native_models_base_is_preserved():
+    assert generate_content_url("https://model-proxy.example/v1beta/models/", "test-model") == "https://model-proxy.example/v1beta/models/test-model:generateContent"
+
+
 def test_missing_key_keeps_scripted_replay(monkeypatch, tmp_path):
     _clear_model_env(monkeypatch)
     monkeypatch.setattr(model, "_LOCAL_ENV_PATH", tmp_path / "missing.env")

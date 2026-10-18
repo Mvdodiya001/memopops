@@ -377,6 +377,8 @@ class GeminiFunctionCallingModel:
         return action
 
     def _map_action(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        if name in {"query_conclusion", "propose_assertion"} and type(arguments.get("negated", False)) is not bool:
+            raise ValueError("negated must be a boolean; coercion could reverse the intended proposition")
         if name == "finish":
             summary = str(arguments.get("summary", "")).strip()
             if summary:

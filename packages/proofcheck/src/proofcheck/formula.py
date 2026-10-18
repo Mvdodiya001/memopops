@@ -56,6 +56,8 @@ def parse_formula(value: object) -> Formula:
         if extra:
             raise FormulaRejected("malformed", "Formula contains unknown properties.")
         op = node.get("op")
+        if not isinstance(op, str):
+            raise FormulaRejected("malformed", "Formula operator must be a string.")
         if op == "atom":
             if set(node) != {"op", "id"}:
                 raise FormulaRejected("malformed", "Atom formulas require op and id only.")

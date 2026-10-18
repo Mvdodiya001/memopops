@@ -45,6 +45,16 @@ class HashEnvelopeTests(unittest.TestCase):
 
 
 class CertificateTests(unittest.TestCase):
+    def test_malformed_enum_values_report_failure_instead_of_raising(self) -> None:
+        for value in ([], {}, ["PROVED"]):
+            with self.subTest(value=value):
+                bundle = chain_proved_bundle()
+                bundle["result"] = value
+                self.assertFalse(check_certificate(bundle).logical_valid)
+                bundle = chain_proved_bundle()
+                bundle["query"]["op"] = value
+                self.assertFalse(check_certificate(bundle).logical_valid)
+
     def test_shared_implies_formula_proves_itself(self) -> None:
         bundle = implies_query_bundle()
         report = check_certificate(bundle, context_for(bundle))

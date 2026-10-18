@@ -31,6 +31,7 @@ import { MemoryGraphView, QuerySupport } from "./MemoryGraphView"
 import { RunWalkthrough } from "../run/RunWalkthrough"
 import type { RunData } from "../run/parse"
 import { pollInterval, usePageVisible } from "./observation"
+import { suggestedDecision } from "../model/decision"
 import { presentResult, revisionLabel, sameRevision } from "../model/copy"
 import { assertionTitle, formatTimestamp, prettyFormula } from "../model/formula"
 import { hrefFor, type AppLocation, type Section } from "../model/location"
@@ -633,11 +634,14 @@ function AddMemory(props: {
   const [atomId, setAtomId] = useState(props.atoms[0]?.id ?? "")
   const [negated, setNegated] = useState(false)
   const [reason, setReason] = useState("")
+  const [evidenceUri, setEvidenceUri] = useState("")
+  const [evidenceExcerpt, setEvidenceExcerpt] = useState("")
+  const [observedAt, setObservedAt] = useState("")
   const [notice, setNotice] = useState("")
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
   useEffect(() => {
     setIdempotencyKey(crypto.randomUUID())
-  }, [atomId, negated, reason, props.revisionId])
+  }, [atomId, negated, reason, evidenceUri, evidenceExcerpt, observedAt, props.revisionId])
   const mutation = useMutation({
     mutationFn: () =>
       postRevision(
@@ -655,7 +659,13 @@ function AddMemory(props: {
                 formula: negated
                   ? { op: "not", arg: { op: "atom", id: atomId } }
                   : { op: "atom", id: atomId },
-                evidence: [],
+                evidence: [
+                  {
+                    uri: evidenceUri.trim(),
+                    excerpt: evidenceExcerpt.trim(),
+                    observed_at: new Date(observedAt).toISOString(),
+                  },
+                ],
               },
             },
           ],
@@ -722,12 +732,55 @@ function AddMemory(props: {
           required
         />
       </label>
+      <label className="revision-control">
+        <span>Evidence URI</span>
+        <input
+          type="text"
+          required
+          maxLength={2048}
+          value={evidenceUri}
+          onChange={(event) => setEvidenceUri(event.target.value)}
+          placeholder="https://… or fixture://…"
+        />
+      </label>
+      <label className="revision-control">
+        <span>Evidence excerpt</span>
+        <textarea
+          required
+          maxLength={2000}
+          value={evidenceExcerpt}
+          onChange={(event) => setEvidenceExcerpt(event.target.value)}
+        />
+      </label>
+      <label className="revision-control">
+        <span>Observed at (local time)</span>
+        <input
+          type="datetime-local"
+          required
+          value={observedAt}
+          onChange={(event) => setObservedAt(event.target.value)}
+        />
+      </label>
+      <p className="meta">
+        The observation time is saved in UTC. Evidence records the source; it does not certify its
+        factual accuracy.
+      </p>
       {notice ? (
         <p className="callout" role="status">
           {notice}
         </p>
       ) : null}
-      <button className="primary" type="submit" disabled={mutation.isPending || !reason.trim()}>
+      <button
+        className="primary"
+        type="submit"
+        disabled={
+          mutation.isPending ||
+          !reason.trim() ||
+          !evidenceUri.trim() ||
+          !evidenceExcerpt.trim() ||
+          !observedAt
+        }
+      >
         {mutation.isPending ? "Saving…" : "Submit for check"}
       </button>
     </form>
@@ -860,11 +913,13 @@ function LiveQuery(props: {
             />
           ) : null}
           <RecordDecision
+            key={visible.query_id}
             workspaceId={props.location.workspaceId}
             revisionId={visible.revision_id}
             headRevisionId={props.headRevisionId}
             queryId={visible.query_id}
             result={visible.result}
+            proofStatus={visible.proof_status}
             token={props.token}
           />
         </ResultCard>
@@ -880,12 +935,13 @@ function RecordDecision(props: {
   headRevisionId?: string
   queryId: string
   result: QueryResponse["result"]
+  proofStatus: QueryResponse["proof_status"]
   token: string
 }) {
   const [note, setNote] = useState("")
+  const [idempotencyKey] = useState(() => crypto.randomUUID())
   const atHead = props.headRevisionId === props.revisionId
-  const outcome =
-    props.result === "PROVED" ? "PROCEED" : props.result === "REFUTED" ? "BLOCK" : null
+  const outcome = suggestedDecision(props.result, props.proofStatus)
   const mutation = useMutation({
     mutationFn: () => {
       if (!outcome) throw new Error("unsupported result")
@@ -894,7 +950,7 @@ function RecordDecision(props: {
         {
           expected_revision: props.revisionId,
           query_id: props.queryId,
-          idempotency_key: crypto.randomUUID(),
+          idempotency_key: idempotencyKey,
           outcome,
           rationale:
             outcome === "PROCEED"
