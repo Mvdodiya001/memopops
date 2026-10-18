@@ -1,6 +1,8 @@
 # Video demo plan: Gemini-driven agents over proof-carrying memory
 
-Status: planned (2026-10-18). Owner: whoever picks up task `VIDEO-DEMO`. Read `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `logs/MASTER.md`, and your own log before starting. Fetch `origin` first: local `main` was 2 commits behind `origin/main` when this plan was written.
+Status: implemented and validated (2026-10-18) under `M-20261018-01`, with repeat-run portability corrected under `M-20261018-02`. This remains the design and recording rationale; current commands are in `docs/DEMO.md`.
+
+The `rev_001` references below describe the canonical seeded story, not a runner constraint. The implemented runner discovers its baseline revision from the API, validates that the canonical facts are present, and offers explicit `--reset` reseeding for repeat takes.
 
 This file is the single source of truth for the demo video. It is written so an agent that has never seen this repository can implement and record it. Human instructions for the current task take precedence.
 

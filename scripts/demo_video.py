@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from agents.client import MemoryClient
-from agents.demo_memory import REVISION_ID, WORKSPACE_ID
+from agents.demo_memory import ASSERTION_INPUTS, WORKSPACE_ID
 from agents.gemini_tools import GeminiFunctionCallingModel
 from agents.model import ScriptedActions
 from agents.operator import (
@@ -24,6 +24,7 @@ from agents.scripts import RELEASE_QUERY, ScriptedFailureWriter, ScriptedRelease
 from agents.session import AgentSession
 from agents.transport import UrlTransport
 from memopops.store import FalkorSnapshotStore, graph_name_for_workspace
+from scripts.reset_demo_workspace import reset_demo_workspace
 from scripts.seed_demo import load_local_env
 
 
@@ -39,15 +40,22 @@ WRITER_GOAL = (
     "tests_pass is false."
 )
 
-GRAPH_QUERIES = (
-    """MATCH (q:QueryResult {revision_id: 'rev_001'})-[:USES_PREMISE]->(a:Assertion)-[:ENCODES]->(f:Formula)
+EXPECTED_BASELINE_ASSERTIONS = {
+    assertion_id: formula for assertion_id, formula, _uri, _excerpt in ASSERTION_INPUTS
+}
+
+
+def graph_queries(revision_id: str) -> tuple[str, str]:
+    escaped_revision_id = revision_id.replace("\\", "\\\\").replace("'", "\\'")
+    return (
+        f"""MATCH (q:QueryResult {{revision_id: '{escaped_revision_id}'}})-[:USES_PREMISE]->(a:Assertion)-[:ENCODES]->(f:Formula)
 OPTIONAL MATCH (a)-[:SUPPORTED_BY]->(e:Evidence)
 RETURN q.id, a.id, f.canonical_json, e.uri
 ORDER BY a.id""",
-    """MATCH (r:Revision)-[:INCLUDES]->(a:Assertion)
+        """MATCH (r:Revision)-[:INCLUDES]->(a:Assertion)
 RETURN r.id, r.sequence, collect(a.id) AS members
 ORDER BY r.sequence""",
-)
+    )
 
 
 def pretty_formula(formula: dict[str, Any]) -> str:
@@ -144,6 +152,7 @@ class DemoRunner:
         }
         self.first_decision: dict[str, Any] | None = None
         self.first_query_id: str | None = None
+        self.baseline_revision_id: str | None = None
         self.new_revision_id: str | None = None
         self.gemini_transcript: list[dict[str, Any]] = []
 
@@ -153,6 +162,43 @@ class DemoRunner:
     def _wait(self) -> None:
         if self.pause:
             input("\nPress Enter for the next scene...")
+
+    def _discover_baseline(self) -> tuple[str, dict[str, Any]]:
+        workspace_status, workspace = self.reader.workspace()
+        if workspace_status != 200:
+            raise RuntimeError(f"workspace read failed with HTTP {workspace_status}")
+        head = workspace.get("head_revision_id")
+        if not isinstance(head, str) or not head:
+            raise RuntimeError("workspace has no current head revision")
+        memory_status, memory = self.reader.memory(head)
+        if memory_status != 200:
+            raise RuntimeError(f"memory read failed with HTTP {memory_status}")
+        actual = {
+            item.get("id"): item.get("formula")
+            for item in memory.get("assertions", [])
+            if isinstance(item, dict)
+        }
+        missing_or_changed = sorted(
+            assertion_id
+            for assertion_id, formula in EXPECTED_BASELINE_ASSERTIONS.items()
+            if actual.get(assertion_id) != formula
+        )
+        unexpected = sorted(set(actual) - set(EXPECTED_BASELINE_ASSERTIONS))
+        if missing_or_changed or unexpected:
+            raise RuntimeError(
+                f"workspace head {head!r} is not the canonical demo baseline "
+                f"(missing or changed: {missing_or_changed}; unexpected: {unexpected}); "
+                "rerun with --reset"
+            )
+        self.baseline_revision_id = head
+        self.summary["baseline_revision_id"] = head
+        return head, memory
+
+    def _baseline(self) -> str:
+        if self.baseline_revision_id is None:
+            self._discover_baseline()
+        assert self.baseline_revision_id is not None
+        return self.baseline_revision_id
 
     def _print_session(
         self,
@@ -278,14 +324,9 @@ class DemoRunner:
         health_status, health = self.reader.transport.request(
             "GET", "/api/v1/health/ready", None, self.reader.token
         )
-        workspace_status, workspace = self.reader.workspace()
-        if health_status != 200 or workspace_status != 200:
-            raise RuntimeError(f"preflight failed: health={health_status}, workspace={workspace_status}")
-        head = workspace.get("head_revision_id")
-        if head != REVISION_ID:
-            raise RuntimeError(
-                f"workspace head is {head!r}, expected {REVISION_ID!r}; run reset_demo_workspace.py"
-            )
+        if health_status != 200:
+            raise RuntimeError(f"preflight failed: health={health_status}")
+        head, _memory = self._discover_baseline()
         graph_name = graph_name_for_workspace(WORKSPACE_ID)
         result = {
             "health": health.get("status"),
@@ -298,8 +339,9 @@ class DemoRunner:
         return result
 
     def scene_memory(self) -> dict[str, Any]:
-        self._header(1, "Accepted memory at rev_001")
-        status, memory = self.reader.memory(REVISION_ID)
+        baseline = self._baseline()
+        self._header(1, f"Accepted memory at {baseline}")
+        status, memory = self.reader.memory(baseline)
         if status != 200:
             raise RuntimeError(f"memory read failed with HTTP {status}")
         for assertion in memory.get("assertions", []):
@@ -316,7 +358,8 @@ class DemoRunner:
         }
 
     def scene_reader(self) -> dict[str, Any]:
-        self._header(2, "Reader decides at rev_001")
+        baseline = self._baseline()
+        self._header(2, f"Reader decides at {baseline}")
         session, result = self._run_fresh(
             client=self.reader,
             role="reader",
@@ -336,6 +379,7 @@ class DemoRunner:
 
     def scene_uncertain(self) -> dict[str, Any]:
         self._header(3, "Unknown stays unknown")
+        self._baseline()
         session, result = self._run_fresh(
             client=self.reader,
             role="reader",
@@ -352,6 +396,7 @@ class DemoRunner:
 
     def scene_writer(self) -> dict[str, Any]:
         self._header(4, "Writer proposal and quarantine")
+        baseline = self._baseline()
         _session, writer_result = self._run_fresh(
             client=self.writer,
             role="writer",
@@ -362,7 +407,7 @@ class DemoRunner:
         print("Writer credentials cannot activate memory. Operator submits the observation for validation.")
         status, quarantined = submit_revision(
             self.operator,
-            expected_revision=REVISION_ID,
+            expected_revision=baseline,
             idempotency_key=f"video-quarantine-{self.take}",
             reason="Review the writer's synthetic failed-tests observation.",
             mutations=inconsistent_failure_add(),
@@ -383,9 +428,10 @@ class DemoRunner:
 
     def scene_correction(self) -> dict[str, Any]:
         self._header(5, "Operator correction and impact")
+        baseline = self._baseline()
         status, committed = submit_revision(
             self.operator,
-            expected_revision=REVISION_ID,
+            expected_revision=baseline,
             idempotency_key=f"video-correction-{self.take}",
             reason="Operator replaces the passing test report after the reader decision.",
             mutations=replace_passing_tests(),
@@ -467,7 +513,12 @@ class DemoRunner:
         status, bundle = self.reader.certificate(self.first_query_id)
         if status != 200:
             raise RuntimeError(f"certificate export failed with HTTP {status}")
-        valid_path = self.output / "certificate-rev_001.json"
+        baseline = self._baseline()
+        safe_revision = "".join(
+            character if character.isalnum() or character in "._-" else "_"
+            for character in baseline
+        )
+        valid_path = self.output / f"certificate-{safe_revision}.json"
         valid_path.write_text(_json(bundle) + "\n", encoding="utf-8")
         valid = subprocess.run(
             [sys.executable, "-m", "proofcheck", str(valid_path)],
@@ -512,8 +563,9 @@ class DemoRunner:
 
     def scene_graph(self) -> dict[str, Any]:
         self._header(8, "FalkorDB dependency graph")
+        queries = graph_queries(self._baseline())
         (self.output / "graph-queries.cypher").write_text(
-            "\n\n".join(GRAPH_QUERIES) + "\n",
+            "\n\n".join(queries) + "\n",
             encoding="utf-8",
         )
         if self.store_factory is None:
@@ -523,7 +575,7 @@ class DemoRunner:
         rows: list[list[Any]] = []
         try:
             graph = store._get_client().select_graph(graph_name_for_workspace(WORKSPACE_ID))
-            for query in GRAPH_QUERIES:
+            for query in queries:
                 print("\nCypher:\n" + query)
                 result = graph.query(query).result_set
                 rows.append(result)
@@ -583,6 +635,11 @@ def main() -> None:
     parser.add_argument("--api-base", default="http://127.0.0.1:8001")
     parser.add_argument("--model", choices=["live", "scripted"], default="scripted")
     parser.add_argument("--pause", action="store_true")
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Delete and reseed only workspace_demo before this run.",
+    )
     parser.add_argument("--take", default="1")
     parser.add_argument("--output", type=Path, default=Path(".artifacts/video-demo"))
     parser.add_argument("--scenes", default="all")
@@ -592,6 +649,8 @@ def main() -> None:
     args = parser.parse_args()
 
     load_local_env()
+    if args.reset:
+        reset_demo_workspace(confirmed=True)
     tokens = _tokens_from_env()
     transport = UrlTransport(args.api_base)
     reader = MemoryClient(transport, _token(tokens, args.reader_token_name), WORKSPACE_ID)

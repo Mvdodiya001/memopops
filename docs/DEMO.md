@@ -17,17 +17,19 @@ Use the expanded [recording plan and implementation notes](plan/VIDEO_DEMO_PLAN.
 ```bash
 # Full narrated run against a configured API and FalkorDB.
 PYTHONPATH=.:src:packages/proofcheck/src uv run --locked python scripts/demo_video.py \
-  --api-base http://127.0.0.1:8001 --model live --pause --take 1
+  --api-base http://127.0.0.1:8001 --model live --pause --reset --take 1
 
 # Deterministic dry run through the same service contracts.
 PYTHONPATH=.:src:packages/proofcheck/src uv run --locked python scripts/demo_video.py \
-  --api-base http://127.0.0.1:8001 --model scripted --take dry
+  --api-base http://127.0.0.1:8001 --model scripted --reset --take dry
 
 # Reset only workspace_demo before a retake; all other graphs are preserved.
 PYTHONPATH=.:src:packages/proofcheck/src uv run --locked python scripts/reset_demo_workspace.py --yes
 ```
 
-The runner writes redacted journals, a summary, valid and tampered certificates, and reusable Cypher under `.artifacts/video-demo/take-<id>/`. The writer scene is deliberately honest: writer credentials are denied activation; a trusted operator submits the same observation for consistency checking, and the conflicting proposal is quarantined.
+`--reset` explicitly deletes and reseeds only the synthetic `workspace_demo` graph before a run; omit it when you want to inspect the current state without deletion. The runner discovers the baseline revision ID from the API, so it does not require a particular revision name. It still validates the canonical demo assertions because the correction story specifically depends on those facts; a changed workspace fails with reset guidance instead of producing misleading output.
+
+The runner writes redacted journals, a summary, revision-named valid and tampered certificates, and reusable Cypher under `.artifacts/video-demo/take-<id>/`. The writer scene is deliberately honest: writer credentials are denied activation; a trusted operator submits the same observation for consistency checking, and the conflicting proposal is quarantined.
 
 For the older in-memory lab replay, use:
 
