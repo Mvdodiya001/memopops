@@ -54,7 +54,7 @@ Earlier text said publication was pending; the live UI integration was already m
 - Objective: deterministic writer and reader clients against the published memory API, recording reader decisions through Saqlain's `POST /decisions` endpoint, plus a small acceptance evaluation and scripted-replay baselines. Live model calls stay disabled unless credentials exist.
 - Actions and decisions: merged latest `origin/main` before work to avoid backend conflicts. Reader `record_decision` maps ship/hold to `PROCEED`/`BLOCK`; abstain stays journal-only. Operator corrections use trusted fixture revisions outside the writer tool allowlist.
 - Validation: `uv run --locked pytest -q` (136 passed, including 3 new agent/acceptance tests). Pytest exercises the acceptance path via `evaluation.acceptance.run_acceptance`. No FalkorDB or live model run.
-- Handoff: wire UI to `GET /proposals` and decision history when ready; optional live model adapter remains behind env credentials.
+- Handoff (closed): live UI wires `GET /proposals` and `POST /decisions` (M-04/M-05). A read-only decision list API does not exist yet; no further Mahavir UI task until Saqlain adds one. Live model adapter stays optional behind env credentials.
 - Publication: merged to `origin/main` as `be55565` with UI proposals/decision wiring, demo script, and evaluation docs.
 
 ## M-20261017-05
@@ -67,3 +67,8 @@ Earlier text said publication was pending; the live UI integration was already m
 - Validation: `uv run --locked pytest -q` (138 passed); web typecheck and 8 vitest tests passed; `evaluation.run --suite acceptance` (4/4 cases passed).
 - Handoff: run `./scripts/verify_release.sh` before submit; record demo video per `docs/DEMO.md`; FalkorDB persistence/restart and live model remain optional.
 - Publication: pushed to `origin/main` as `434ad4e` after validation (`merge-base` confirmed).
+
+## Lane status (2026-10-17T18:38:00+05:30)
+
+- Active implementation tasks: **none** (M-20261017-01 through M-20261017-05 are **completed** and on `origin/main`).
+- Out of scope for this lane: hackathon registration, demo video/screenshots, optional FalkorDB restart smoke, optional live model demo — see `docs/SUBMISSION.md` and `docs/DEMO.md`.

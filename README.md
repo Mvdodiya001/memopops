@@ -48,7 +48,7 @@ uv run --locked python -m evaluation.run --suite acceptance --output docs/evalua
 uv run --locked python scripts/run_agent_demo.py --mode lab --output .artifacts/agent-demo
 ```
 
-See [docs/evaluation/README.md](docs/evaluation/README.md). Live model adapters stay disabled unless `MEMOPOPS_MODEL_API_KEY` and `MEMOPOPS_MODEL_BASE_URL` are set.
+See [docs/evaluation/README.md](docs/evaluation/README.md). Live model calls stay off unless `MEMOPOPS_MODEL_API_KEY` is set in the gitignored `.env` file. A key alone selects `gemini-flash-latest` and POSTs to Google's `generateContent` API with `X-goog-api-key`. The reply is plain text; the reader and writer tool loop stays on scripted replay. Scripted replay remains the default when that key is absent.
 
 The live web inspector can list quarantined proposals (`GET /proposals`) and record reader decisions after a verified query at the current head.
 
