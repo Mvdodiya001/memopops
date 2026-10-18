@@ -34,6 +34,8 @@ Final commands and counts are recorded in [Saqlain's log](../logs/saqlain.md#s-2
 
 Final internet-enabled verification on October 18: 182 pytest tests and 3 subtests passed; 42 standalone checker tests passed; 30 frontend tests, TypeScript checking and the production build passed; acceptance passed 4/4. Locked dependency installation, Python compilation, source/wheel packaging, Compose parsing, and both Chrome suites passed. npm audit against the official registry and pip-audit of installed non-editable dependencies reported no known vulnerabilities. The two editable project packages were covered by the code review/tests rather than the advisory scan.
 
+Implementation commit `87e3ba2` is published on main. Hosted [backend CI](https://github.com/Mvdodiya001/memopops/actions/runs/39122720006) and [web/checker CI](https://github.com/Mvdodiya001/memopops/actions/runs/39122720020) both completed successfully for that commit.
+
 - Full pytest suite, including the 1,000-case truth-table comparison and new regressions.
 - Standalone standard-library independent-checker tests.
 - Frontend TypeScript, Vitest and production build.
