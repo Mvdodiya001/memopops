@@ -2,15 +2,25 @@
 
 Proof-carrying shared memory for AI agents, targeting Graph Hacks Track 02. Working concept: persistent propositions, evidence, revisions, and proof dependencies in FalkorDB, with a separate propositional-logic checker.
 
-Status: hackathon MVP on `main` — proof-carrying shared memory with FalkorDB, independent checker, web inspector, scripted agents, and acceptance evaluation. Hosted database restart, public deployment, and live model demos are optional follow-ups documented in [docs/SUBMISSION.md](docs/SUBMISSION.md).
+Status: hackathon implementation on `main` — proof-carrying shared memory with FalkorDB, independent checker, web inspector, scripted agents, and acceptance evaluation. Submission preparation uses complete local setup rather than public application deployment. The real FalkorDB recording and local persistence/restart rehearsal still need completion; see the [submission execution plan](docs/submission/PLAN.md).
 
 The Python 3.12 service contains strict Boolean formula parsing, canonical hashes, a two-worker Z3 classifier with a bounded 16-request waiting queue, hash-verified FalkorDB snapshot reads, atomic revision publication, idempotency receipts, quarantined inconsistent proposals, workspace-scoped memory/history/query reads, and bounded resolution certificates checked by the independent `proofcheck` package.
 
 ## Local FalkorDB
 
+Follow the [complete local setup](docs/submission/LOCAL_SETUP.md) for prerequisites, separate frontend launch, API port selection, and the recording/restart checks. Compose runs the database and API; it does not start the web inspector.
+
 Install Docker Desktop with its Linux engine, then copy `.env.example` to `.env` and replace the local development password and demo bearer tokens. Configure reader/writer tokens for agents and an operator token for accepted-memory commits. Start the persistent, loopback-only database and API with `docker compose up -d --build`; check them with `docker compose ps` and `docker compose logs api falkordb`. Seed the synthetic workspace with `docker compose exec api python scripts/seed_demo.py`; the seed command checks existing immutable content and provenance before retrying. Stop services with `docker compose down`. The named volume keeps graph data when the container stops. Do not run `docker compose down -v` unless you intend to erase that data.
 
-The local Compose configuration pins the official server image to `v4.22.0`, matching the supplied hosted instance version. Set `FALKORDB_PASSWORD` and `MEMOPOPS_AUTH_TOKENS` in an ignored `.env` file before starting the stack. Hosted FalkorDB uses the same client settings; configure its exact host, port, username, password and TLS from its Connectivity panel, and keep those values in `.env.cloud` or the deployment's secret store. Database startup and persistence/restart checks have not been run in this work session; complete them when the hosted instance is available.
+The local Compose configuration pins the official server image to `v4.22.0`, matching the supplied hosted instance version. Set `FALKORDB_PASSWORD` and `MEMOPOPS_AUTH_TOKENS` in an ignored `.env` file before starting the stack. Hosted FalkorDB uses the same client settings; configure its exact host, port, username, password and TLS from its Connectivity panel, and keep those values in `.env.cloud` or the deployment's secret store. Database startup and persistence/restart checks have not been run in this work session; complete them with local Docker or the configured hosted instance before the final recording.
+
+## Implemented graph data model
+
+Each authorized workspace selects a separate FalkorDB graph. A Workspace's `head_revision` property selects the current immutable Revision. A revision `INCLUDES` accepted Assertions; each assertion `ENCODES` a Formula and is `SUPPORTED_BY` Evidence. Formula nodes store content-hashed canonical Boolean AST JSON. Atom nodes form the scoped meaning registry.
+
+QueryResults point to their revision with `AT_REVISION` and to premise assertions with `USES_PREMISE`. A correction records removed assertion IDs; traversing these premise links identifies affected queries at the parent revision. Quarantined Proposals remain outside accepted membership. Decisions link to their query/revision, and RequestReceipts preserve idempotent outcomes. Certificates are stored/exported JSON, rather than separate proof-step graph nodes.
+
+See the [actual schema, diagram, and core Cypher](docs/submission/GRAPH_MODEL.md), with source in [store.py](src/memopops/store.py) and [seed_demo.py](scripts/seed_demo.py). FalkorDB supplies persistence, provenance, and dependency traversal; Z3 and the independent checker supply logical reasoning and certificate verification.
 
 ## Python core
 
@@ -45,8 +55,16 @@ Scripted reader/writer sessions live in `agents/` and call the same published ro
 
 ```bash
 uv run --locked python -m evaluation.run --suite acceptance --output docs/evaluation/acceptance-run
-uv run --locked python scripts/run_agent_demo.py --mode lab --output .artifacts/agent-demo
 ```
+
+For the synthetic lab replay, run this from the repository root in a dedicated PowerShell terminal. These are local fixture tokens, not production credentials:
+
+```powershell
+$env:MEMOPOPS_AUTH_TOKENS = '{"reader-token":{"workspace_id":"workspace_demo","role":"reader"},"operator-token":{"workspace_id":"workspace_demo","role":"operator"}}'
+uv run --locked python -m scripts.run_agent_demo --mode lab --output .artifacts/agent-demo
+```
+
+This module invocation and explicit fixture configuration were checked on October 18. The current remote runner performs only the initial reader session; the full real-API correction/resume recording requires the staged work in the submission plan.
 
 See [docs/evaluation/README.md](docs/evaluation/README.md). Live model calls stay off unless `MEMOPOPS_MODEL_API_KEY` is set in the gitignored `.env` file. A key alone selects `gemini-flash-latest` and POSTs to Google's `generateContent` API with `X-goog-api-key`. The reply is plain text; the reader and writer tool loop stays on scripted replay. Scripted replay remains the default when that key is absent.
 
@@ -61,6 +79,8 @@ chmod +x scripts/verify_release.sh
 
 ## Start here
 
+- [Submission execution plan and parallel schedule](docs/submission/PLAN.md)
+- [Draft form answers](docs/submission/FORM_ANSWERS.md), [timed video script](docs/submission/VIDEO.md), and [blog brief](docs/submission/BLOG_BRIEF.md)
 - [Demo storyboard](docs/DEMO.md)
 - [Submission checklist](docs/SUBMISSION.md)
 - [Detailed implementation plan and parallel work](docs/IMPLEMENTATION_PLAN.md)
@@ -72,3 +92,7 @@ chmod +x scripts/verify_release.sh
 - Detailed logs: [Saqlain](logs/saqlain.md) and [Mahavir](logs/mahavir.md)
 
 Each person should use their own clone and task branch. Do not run concurrent agents in the same working directory. Read AGENTS.md before making changes.
+
+## AI assistance and demonstration mode
+
+AI coding assistants supported planning, implementation, tests, UI, and documentation. The [activity logs](logs/MASTER.md) record the work and verification results. The team remains responsible for the submission and its technical claims. The agent workflow is scripted replay unless explicitly labeled otherwise; the optional live model client currently generates plain text rather than driving the tool loop. Demo observations are synthetic. A logical proof is conditional on accepted premises and does not establish their factual truth.

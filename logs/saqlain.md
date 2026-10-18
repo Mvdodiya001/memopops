@@ -234,4 +234,18 @@ User requested retry after access changed. git push origin main succeeded (e7a13
 - Actions and decisions: derive actor from existing bearer auth and use the existing RFC3339 UTC timestamp convention; retain both fields in the immutable result JSON and graph node.
 - Validation: `uv run --locked pytest -q` (133 passed); `uv run python -m compileall -q src`; `git diff --check`. API tests verify actor IDs are server-derived and timestamps are UTC; store tests assert both are properties of the atomic query write.
 - Handoff: these fields support later ordered audit/event presentation; they do not themselves implement the event feed.
-- Publication: pending direct push to `origin/main`; no PR.
+- Publication correction (October 18): commit `40a446b` was pushed directly to `origin/main` and is an ancestor of the audited final implementation. No PR.
+
+## S-20261018-01
+
+- Updated: 2026-10-18T11:58:05+05:30
+- Human / agent: Saqlain / Codex
+- Status: completed
+- Branch / scope: `codex/saqlain/submission-kit`; README, submission documentation, graph/setup notes, and Saqlain/master logs. No implementation, account, or deployment changes.
+- Objective and success criteria: make every submission field and required artifact actionable, with a recording script, blog plan, proposed two-person schedule, implemented graph model/queries, and explicit evidence gates.
+- Actions and decisions: inspected final main `e9bd8c3`, organizer rules, UI, model adapter, scripts, store, seed, and prior logs. Deployment is excluded at the user's request. Distinguish the lab replay from a FalkorDB-backed recording; do not relabel plain-text model generation as a live tool loop.
+- Validation so far: 144 pytest passed; web typecheck, 8 tests and production build passed; acceptance 4/4 cases passed in the in-memory lab. Documented direct-file demo command fails importing `agents`; module invocation then fails because token validation precedes lab defaults. Remote mode only executes the first reader run. No live database or video was run in this planning task.
+- Outcome: added six documents under `docs/submission/` covering execution/parallel schedule, draft form answers, video script, blog brief, actual graph model/core Cypher, and complete intended local setup. README now includes the implemented model, AI disclosure, correct frontend/API port guidance via the setup link, and a tested lab replay command. Corrected old checklist language that treated DB verification/video as optional substitutes.
+- Additional validation: module replay with explicit synthetic fixture tokens exited successfully and produced both reader stages; the README documents that workaround. All local links in nine affected Markdown documents resolve; `git diff --check` passes. No production code, accounts, deployments, uploaded media, or organizer form was changed.
+- Handoff: real FalkorDB correction/resume/restart, clean-clone setup, staged remote replay, recording/upload, public blog, final URLs and submission receipt remain execution tasks. The proposed schedule targets submission by 21:00 IST, ahead of the official 23:59 deadline. Publishing accounts and final URLs remain human-controlled steps.
+- Publication: documentation milestone ready for direct commit/push; no PR. Remote publication will be verified before final handoff.

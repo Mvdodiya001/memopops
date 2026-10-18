@@ -1,5 +1,7 @@
 # Demo storyboard (about 3 minutes)
 
+Use the expanded [3:30 recording plan and narration](submission/VIDEO.md) and [execution gates](submission/PLAN.md) for final production. The short outline below is historical planning guidance, not evidence of a completed recording. Full local startup is in [LOCAL_SETUP.md](submission/LOCAL_SETUP.md).
+
 Label scripted replays as **Scripted replay**, not live model output.
 
 1. **Problem (0:00–0:20)** — Two agent identities share memory; a later correction can invalidate an earlier conclusion.
@@ -14,9 +16,12 @@ Label scripted replays as **Scripted replay**, not live model output.
 
 ```bash
 # Scripted two-client path (no FalkorDB)
-uv run --locked python scripts/run_agent_demo.py --mode lab --output .artifacts/agent-demo
+# Requires explicit synthetic fixture tokens; see the tested PowerShell example in README.
+uv run --locked python -m scripts.run_agent_demo --mode lab --output .artifacts/agent-demo
 
 # Full stack (requires .env and Docker)
 docker compose up -d --build
 docker compose exec api python scripts/seed_demo.py
 ```
+
+The lab replay is in-memory. The existing remote runner only performs the initial reader session, so the operator correction/resume stages must be prepared and rehearsed against real FalkorDB before recording the final story.
