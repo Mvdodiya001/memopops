@@ -75,7 +75,7 @@ Earlier text said publication was pending; the live UI integration was already m
 
 ## M-20261018-01
 
-- Updated: 2026-10-18T13:03:05+05:30
+- Updated: 2026-10-18T13:04:22+05:30
 - Human / agent: Mahavir / Cursor
 - Status: ready-for-review
 - Branch / scope: `codex/mahavir/video-demo`; `agents/gemini_tools.py`, `scripts/demo_video.py`, `scripts/reset_demo_workspace.py`, focused tests, demo/readme documentation, and logs. Existing API, solver, store, checker, and UI behavior remain unchanged.
@@ -86,3 +86,4 @@ Earlier text said publication was pending; the live UI integration was already m
 - Known gap: a multi-scene live-model lab rehearsal completed the product outcomes but truthfully used scripted fallback for some scenes after transient model runtime errors; a separate live uncertainty scene completed UNKNOWN/abstain. Recording day must run the live dry run first and keep every live/replay banner visible.
 - Files: `agents/gemini_tools.py`, `agents/client.py`, `scripts/demo_video.py`, `scripts/reset_demo_workspace.py`, `tests/test_gemini_tools.py`, `tests/test_demo_video.py`, demo/submission/readme docs, `.env.example`, and logs. No secret file or key was changed or staged.
 - Handoff: review the terminal verbosity and narration, configure the hosted FalkorDB values privately, run reset plus scripted/live dry runs, then record with `--pause`. The video itself, screenshots, upload, signed-out check, and organizer submission remain human tasks.
+- Publication: implementation committed locally as `7e4999f`; `origin/main` was current and the post-merge release gate passed, but `git push origin HEAD:main` was rejected because this checkout has no GitHub credentials. The GitHub CLI is not installed, so publication remains pending authenticated access.
