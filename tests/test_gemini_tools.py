@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import agents.model as model_config
+import pytest
 from agents.client import MemoryClient
 from agents.demo_memory import WORKSPACE_ID
 from agents.gemini_tools import GeminiFunctionCallingModel
@@ -169,7 +170,7 @@ def test_retryable_failures_are_bounded():
     def complete(_payload, _timeout):
         nonlocal attempts
         attempts += 1
-        if attempts < 3:
+        if attempts < 2:
             raise RuntimeError("model request failed: HTTP 503")
         return _response("finish", {"rationale": "Done.", "summary": "Done."})
 
@@ -182,7 +183,34 @@ def test_retryable_failures_are_bounded():
     )
 
     assert actor.next_action({"type": "start"}) == {"type": "stop"}
-    assert attempts == 3
+    assert attempts == 2
+
+
+def test_timeout_is_configurable_and_reports_retry_progress():
+    timeouts = []
+    statuses = []
+
+    def complete(_payload, timeout):
+        timeouts.append(timeout)
+        raise TimeoutError("provider stalled")
+
+    actor = GeminiFunctionCallingModel(
+        complete,
+        role="reader",
+        goal="Test.",
+        workspace_id=WORKSPACE_ID,
+        request_timeout=3,
+        status=statuses.append,
+        sleep=lambda _seconds: None,
+    )
+
+    with pytest.raises(TimeoutError, match="provider stalled"):
+        actor.next_action({"type": "start"})
+
+    assert timeouts == [3, 3]
+    assert statuses[0] == "request attempt 1/2 (timeout 3s)"
+    assert "attempt 1/2 failed: TimeoutError" in statuses
+    assert statuses[-1] == "request failed after 2 attempt(s): TimeoutError"
 
 
 def test_function_adapter_runs_guarded_reader_session(monkeypatch, tmp_path: Path):

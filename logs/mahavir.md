@@ -90,7 +90,7 @@ Earlier text said publication was pending; the live UI integration was already m
 
 ## M-20261018-02
 
-- Updated: 2026-10-18T13:47:59+05:30
+- Updated: 2026-10-18T13:52:58+05:30
 - Human / agent: Mahavir / Cursor
 - Status: ready-for-review
 - Branch / scope: `codex/mahavir/adaptive-video-demo`; `scripts/demo_video.py`, its focused tests, demo documentation, and logs. No API, store, solver, checker, or schema changes.
@@ -100,3 +100,5 @@ Earlier text said publication was pending; the live UI integration was already m
 - Validation: adaptive focused tests passed (9); the complete scripted nine-scene flow passed against local FalkorDB/API using `--reset`, including quarantine, correction, impact, stale-decision recovery, valid/tampered proofcheck exits 0/1, and dynamic graph queries; the workspace was reset to the canonical baseline afterward. `./scripts/verify_release.sh` passed 153 pytest, 40 checker tests, web typecheck, 8 Vitest tests, production build, and 4/4 acceptance. Node 20 still emits the existing Vitest Node 22.12+ engine warning.
 - Handoff: for repeat takes use `scripts/demo_video.py ... --reset`; omit `--reset` to preserve the current graph. Environment variables intentionally override `.env`, so clear stale exported FalkorDB settings or pass the active host/port explicitly.
 - Publication: implementation committed locally as `6540ef3`; the branch was current with `origin/main` and passed the post-merge release gate, but push remains blocked because this checkout has no GitHub HTTPS credentials.
+- Follow-up: a manual live take appeared frozen at scene 2 because the first Gemini HTTPS response remained silent inside the 60-second socket timeout; the human interrupted it before fallback. Add visible request/retry status and a bounded configurable live-model timeout so a provider stall is observable and falls back promptly.
+- Follow-up outcome: live calls now print attempt/timeout/retry status, default to 10 seconds with one retry, and accept `--model-timeout` or `MEMOPOPS_MODEL_TIMEOUT_SECONDS`. A real live smoke exposed two provider timeouts followed by Google HTTP 429 quota exhaustion; the runner labeled and completed the reader scene with scripted fallback instead of hanging. Focused tests passed (10), and the release gate passed 154 pytest, 40 checker tests, web typecheck, 8 Vitest tests, production build, and 4/4 acceptance.

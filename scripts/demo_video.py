@@ -132,6 +132,7 @@ class DemoRunner:
         model_mode: str,
         take: str,
         pause: bool = False,
+        model_timeout: float | None = None,
         store_factory: Callable[[], FalkorSnapshotStore] | None = None,
     ):
         self.reader = reader
@@ -141,6 +142,7 @@ class DemoRunner:
         self.model_mode = model_mode
         self.take = take
         self.pause = pause
+        self.model_timeout = model_timeout
         self.store_factory = store_factory
         self.output.mkdir(parents=True, exist_ok=True)
         self.summary: dict[str, Any] = {
@@ -249,6 +251,8 @@ class DemoRunner:
                 role,
                 goal,
                 workspace_id=WORKSPACE_ID,
+                request_timeout=self.model_timeout,
+                status=self._model_status,
             )
             if live is not None:
                 return (
@@ -277,6 +281,10 @@ class DemoRunner:
             scripted_model,
             "scripted_replay",
         )
+
+    @staticmethod
+    def _model_status(message: str) -> None:
+        print(f"[Live model] {message}", flush=True)
 
     def _run_fresh(
         self,
@@ -459,6 +467,8 @@ class DemoRunner:
                 READER_GOAL,
                 workspace_id=WORKSPACE_ID,
                 prior_decision=self.first_decision,
+                request_timeout=self.model_timeout,
+                status=self._model_status,
             )
         else:
             model = None
@@ -634,6 +644,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Narrated memopops video demo.")
     parser.add_argument("--api-base", default="http://127.0.0.1:8001")
     parser.add_argument("--model", choices=["live", "scripted"], default="scripted")
+    parser.add_argument(
+        "--model-timeout",
+        type=float,
+        default=None,
+        help="Seconds per live Gemini request (default 10; range 1-120).",
+    )
     parser.add_argument("--pause", action="store_true")
     parser.add_argument(
         "--reset",
@@ -647,6 +663,8 @@ def main() -> None:
     parser.add_argument("--writer-token-name", default="local-writer-token")
     parser.add_argument("--operator-token-name", default="local-operator-token")
     args = parser.parse_args()
+    if args.model_timeout is not None and not 1 <= args.model_timeout <= 120:
+        parser.error("--model-timeout must be between 1 and 120 seconds")
 
     load_local_env()
     if args.reset:
@@ -682,6 +700,7 @@ def main() -> None:
         model_mode=args.model,
         take=args.take,
         pause=args.pause,
+        model_timeout=args.model_timeout,
         store_factory=FalkorSnapshotStore.from_env,
     )
     runner.run(scenes)

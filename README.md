@@ -68,12 +68,13 @@ This module invocation and explicit fixture configuration were checked on Octobe
 
 ```bash
 PYTHONPATH=.:src:packages/proofcheck/src uv run --locked python scripts/demo_video.py \
-  --api-base http://127.0.0.1:8001 --model live --pause --reset --take 1
+  --api-base http://127.0.0.1:8001 --model live --model-timeout 10 \
+  --pause --reset --take 1
 ```
 
 The opt-in `--reset` deletes and reseeds only the synthetic `workspace_demo` graph, making repeat takes reproducible without assuming that its current revision is named `rev_001`. Omit the flag to preserve and inspect the current graph; the runner will stop with guidance if that graph no longer contains the canonical demo baseline.
 
-See [docs/evaluation/README.md](docs/evaluation/README.md). Live model calls stay off unless `MEMOPOPS_MODEL_API_KEY` is set in the gitignored `.env` file. The video runner selects `gemini-flash-latest` and uses Google's native `generateContent` function-calling API with `X-goog-api-key`. Gemini can choose only the bounded functions declared for its reader or writer role; the existing `AgentSession` still validates every call, enforces role and revision guards, and caps tool steps. If the key or model is unavailable, the runner labels that scene **Scripted replay** and uses the deterministic fallback.
+See [docs/evaluation/README.md](docs/evaluation/README.md). Live model calls stay off unless `MEMOPOPS_MODEL_API_KEY` is set in the gitignored `.env` file. The video runner selects `gemini-flash-latest` and uses Google's native `generateContent` function-calling API with `X-goog-api-key`. Gemini can choose only the bounded functions declared for its reader or writer role; the existing `AgentSession` still validates every call, enforces role and revision guards, and caps tool steps. Live requests print progress and use a configurable 10-second default timeout; after two failed attempts, the runner labels that scene **Scripted replay** and uses the deterministic fallback.
 
 The live web inspector can list quarantined proposals (`GET /proposals`) and record reader decisions after a verified query at the current head.
 

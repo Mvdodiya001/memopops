@@ -21,9 +21,13 @@ from agents.model import (
 
 
 Complete = Callable[[dict[str, Any], float], dict[str, Any]]
+Status = Callable[[str], None]
 
 _RETRYABLE_STATUS = ("HTTP 429", "HTTP 500", "HTTP 503")
 _BASE_FUNCTIONS = ("inspect_memory", "query_conclusion", "record_decision", "finish")
+DEFAULT_REQUEST_TIMEOUT = 10.0
+MODEL_TIMEOUT_ENV = "MEMOPOPS_MODEL_TIMEOUT_SECONDS"
+RETRY_DELAYS = (0, 2)
 
 
 def _schema(
@@ -186,11 +190,17 @@ class GeminiFunctionCallingModel:
         endpoint_url: str = "",
         prior_decision: dict[str, Any] | None = None,
         sleep: Callable[[float], None] = time.sleep,
+        request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
+        status: Status | None = None,
     ):
         if role not in {"reader", "writer"}:
             raise ValueError("role must be reader or writer")
+        if not 1 <= request_timeout <= 120:
+            raise ValueError("request_timeout must be between 1 and 120 seconds")
         self._complete = complete
         self._sleep = sleep
+        self._status = status or (lambda _message: None)
+        self.request_timeout = request_timeout
         self.role = role
         self.goal = goal
         self.workspace_id = workspace_id
@@ -214,6 +224,8 @@ class GeminiFunctionCallingModel:
         *,
         workspace_id: str,
         prior_decision: dict[str, Any] | None = None,
+        request_timeout: float | None = None,
+        status: Status | None = None,
     ) -> "GeminiFunctionCallingModel | None":
         _load_local_model_env()
         api_key = os.getenv(LIVE_KEY_ENV)
@@ -222,6 +234,16 @@ class GeminiFunctionCallingModel:
         model_name = os.getenv(LIVE_NAME_ENV) or DEFAULT_LIVE_MODEL
         base_url = os.getenv(LIVE_BASE_ENV) or DEFAULT_LIVE_BASE_URL
         endpoint_url = generate_content_url(base_url, model_name)
+        if request_timeout is None:
+            configured_timeout = os.getenv(MODEL_TIMEOUT_ENV)
+            try:
+                request_timeout = (
+                    float(configured_timeout)
+                    if configured_timeout
+                    else DEFAULT_REQUEST_TIMEOUT
+                )
+            except ValueError as exc:
+                raise ValueError(f"{MODEL_TIMEOUT_ENV} must be a number") from exc
 
         def complete(payload: dict[str, Any], timeout: float) -> dict[str, Any]:
             return post_generate_content(endpoint_url, api_key, payload, timeout=timeout)
@@ -234,6 +256,8 @@ class GeminiFunctionCallingModel:
             model_name=model_name,
             endpoint_url=endpoint_url,
             prior_decision=prior_decision,
+            request_timeout=request_timeout,
+            status=status,
         )
 
     def _payload(self) -> dict[str, Any]:
@@ -253,19 +277,34 @@ class GeminiFunctionCallingModel:
             "generationConfig": {"temperature": 0},
         }
 
-    def _call(self, timeout: float = 60) -> dict[str, Any]:
+    def _call(self) -> dict[str, Any]:
         last_error: Exception | None = None
-        for attempt, delay in enumerate((0, 2, 4), start=1):
+        for attempt, delay in enumerate(RETRY_DELAYS, start=1):
             if delay:
+                self._status(f"retrying in {delay}s")
                 self._sleep(delay)
+            self._status(
+                f"request attempt {attempt}/{len(RETRY_DELAYS)} "
+                f"(timeout {self.request_timeout:g}s)"
+            )
             try:
-                return self._complete(self._payload(), timeout)
+                response = self._complete(self._payload(), self.request_timeout)
+                self._status("response received")
+                return response
             except (TimeoutError, OSError, RuntimeError) as exc:
                 retryable = not isinstance(exc, RuntimeError) or any(
                     marker in str(exc) for marker in _RETRYABLE_STATUS
                 )
-                if not retryable or attempt == 3:
+                if not retryable or attempt == len(RETRY_DELAYS):
+                    self._status(
+                        f"request failed after {attempt} attempt(s): "
+                        f"{exc.__class__.__name__}"
+                    )
                     raise
+                self._status(
+                    f"attempt {attempt}/{len(RETRY_DELAYS)} failed: "
+                    f"{exc.__class__.__name__}"
+                )
                 last_error = exc
         assert last_error is not None
         raise last_error
