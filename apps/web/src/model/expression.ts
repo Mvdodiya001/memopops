@@ -5,6 +5,7 @@ export function parseExpression(text: string, registered: readonly string[]): Fo
   if (!text.trim() || text.length > 4096)
     throw new Error("Enter an expression of at most 4,096 characters.")
   const tokens: string[] = []
+  const symbols = new Map([["¬", "!"], ["∧", "&"], ["∨", "|"], ["→", "->"], ["↔", "<->"]])
   let offset = 0
   while (offset < text.length) {
     if (!text.slice(offset).trim()) break
@@ -13,17 +14,13 @@ export function parseExpression(text: string, registered: readonly string[]): Fo
       throw new Error(
         `Unexpected character near position ${offset + 1}. Use proposition IDs and logic operators.`,
       )
-    tokens.push(
-      ({ "¬": "!", "∧": "&", "∨": "|", "→": "->", "↔": "<->" } as Record<string, string>)[
-        match[1]
-      ] ?? match[1],
-    )
+    tokens.push(symbols.get(match[1]) ?? match[1])
     offset += match[0].length
     if (tokens.length > 256) throw new Error("Expression is too large.")
   }
   let index = 0
   const known = new Set(registered)
-  const precedence: Record<string, number> = { "<->": 1, "->": 2, "|": 3, "&": 4 }
+  const precedence = new Map([["<->", 1], ["->", 2], ["|", 3], ["&", 4]])
   const operations = { "<->": "iff", "->": "implies", "|": "or", "&": "and" } as const
   function expression(minimum = 1, depth = 1): Formula {
     if (depth > 16) throw new Error("Expressions may be at most 16 levels deep.")
@@ -42,7 +39,7 @@ export function parseExpression(text: string, registered: readonly string[]): Fo
     }
     while (index < tokens.length) {
       const operator = tokens[index] as keyof typeof operations
-      const rank = precedence[operator] ?? 0
+      const rank = precedence.get(operator) ?? 0
       if (rank < minimum) break
       index++
       const right = expression(rank + (operator === "->" ? 0 : 1), depth + 1)

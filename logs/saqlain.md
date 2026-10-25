@@ -2,7 +2,7 @@
 
 ## S-20261025-01
 
-- Human / agent: Saqlain / Codex. Status: in-progress. Branch: codex/saqlain/usable-workspaces.
+- Human / agent: Saqlain / Codex. Status: completed (implementation and available checks; live persistence rehearsal remains limited below). Branch: codex/saqlain/usable-workspaces.
 - Objective: turn the fixed demonstration into a usable evidence-backed propositional workspace, preserving immutable revisions, authorization, full-snapshot reasoning and independent certificates.
 - Scope: workspace initialization and proposition meanings, query history, deterministic formula editing, corrections/retractions, no-Docker host startup, documentation and focused regression/browser checks.
 - Research: primary Graphiti, LangMem and Letta documentation; retain explicit source/provenance, namespaces and controlled writes. No natural-language extraction is trusted as a logical premise without operator review.
@@ -13,6 +13,8 @@
 - Research: docs/PRODUCT_RESEARCH_2026-10-25.md records primary Graphiti/LangMem/Letta sources and design tradeoffs. docs/PRODUCT_GUIDE.md documents setup, vocabulary scopes, evidence, explicit policies, corrections, history and limits. No automatic natural-language acceptance, vector-search truncation, first-order reasoning or general-chat-memory claim was introduced.
 - Checks: 194 pytest tests and 3 subtests passed; independent checker 42 passed; frontend 41 tests, typecheck and production build passed; acceptance 4/4; compileall, startup help and source/wheel build passed. Extended Chrome suite passed the prior visualization gates plus creation of an empty non-demo workspace, a compound equivalence policy, verified proof, premise replacement, verified refutation, evidence-free retraction, UNKNOWN witnesses and historical question reopening without a current decision control. Screenshots were visually inspected; browser report shows no exceptions and zero replay mutations. Generated outputs remain ignored.
 - Limits: both previously supplied cloud DNS names fail resolution. New initialization/history Cypher is covered by adapter tests but has not been executed against a reachable FalkorDB in this iteration. No cloud workspace was created or changed; no Docker or live-model work. Existing demo behavior and private configuration are preserved. Publication will be recorded after remote verification.
+- Publication: `bee18a8` pushed directly to main and confirmed by fetch/ancestor check. Hosted backend workflow `40175350516` and web-and-proofcheck workflow `40175350527` both succeeded for that implementation. Synthetic API and preview servers stopped after verification; pre-existing stash retained. No PR was created.
+- Final parser review: replaced prototype-inheriting operator/symbol lookups with Maps, so valid proposition IDs such as `constructor` remain ordinary atoms and cannot be interpreted as operators. Added regressions; the final frontend count is 43 passing tests, with TypeScript and production build passing. This small follow-up and publication record are committed separately.
 
 Task-level notes for Saqlain and agents working on his behalf. Times include timezone. Do not record secrets or hidden reasoning.
 

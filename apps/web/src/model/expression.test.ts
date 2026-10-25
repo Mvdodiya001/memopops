@@ -23,6 +23,7 @@ describe("explicit logic expressions", () => {
   it.each([
     "",
     "p q",
+    "p constructor q",
     "p &",
     "(p",
     "p)",
@@ -33,5 +34,9 @@ describe("explicit logic expressions", () => {
     "p | ".repeat(65) + "q",
   ])("rejects invalid or excessive input: %s", (text) => {
     expect(() => parseExpression(text, ids)).toThrow()
+  })
+  it("handles registered proposition names that also occur on Object.prototype", () => {
+    expect(parseExpression("constructor", ["constructor"])).toEqual({ op: "atom", id: "constructor" })
+    expect(parseExpression("hasownproperty -> constructor", ["hasownproperty", "constructor"]).op).toBe("implies")
   })
 })
