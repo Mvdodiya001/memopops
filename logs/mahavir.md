@@ -105,9 +105,13 @@ Earlier text said publication was pending; the live UI integration was already m
 
 ## M-20261026-01
 
-- Updated: 2026-10-26T02:19:00+05:30
+- Updated: 2026-10-26T02:22:03+05:30
 - Human / agent: Mahavir / Cursor
-- Status: in-progress
+- Status: ready-for-review
 - Branch / scope: `codex/mahavir/sync-saqlain`; integrate the complete `SaqlainSQX/memopops` `main` history into Mahavir's repository without rewriting either history.
 - Objective and success criteria: preserve Mahavir's published work, include every commit currently on Saqlain's `main`, pass the repository release checks, and publish the integrated result to Mahavir's `main`.
 - Initial state: Mahavir's `origin/main` was at `f66849a`; Saqlain's `main` was at `317e451`. The former is an ancestor of the latter, while Mahavir's earlier adaptive-demo branch is also an ancestor, so no content conflict or history replacement is expected.
+- Actions and decisions: fetched `https://github.com/SaqlainSQX/memopops.git` `main` and merged it with `--no-ff`. The merge brought nine commits: the reproducible method benchmark, the October 25 measured results, and the proof-carrying memory blog through `317e451`. No content conflicts. After the merge, `git diff saqlain/main` is limited to this log.
+- Validation: `./scripts/verify_release.sh` passed. Backend pytest: 211 passed, 3 subtests passed. Checker unittest: 42 OK. Web typecheck passed, Vitest 43 passed, production build passed. Lab acceptance: 4/4. Node 20 still emits the existing Vitest Node 22.12+ engine warning. FalkorDB persistence and live-model checks were not rerun.
+- Outcome: Mahavir's branch now contains Saqlain's `main` at `317e451`, including custom proposition workspaces already on `origin/main` plus the benchmark harness, raw observations, report, and blog article with four figures.
+- Handoff: publication to `Mvdodiya001/memopops` `main` follows this log update. No secrets were added.
