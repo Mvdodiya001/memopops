@@ -1,0 +1,152 @@
+{
+  "scope": "Untimed post-run diagnosis, never mixed into primary measurements or coverage.",
+  "results": [
+    {
+      "assertion_count": 4,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 4,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 4,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 8,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 8,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 8,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 16,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "assertion_count": 16,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "assertion_count": 16,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 32,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 32,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 32,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "GENERATED",
+      "reason": ""
+    },
+    {
+      "assertion_count": 64,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 64,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 64,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 128,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 128,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 128,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 256,
+      "family": "chain",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 256,
+      "family": "fanout",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    },
+    {
+      "assertion_count": 256,
+      "family": "distractors",
+      "outcome": "PROVED",
+      "status": "BUDGET_EXCEEDED",
+      "reason": "initial clause count exceeds the certificate bound"
+    }
+  ]
+}

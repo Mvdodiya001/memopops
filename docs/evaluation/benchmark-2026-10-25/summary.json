@@ -1,0 +1,2445 @@
+{
+  "oracle": {
+    "cases": 3000,
+    "correct": 3000,
+    "accuracy": 1.0,
+    "wilson_95": [
+      0.9987211512746742,
+      1.0
+    ],
+    "expected_classes": {
+      "REFUTED": 750,
+      "INCONSISTENT_MEMORY": 750,
+      "PROVED": 750,
+      "UNKNOWN": 750
+    },
+    "actual_classes": {
+      "REFUTED": 750,
+      "INCONSISTENT_MEMORY": 750,
+      "PROVED": 750,
+      "UNKNOWN": 750
+    },
+    "witness_failures": 0
+  },
+  "proofs": {
+    "decisive_attempts": 240,
+    "statuses": {
+      "VERIFIED": 234,
+      "BUDGET_EXCEEDED": 6
+    },
+    "verified_certificate_bytes": {
+      "n": 234,
+      "p50": 3337,
+      "p95": 5783
+    },
+    "unknown": {
+      "WITNESSES_VALID": 120
+    }
+  },
+  "tampering": {
+    "attempts": 600,
+    "accepted": 0,
+    "by_mutation": {
+      "evidence_binding": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "false_empty_id": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "flip_result": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "invented_support": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "missing_clause": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "missing_witness": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "query_hash": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "revision_binding": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "trusted_context_binding": {
+        "attempts": 60,
+        "accepted": 0
+      },
+      "workspace_binding": {
+        "attempts": 60,
+        "accepted": 0
+      }
+    }
+  },
+  "lifecycle": {
+    "cycles": 90,
+    "passed_cycles": 90,
+    "checks": 1530,
+    "failed_checks": 0
+  },
+  "controls": {
+    "fresh_solver": {
+      "n": 90,
+      "correct_current_answers": 90
+    },
+    "query_only_stale_cache": {
+      "n": 90,
+      "correct_current_answers": 0
+    }
+  },
+  "scaling": [
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 4,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 16.009899988770485,
+        "p95_ms": 25.753499999642372,
+        "p99_ms": 29.087099999189377,
+        "min_ms": 10.527300000190735,
+        "max_ms": 29.087099999189377,
+        "mean_ms": 17.81517666677634
+      },
+      "per_process_p50_ms": {
+        "20261025": 13.655499994754791,
+        "20261026": 22.14859999716282,
+        "20261027": 16.77809999883175
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "PROVED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "VERIFIED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 4,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 15.823100000619888,
+        "p95_ms": 21.777400001883507,
+        "p99_ms": 24.28650000691414,
+        "min_ms": 9.9949000030756,
+        "max_ms": 24.28650000691414,
+        "mean_ms": 15.960727778739399
+      },
+      "per_process_p50_ms": {
+        "20261025": 12.66270001232624,
+        "20261026": 18.383900001645088,
+        "20261027": 16.317200005054474
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 8,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 24.161199986934662,
+        "p95_ms": 44.349899992346764,
+        "p99_ms": 49.90479999780655,
+        "min_ms": 11.556499987840652,
+        "max_ms": 49.90479999780655,
+        "mean_ms": 26.194296666317516
+      },
+      "per_process_p50_ms": {
+        "20261025": 21.307600006461143,
+        "20261026": 25.847599998116493,
+        "20261027": 27.258299991488457
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "PROVED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "VERIFIED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 8,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 14.732600003480911,
+        "p95_ms": 24.638200014829636,
+        "p99_ms": 27.298000007867813,
+        "min_ms": 9.294900000095367,
+        "max_ms": 27.298000007867813,
+        "mean_ms": 15.821604444086551
+      },
+      "per_process_p50_ms": {
+        "20261025": 12.715800002217293,
+        "20261026": 16.167699992656708,
+        "20261027": 17.66050000488758
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "UNKNOWN": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 16,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 29.870699986815453,
+        "p95_ms": 50.98019999265671,
+        "p99_ms": 54.40209999680519,
+        "min_ms": 13.396200001239777,
+        "max_ms": 54.40209999680519,
+        "mean_ms": 31.1994699994723
+      },
+      "per_process_p50_ms": {
+        "20261025": 29.870699986815453,
+        "20261026": 28.20489999651909,
+        "20261027": 31.23259998857975
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 16,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 18.032900005578995,
+        "p95_ms": 24.859099999070168,
+        "p99_ms": 28.224800005555153,
+        "min_ms": 10.303399994969368,
+        "max_ms": 28.224800005555153,
+        "mean_ms": 17.87345111138291
+      },
+      "per_process_p50_ms": {
+        "20261025": 18.032900005578995,
+        "20261026": 18.466600000858307,
+        "20261027": 16.351299986243248
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 32,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 18.60410000383854,
+        "p95_ms": 31.34579999744892,
+        "p99_ms": 33.79659999907017,
+        "min_ms": 13.58449999988079,
+        "max_ms": 33.79659999907017,
+        "mean_ms": 21.05644222150246
+      },
+      "per_process_p50_ms": {
+        "20261025": 16.2618999928236,
+        "20261026": 24.91169999539852,
+        "20261027": 18.94979999959469
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "PROVED": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "BUDGET_EXCEEDED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 32,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 16.989799991250038,
+        "p95_ms": 27.78219999372959,
+        "p99_ms": 30.7487999945879,
+        "min_ms": 12.356100007891655,
+        "max_ms": 30.7487999945879,
+        "mean_ms": 19.243304444352784
+      },
+      "per_process_p50_ms": {
+        "20261025": 15.6739000082016,
+        "20261026": 22.96270000934601,
+        "20261027": 18.232400000095367
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "PROVED": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 64,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 21.71160000562668,
+        "p95_ms": 39.84170000255108,
+        "p99_ms": 56.53280000388622,
+        "min_ms": 15.692400008440018,
+        "max_ms": 56.53280000388622,
+        "mean_ms": 25.21999889082379
+      },
+      "per_process_p50_ms": {
+        "20261025": 20.49210000038147,
+        "20261026": 19.239500001072884,
+        "20261027": 31.555000007152557
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 64,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 19.37270000576973,
+        "p95_ms": 36.093200013041496,
+        "p99_ms": 40.481099992990494,
+        "min_ms": 14.238299995660782,
+        "max_ms": 40.481099992990494,
+        "mean_ms": 22.54791333294577
+      },
+      "per_process_p50_ms": {
+        "20261025": 18.113900005817413,
+        "20261026": 18.268900007009506,
+        "20261027": 30.071600005030632
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 128,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 33.10130000114441,
+        "p95_ms": 48.1305999904871,
+        "p99_ms": 50.58630000054836,
+        "min_ms": 19.920199990272522,
+        "max_ms": 50.58630000054836,
+        "mean_ms": 33.696266667048135
+      },
+      "per_process_p50_ms": {
+        "20261025": 24.575699999928474,
+        "20261026": 36.71430000662804,
+        "20261027": 41.16779999434948
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "UNKNOWN": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 128,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 29.57479999959469,
+        "p95_ms": 41.690599992871284,
+        "p99_ms": 46.018899992108345,
+        "min_ms": 17.468899995088577,
+        "max_ms": 46.018899992108345,
+        "mean_ms": 29.40095444487201
+      },
+      "per_process_p50_ms": {
+        "20261025": 21.141499996185303,
+        "20261026": 34.27639999985695,
+        "20261027": 34.68170000612736
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "UNKNOWN": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 256,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 43.419200003147125,
+        "p95_ms": 62.63120000064373,
+        "p99_ms": 116.1562999933958,
+        "min_ms": 28.22740000486374,
+        "max_ms": 116.1562999933958,
+        "mean_ms": 45.51813889029953
+      },
+      "per_process_p50_ms": {
+        "20261025": 33.46779999136925,
+        "20261026": 45.07029999792576,
+        "20261027": 57.020600005984306
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "BUDGET_EXCEEDED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "chain",
+      "assertion_count": 256,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 32.916400000452995,
+        "p95_ms": 53.08560000360012,
+        "p99_ms": 142.80150000751019,
+        "min_ms": 22.716600000858307,
+        "max_ms": 142.80150000751019,
+        "mean_ms": 36.755082222819325
+      },
+      "per_process_p50_ms": {
+        "20261025": 27.480100005865097,
+        "20261026": 35.4818000048399,
+        "20261027": 41.293099999427795
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 4,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 14.434300005435944,
+        "p95_ms": 25.159000009298325,
+        "p99_ms": 26.32209999859333,
+        "min_ms": 10.042000010609627,
+        "max_ms": 26.32209999859333,
+        "mean_ms": 16.535963333977595
+      },
+      "per_process_p50_ms": {
+        "20261025": 12.463500007987022,
+        "20261026": 16.129899993538857,
+        "20261027": 20.934599995613098
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "VERIFIED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 4,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 15.227699995040894,
+        "p95_ms": 24.30680000782013,
+        "p99_ms": 106.81010000407696,
+        "min_ms": 9.589200004935265,
+        "max_ms": 106.81010000407696,
+        "mean_ms": 17.33224111100038
+      },
+      "per_process_p50_ms": {
+        "20261025": 11.947599992156029,
+        "20261026": 16.487399995326996,
+        "20261027": 19.316899999976158
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 8,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 12.843400001525879,
+        "p95_ms": 26.070099994540215,
+        "p99_ms": 28.59510000050068,
+        "min_ms": 9.884800001978874,
+        "max_ms": 28.59510000050068,
+        "mean_ms": 15.258692222336927
+      },
+      "per_process_p50_ms": {
+        "20261025": 12.600599989295006,
+        "20261026": 13.36769999563694,
+        "20261027": 13.978400006890297
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "UNKNOWN": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "VERIFIED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 8,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 12.267599999904633,
+        "p95_ms": 22.355499997735023,
+        "p99_ms": 24.03720000386238,
+        "min_ms": 9.435400009155273,
+        "max_ms": 24.03720000386238,
+        "mean_ms": 13.936778888271915
+      },
+      "per_process_p50_ms": {
+        "20261025": 11.73420000076294,
+        "20261026": 15.54280000925064,
+        "20261027": 12.498799994587898
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 16,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 21.78669999539852,
+        "p95_ms": 29.504099994897842,
+        "p99_ms": 73.08900000154972,
+        "min_ms": 12.788599997758865,
+        "max_ms": 73.08900000154972,
+        "mean_ms": 21.965462221205236
+      },
+      "per_process_p50_ms": {
+        "20261025": 15.550499990582466,
+        "20261026": 21.662300005555153,
+        "20261027": 24.56189998984337
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "VERIFIED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 16,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 18.707399994134903,
+        "p95_ms": 24.54339998960495,
+        "p99_ms": 27.26130001246929,
+        "min_ms": 10.741099998354912,
+        "max_ms": 27.26130001246929,
+        "mean_ms": 18.254295555419393
+      },
+      "per_process_p50_ms": {
+        "20261025": 13.777400001883507,
+        "20261026": 20.43690000474453,
+        "20261027": 20.938400000333786
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 32,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 21.774900004267693,
+        "p95_ms": 30.677699998021126,
+        "p99_ms": 33.42620000243187,
+        "min_ms": 13.848700001835823,
+        "max_ms": 33.42620000243187,
+        "mean_ms": 22.414968889123863
+      },
+      "per_process_p50_ms": {
+        "20261025": 16.190000012516975,
+        "20261026": 27.625,
+        "20261027": 24.1739000082016
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "VERIFIED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 32,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 19.797600001096725,
+        "p95_ms": 27.829800009727478,
+        "p99_ms": 29.057899996638298,
+        "min_ms": 10.9341000020504,
+        "max_ms": 29.057899996638298,
+        "mean_ms": 19.83934000035127
+      },
+      "per_process_p50_ms": {
+        "20261025": 14.81640000641346,
+        "20261026": 24.32200001180172,
+        "20261027": 22.468699991703033
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 64,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 22.473299995064735,
+        "p95_ms": 37.01199999451637,
+        "p99_ms": 39.811100006103516,
+        "min_ms": 13.024700000882149,
+        "max_ms": 39.811100006103516,
+        "mean_ms": 24.200473332736227
+      },
+      "per_process_p50_ms": {
+        "20261025": 17.26009999215603,
+        "20261026": 21.67289999127388,
+        "20261027": 28.830900013446808
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 64,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 21.850699990987778,
+        "p95_ms": 33.89869999885559,
+        "p99_ms": 39.102200001478195,
+        "min_ms": 12.605200007557869,
+        "max_ms": 39.102200001478195,
+        "mean_ms": 23.205179999437597
+      },
+      "per_process_p50_ms": {
+        "20261025": 15.8851999938488,
+        "20261026": 21.450100004673004,
+        "20261027": 28.408000007271767
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "PROVED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 128,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 38.33659999072552,
+        "p95_ms": 45.601699993014336,
+        "p99_ms": 93.5075000077486,
+        "min_ms": 18.36710000038147,
+        "max_ms": 93.5075000077486,
+        "mean_ms": 37.721662222842376
+      },
+      "per_process_p50_ms": {
+        "20261025": 40.12150000035763,
+        "20261026": 38.33659999072552,
+        "20261027": 36.03280000388622
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 128,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 31.41789999604225,
+        "p95_ms": 38.2521999925375,
+        "p99_ms": 43.10859999060631,
+        "min_ms": 16.302499994635582,
+        "max_ms": 43.10859999060631,
+        "mean_ms": 30.382635555830266
+      },
+      "per_process_p50_ms": {
+        "20261025": 31.90039999783039,
+        "20261026": 31.225999996066093,
+        "20261027": 30.104300007224083
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 256,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 49.099400013685226,
+        "p95_ms": 63.275000005960464,
+        "p99_ms": 140.2889999896288,
+        "min_ms": 27.052299991250038,
+        "max_ms": 140.2889999896288,
+        "mean_ms": 48.12023888842927
+      },
+      "per_process_p50_ms": {
+        "20261025": 52.339800000190735,
+        "20261026": 39.53890000283718,
+        "20261027": 51.02859999239445
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "distractors",
+      "assertion_count": 256,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 40.5612999945879,
+        "p95_ms": 52.37879998981953,
+        "p99_ms": 56.79070000350475,
+        "min_ms": 20.447400003671646,
+        "max_ms": 56.79070000350475,
+        "mean_ms": 38.83017444345686
+      },
+      "per_process_p50_ms": {
+        "20261025": 39.32649999856949,
+        "20261026": 34.93230000138283,
+        "20261027": 43.277399986982346
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 4,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 21.55579999089241,
+        "p95_ms": 27.30969999730587,
+        "p99_ms": 28.39640000462532,
+        "min_ms": 10.16380000114441,
+        "max_ms": 28.39640000462532,
+        "mean_ms": 20.725653333134122
+      },
+      "per_process_p50_ms": {
+        "20261025": 23.516100004315376,
+        "20261026": 19.852800011634827,
+        "20261027": 19.78109999001026
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "PROVED": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "VERIFIED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 4,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 19.413100004196167,
+        "p95_ms": 24.031900003552437,
+        "p99_ms": 25.264499992132187,
+        "min_ms": 9.4425999969244,
+        "max_ms": 25.264499992132187,
+        "mean_ms": 18.196594443917274
+      },
+      "per_process_p50_ms": {
+        "20261025": 20.177500009536743,
+        "20261026": 17.771600008010864,
+        "20261027": 19.479899987578392
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 8,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 24.872400000691414,
+        "p95_ms": 34.460899993777275,
+        "p99_ms": 36.40150000154972,
+        "min_ms": 11.155900001525879,
+        "max_ms": 36.40150000154972,
+        "mean_ms": 24.810181111262903
+      },
+      "per_process_p50_ms": {
+        "20261025": 25.559400007128716,
+        "20261026": 24.405599996447563,
+        "20261027": 24.470400005578995
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "PROVED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "VERIFIED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 60,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 8,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 20.106299996376038,
+        "p95_ms": 25.094200000166893,
+        "p99_ms": 26.00110000371933,
+        "min_ms": 9.975099995732307,
+        "max_ms": 26.00110000371933,
+        "mean_ms": 19.084664443963103
+      },
+      "per_process_p50_ms": {
+        "20261025": 21.13509999215603,
+        "20261026": 20.333599999547005,
+        "20261027": 19.008200004696846
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 16,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 22.163400009274483,
+        "p95_ms": 37.64690001308918,
+        "p99_ms": 41.29389999806881,
+        "min_ms": 8.373799994587898,
+        "max_ms": 41.29389999806881,
+        "mean_ms": 23.903807777497505
+      },
+      "per_process_p50_ms": {
+        "20261025": 18.476199999451637,
+        "20261026": 21.78829999268055,
+        "20261027": 27.212599992752075
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "BUDGET_EXCEEDED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 16,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 19.354599997401237,
+        "p95_ms": 26.401100009679794,
+        "p99_ms": 28.93129999935627,
+        "min_ms": 8.337899997830391,
+        "max_ms": 28.93129999935627,
+        "mean_ms": 18.90688000006808
+      },
+      "per_process_p50_ms": {
+        "20261025": 13.862899988889694,
+        "20261026": 20.99889999628067,
+        "20261027": 22.668099999427795
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "PROVED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 32,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 24.716399997472763,
+        "p95_ms": 32.18809999525547,
+        "p99_ms": 36.32080000638962,
+        "min_ms": 13.607000008225441,
+        "max_ms": 36.32080000638962,
+        "mean_ms": 23.524877777695657
+      },
+      "per_process_p50_ms": {
+        "20261025": 17.33729998767376,
+        "20261026": 28.531299993395805,
+        "20261027": 27.486900001764297
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "BUDGET_EXCEEDED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 32,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 20.037500008940697,
+        "p95_ms": 31.259700000286102,
+        "p99_ms": 33.34110000729561,
+        "min_ms": 11.909999996423721,
+        "max_ms": 33.34110000729561,
+        "mean_ms": 21.45637888825602
+      },
+      "per_process_p50_ms": {
+        "20261025": 15.901099994778633,
+        "20261026": 24.61030000448227,
+        "20261027": 25.114099994301796
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "UNKNOWN": 30,
+        "REFUTED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 64,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 30.34579999744892,
+        "p95_ms": 41.552000001072884,
+        "p99_ms": 87.89289999008179,
+        "min_ms": 15.124300003051758,
+        "max_ms": 87.89289999008179,
+        "mean_ms": 29.755208888981077
+      },
+      "per_process_p50_ms": {
+        "20261025": 34.23770000040531,
+        "20261026": 33.9966000020504,
+        "20261027": 19.043200001120567
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "PROVED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 64,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 25.925500005483627,
+        "p95_ms": 39.96499998867512,
+        "p99_ms": 42.59729999303818,
+        "min_ms": 14.1148000061512,
+        "max_ms": 42.59729999303818,
+        "mean_ms": 26.2501633334491
+      },
+      "per_process_p50_ms": {
+        "20261025": 28.246299996972084,
+        "20261026": 30.244299992918968,
+        "20261027": 17.52539999783039
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 128,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 31.173899993300438,
+        "p95_ms": 48.69879999756813,
+        "p99_ms": 78.9632000029087,
+        "min_ms": 20.70719999074936,
+        "max_ms": 78.9632000029087,
+        "mean_ms": 33.78836333387428
+      },
+      "per_process_p50_ms": {
+        "20261025": 24.665800005197525,
+        "20261026": 39.53159999847412,
+        "20261027": 37.567800000309944
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 30,
+        "BUDGET_EXCEEDED": 60
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 128,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 24.895600005984306,
+        "p95_ms": 43.09110000729561,
+        "p99_ms": 47.73209999501705,
+        "min_ms": 18.649399995803833,
+        "max_ms": 47.73209999501705,
+        "mean_ms": 28.283291110561954
+      },
+      "per_process_p50_ms": {
+        "20261025": 20.911899998784065,
+        "20261026": 31.639400005340576,
+        "20261027": 27.548899993300438
+      },
+      "outcomes": {
+        "REFUTED": 30,
+        "UNKNOWN": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 256,
+      "mode": "certificate",
+      "latency": {
+        "n": 90,
+        "p50_ms": 49.64699999988079,
+        "p95_ms": 68.6271999925375,
+        "p99_ms": 103.27589999139309,
+        "min_ms": 26.188999995589256,
+        "max_ms": 103.27589999139309,
+        "mean_ms": 49.06582333445549
+      },
+      "per_process_p50_ms": {
+        "20261025": 47.207499995827675,
+        "20261026": 52.01690000295639,
+        "20261027": 40.51300001144409
+      },
+      "outcomes": {
+        "PROVED": 30,
+        "REFUTED": 30,
+        "UNKNOWN": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "BUDGET_EXCEEDED": 60,
+        "NOT_REQUESTED": 30
+      },
+      "decisive_requests": 60,
+      "verified_decisive": 0,
+      "unknown_requests": 30,
+      "unknown_witnesses_verified": 30
+    },
+    {
+      "phase": "api",
+      "family": "fanout",
+      "assertion_count": 256,
+      "mode": "solver",
+      "latency": {
+        "n": 90,
+        "p50_ms": 42.814400002360344,
+        "p95_ms": 58.50829999148846,
+        "p99_ms": 63.10149998962879,
+        "min_ms": 22.29289999604225,
+        "max_ms": 63.10149998962879,
+        "mean_ms": 42.9441088895003
+      },
+      "per_process_p50_ms": {
+        "20261025": 43.48550000786781,
+        "20261026": 44.308799996972084,
+        "20261027": 41.575699999928474
+      },
+      "outcomes": {
+        "UNKNOWN": 30,
+        "REFUTED": 30,
+        "PROVED": 30
+      },
+      "http_statuses": {
+        "200": 90
+      },
+      "proof_statuses": {
+        "NOT_REQUESTED": 90
+      }
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 4,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.592199996113777,
+        "p95_ms": 13.897400006651878,
+        "p99_ms": 16.27199999988079,
+        "min_ms": 5.969799995422363,
+        "max_ms": 17.454099997878075,
+        "mean_ms": 9.177652592791452
+      },
+      "per_process_p50_ms": {
+        "20261025": 8.932600006461143,
+        "20261026": 8.07660000026226,
+        "20261027": 8.086800009012222
+      },
+      "outcomes": {
+        "REFUTED": 90,
+        "UNKNOWN": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 8,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.82660000026226,
+        "p95_ms": 13.5574000030756,
+        "p99_ms": 16.96570000052452,
+        "min_ms": 6.535199999809265,
+        "max_ms": 18.53729999065399,
+        "mean_ms": 9.320549259527965
+      },
+      "per_process_p50_ms": {
+        "20261025": 9.017300009727478,
+        "20261026": 8.471399992704391,
+        "20261027": 8.462100014090538
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "REFUTED": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 16,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 9.410899996757507,
+        "p95_ms": 15.18019999563694,
+        "p99_ms": 25.40479999780655,
+        "min_ms": 7.196399986743927,
+        "max_ms": 38.09420000016689,
+        "mean_ms": 10.343317037158542
+      },
+      "per_process_p50_ms": {
+        "20261025": 10.038900002837181,
+        "20261026": 8.888300001621246,
+        "20261027": 9.263300001621246
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "REFUTED": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 32,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 11.412999987602234,
+        "p95_ms": 19.770500004291534,
+        "p99_ms": 23.696399986743927,
+        "min_ms": 8.449199989438057,
+        "max_ms": 25.193300008773804,
+        "mean_ms": 12.216123333352584
+      },
+      "per_process_p50_ms": {
+        "20261025": 11.486000001430511,
+        "20261026": 11.397999987006187,
+        "20261027": 11.288799986243248
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "PROVED": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 64,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 14.777700006961823,
+        "p95_ms": 25.796299993991852,
+        "p99_ms": 33.37540000677109,
+        "min_ms": 10.664000004529953,
+        "max_ms": 40.98880000412464,
+        "mean_ms": 16.063163333689726
+      },
+      "per_process_p50_ms": {
+        "20261025": 14.36259999871254,
+        "20261026": 14.846399992704391,
+        "20261027": 15.027099996805191
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "REFUTED": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 128,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 17.008699998259544,
+        "p95_ms": 26.734699994325638,
+        "p99_ms": 36.61589999496937,
+        "min_ms": 13.508699998259544,
+        "max_ms": 40.295300006866455,
+        "mean_ms": 18.038869629469183
+      },
+      "per_process_p50_ms": {
+        "20261025": 16.865700006484985,
+        "20261026": 17.008799999952316,
+        "20261027": 17.200599998235703
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "PROVED": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "chain",
+      "assertion_count": 256,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 23.070500001311302,
+        "p95_ms": 38.53050000965595,
+        "p99_ms": 49.718700006604195,
+        "min_ms": 18.573600009083748,
+        "max_ms": 72.42090000212193,
+        "mean_ms": 25.104258148482554
+      },
+      "per_process_p50_ms": {
+        "20261025": 22.37730000913143,
+        "20261026": 23.85699999332428,
+        "20261027": 23.3108000010252
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "PROVED": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 4,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.50390000641346,
+        "p95_ms": 12.342500001192093,
+        "p99_ms": 16.93189999461174,
+        "min_ms": 6.334300011396408,
+        "max_ms": 25.866100013256073,
+        "mean_ms": 8.97695407392802
+      },
+      "per_process_p50_ms": {
+        "20261025": 8.990800008177757,
+        "20261026": 8.29780000448227,
+        "20261027": 7.968999996781349
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "REFUTED": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 8,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.448899999260902,
+        "p95_ms": 12.542999997735023,
+        "p99_ms": 16.02130000293255,
+        "min_ms": 6.316100001335144,
+        "max_ms": 22.708499997854233,
+        "mean_ms": 8.765703703904594
+      },
+      "per_process_p50_ms": {
+        "20261025": 9.027099996805191,
+        "20261026": 7.975299999117851,
+        "20261027": 8.043600007891655
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "PROVED": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 16,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.85419999063015,
+        "p95_ms": 15.104500010609627,
+        "p99_ms": 20.003000006079674,
+        "min_ms": 6.229399994015694,
+        "max_ms": 21.122899994254112,
+        "mean_ms": 9.593646666352395
+      },
+      "per_process_p50_ms": {
+        "20261025": 8.949199989438057,
+        "20261026": 8.830599993467331,
+        "20261027": 8.710400000214577
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "PROVED": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 32,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 10.04899999499321,
+        "p95_ms": 17.26909999549389,
+        "p99_ms": 29.452599987387657,
+        "min_ms": 7.3545999974012375,
+        "max_ms": 34.087599992752075,
+        "mean_ms": 10.990443703090703
+      },
+      "per_process_p50_ms": {
+        "20261025": 10.008699998259544,
+        "20261026": 10.745900005102158,
+        "20261027": 9.813400000333786
+      },
+      "outcomes": {
+        "PROVED": 90,
+        "UNKNOWN": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 64,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 12.18979999423027,
+        "p95_ms": 18.737800002098083,
+        "p99_ms": 22.68809999525547,
+        "min_ms": 8.865500003099442,
+        "max_ms": 32.59870000183582,
+        "mean_ms": 12.79892444467103
+      },
+      "per_process_p50_ms": {
+        "20261025": 12.316300004720688,
+        "20261026": 12.144999995827675,
+        "20261027": 12.145799994468689
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "PROVED": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 128,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 14.706900000572205,
+        "p95_ms": 23.28930000960827,
+        "p99_ms": 27.209799990057945,
+        "min_ms": 11.770099997520447,
+        "max_ms": 29.018700003623962,
+        "mean_ms": 15.658850741110466
+      },
+      "per_process_p50_ms": {
+        "20261025": 14.624200001358986,
+        "20261026": 15.213899999856949,
+        "20261027": 14.50789999961853
+      },
+      "outcomes": {
+        "PROVED": 90,
+        "REFUTED": 90,
+        "UNKNOWN": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "distractors",
+      "assertion_count": 256,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 20.380799993872643,
+        "p95_ms": 35.527899995446205,
+        "p99_ms": 45.076200008392334,
+        "min_ms": 16.775700002908707,
+        "max_ms": 56.46729999780655,
+        "mean_ms": 22.27775851841326
+      },
+      "per_process_p50_ms": {
+        "20261025": 20.312199994921684,
+        "20261026": 19.809299990534782,
+        "20261027": 20.805900007486343
+      },
+      "outcomes": {
+        "REFUTED": 90,
+        "UNKNOWN": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 4,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.223799988627434,
+        "p95_ms": 14.311000004410744,
+        "p99_ms": 19.21510000526905,
+        "min_ms": 6.181599989533424,
+        "max_ms": 20.10709999501705,
+        "mean_ms": 8.89373296328165
+      },
+      "per_process_p50_ms": {
+        "20261025": 8.416700005531311,
+        "20261026": 8.00059999525547,
+        "20261027": 8.109899997711182
+      },
+      "outcomes": {
+        "REFUTED": 90,
+        "PROVED": 90,
+        "UNKNOWN": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 8,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 8.99040000140667,
+        "p95_ms": 16.21900001168251,
+        "p99_ms": 20.389200001955032,
+        "min_ms": 6.567900002002716,
+        "max_ms": 23.291400000452995,
+        "mean_ms": 9.932496666632316
+      },
+      "per_process_p50_ms": {
+        "20261025": 9.897300004959106,
+        "20261026": 8.548799991607666,
+        "20261027": 8.51860000193119
+      },
+      "outcomes": {
+        "REFUTED": 90,
+        "PROVED": 90,
+        "UNKNOWN": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 16,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 9.522499993443489,
+        "p95_ms": 15.919900000095367,
+        "p99_ms": 18.13850000500679,
+        "min_ms": 7.2603999972343445,
+        "max_ms": 25.18299999833107,
+        "mean_ms": 10.283358148292258
+      },
+      "per_process_p50_ms": {
+        "20261025": 10.120900005102158,
+        "20261026": 8.824999988079071,
+        "20261027": 9.15540000796318
+      },
+      "outcomes": {
+        "PROVED": 90,
+        "REFUTED": 90,
+        "UNKNOWN": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 32,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 11.284799993038177,
+        "p95_ms": 20.00560000538826,
+        "p99_ms": 23.07600000500679,
+        "min_ms": 8.469899997115135,
+        "max_ms": 32.38750000298023,
+        "mean_ms": 12.357450370380173
+      },
+      "per_process_p50_ms": {
+        "20261025": 11.32430000603199,
+        "20261026": 10.942800000309944,
+        "20261027": 11.465900003910065
+      },
+      "outcomes": {
+        "PROVED": 90,
+        "UNKNOWN": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 64,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 14.249500006437302,
+        "p95_ms": 23.786400005221367,
+        "p99_ms": 29.11210000514984,
+        "min_ms": 9.802000001072884,
+        "max_ms": 33.16040000319481,
+        "mean_ms": 15.247106666090312
+      },
+      "per_process_p50_ms": {
+        "20261025": 14.333000004291534,
+        "20261026": 13.833199992775917,
+        "20261027": 14.66660000383854
+      },
+      "outcomes": {
+        "PROVED": 90,
+        "UNKNOWN": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 128,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 17.395099997520447,
+        "p95_ms": 30.158500000834465,
+        "p99_ms": 37.315099999308586,
+        "min_ms": 13.82490000128746,
+        "max_ms": 40.628199994564056,
+        "mean_ms": 18.76585000002826
+      },
+      "per_process_p50_ms": {
+        "20261025": 17.045999988913536,
+        "20261026": 17.532900005578995,
+        "20261027": 17.52580000460148
+      },
+      "outcomes": {
+        "PROVED": 90,
+        "UNKNOWN": 90,
+        "REFUTED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    },
+    {
+      "phase": "solver",
+      "family": "fanout",
+      "assertion_count": 256,
+      "mode": "solver",
+      "latency": {
+        "n": 270,
+        "p50_ms": 23.294699996709824,
+        "p95_ms": 38.70049999654293,
+        "p99_ms": 46.41220000386238,
+        "min_ms": 19.144599989056587,
+        "max_ms": 55.120299994945526,
+        "mean_ms": 25.594701111482248
+      },
+      "per_process_p50_ms": {
+        "20261025": 22.717199996113777,
+        "20261026": 23.545499995350838,
+        "20261027": 24.39020000398159
+      },
+      "outcomes": {
+        "UNKNOWN": 90,
+        "REFUTED": 90,
+        "PROVED": 90
+      },
+      "http_statuses": {},
+      "proof_statuses": {}
+    }
+  ],
+  "scaling_overview": [
+    {
+      "assertion_count": 4,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 8.421800002455711,
+        "p95_ms": 13.649599999189377,
+        "p99_ms": 17.454099997878075,
+        "min_ms": 5.969799995422363,
+        "max_ms": 25.866100013256073,
+        "mean_ms": 9.016113210000373
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 16.577299997210503,
+        "p95_ms": 23.58779999613762,
+        "p99_ms": 25.264499992132187,
+        "min_ms": 9.4425999969244,
+        "max_ms": 106.81010000407696,
+        "mean_ms": 17.163187777885685
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 17.91050000488758,
+        "p95_ms": 26.244099989533424,
+        "p99_ms": 28.81980000436306,
+        "min_ms": 10.042000010609627,
+        "max_ms": 29.087099999189377,
+        "mean_ms": 18.35893111129602
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 180,
+      "certificate_statuses": {
+        "VERIFIED": 180
+      }
+    },
+    {
+      "assertion_count": 8,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 8.723200008273125,
+        "p95_ms": 14.422300010919571,
+        "p99_ms": 18.442900002002716,
+        "min_ms": 6.316100001335144,
+        "max_ms": 23.291400000452995,
+        "mean_ms": 9.339583210021626
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 15.213200002908707,
+        "p95_ms": 24.292000010609627,
+        "p99_ms": 26.00110000371933,
+        "min_ms": 9.294900000095367,
+        "max_ms": 27.298000007867813,
+        "mean_ms": 16.281015925440524
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 22.083099991083145,
+        "p95_ms": 38.69099999964237,
+        "p99_ms": 49.06999999284744,
+        "min_ms": 9.884800001978874,
+        "max_ms": 49.90479999780655,
+        "mean_ms": 22.08772333330578
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 180,
+      "certificate_statuses": {
+        "VERIFIED": 180
+      }
+    },
+    {
+      "assertion_count": 16,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 9.229300007224083,
+        "p95_ms": 15.725600004196167,
+        "p99_ms": 20.581200003623962,
+        "min_ms": 6.229399994015694,
+        "max_ms": 38.09420000016689,
+        "mean_ms": 10.073440617267732
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 18.327300012111664,
+        "p95_ms": 25.32049998641014,
+        "p99_ms": 27.26130001246929,
+        "min_ms": 8.337899997830391,
+        "max_ms": 28.93129999935627,
+        "mean_ms": 18.34487555562346
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 23.751499995589256,
+        "p95_ms": 45.35760000348091,
+        "p99_ms": 54.40209999680519,
+        "min_ms": 8.373799994587898,
+        "max_ms": 73.08900000154972,
+        "mean_ms": 25.68957999939168
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 60,
+      "certificate_statuses": {
+        "VERIFIED": 60,
+        "BUDGET_EXCEEDED": 120
+      }
+    },
+    {
+      "assertion_count": 32,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 11.05519999563694,
+        "p95_ms": 19.251000002026558,
+        "p99_ms": 23.568200007081032,
+        "min_ms": 7.3545999974012375,
+        "max_ms": 34.087599992752075,
+        "mean_ms": 11.854672468941153
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 18.94990000128746,
+        "p95_ms": 29.269500002264977,
+        "p99_ms": 31.474500000476837,
+        "min_ms": 10.9341000020504,
+        "max_ms": 33.34110000729561,
+        "mean_ms": 20.179674444320025
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 21.26350000500679,
+        "p95_ms": 31.980599999427795,
+        "p99_ms": 34.79449999332428,
+        "min_ms": 13.58449999988079,
+        "max_ms": 36.32080000638962,
+        "mean_ms": 22.332096296107327
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 60,
+      "certificate_statuses": {
+        "BUDGET_EXCEEDED": 120,
+        "VERIFIED": 60
+      }
+    },
+    {
+      "assertion_count": 64,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 13.86319999396801,
+        "p95_ms": 23.213699996471405,
+        "p99_ms": 30.66950000822544,
+        "min_ms": 8.865500003099442,
+        "max_ms": 40.98880000412464,
+        "mean_ms": 14.703064814817022
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 22.046900004148483,
+        "p95_ms": 36.58709999918938,
+        "p99_ms": 40.481099992990494,
+        "min_ms": 12.605200007557869,
+        "max_ms": 42.59729999303818,
+        "mean_ms": 24.001085555277488
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 24.197999998927116,
+        "p95_ms": 39.01790000498295,
+        "p99_ms": 56.53280000388622,
+        "min_ms": 13.024700000882149,
+        "max_ms": 87.89289999008179,
+        "mean_ms": 26.391893704180365
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 0,
+      "certificate_statuses": {
+        "BUDGET_EXCEEDED": 180
+      }
+    },
+    {
+      "assertion_count": 128,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 16.466099992394447,
+        "p95_ms": 26.272799998521805,
+        "p99_ms": 34.540800005197525,
+        "min_ms": 11.770099997520447,
+        "max_ms": 40.628199994564056,
+        "mean_ms": 17.487856790202635
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 29.254399999976158,
+        "p95_ms": 41.58219999074936,
+        "p99_ms": 46.018899992108345,
+        "min_ms": 16.302499994635582,
+        "max_ms": 47.73209999501705,
+        "mean_ms": 29.355627037088077
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 36.44430001080036,
+        "p95_ms": 48.35579998791218,
+        "p99_ms": 52.733899995684624,
+        "min_ms": 18.36710000038147,
+        "max_ms": 93.5075000077486,
+        "mean_ms": 35.068764074588266
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 0,
+      "certificate_statuses": {
+        "BUDGET_EXCEEDED": 180
+      }
+    },
+    {
+      "assertion_count": 256,
+      "direct_solver": {
+        "n": 810,
+        "p50_ms": 22.5123999863863,
+        "p95_ms": 38.03989998996258,
+        "p99_ms": 46.15999999642372,
+        "min_ms": 16.775700002908707,
+        "max_ms": 72.42090000212193,
+        "mean_ms": 24.32557259279269
+      },
+      "api_solver": {
+        "n": 270,
+        "p50_ms": 40.269900009036064,
+        "p95_ms": 54.93129999935627,
+        "p99_ms": 62.14699999988079,
+        "min_ms": 20.447400003671646,
+        "max_ms": 142.80150000751019,
+        "mean_ms": 39.50978851859217
+      },
+      "api_certificate": {
+        "n": 270,
+        "p50_ms": 48.329700008034706,
+        "p95_ms": 66.33349999785423,
+        "p99_ms": 103.27589999139309,
+        "min_ms": 26.188999995589256,
+        "max_ms": 140.2889999896288,
+        "mean_ms": 47.5680670377281
+      },
+      "decisive_requests": 180,
+      "verified_decisive": 0,
+      "certificate_statuses": {
+        "BUDGET_EXCEEDED": 180
+      }
+    }
+  ],
+  "contention": [
+    {
+      "concurrency": 1,
+      "requests": 288,
+      "successful": 288,
+      "http_statuses": {
+        "200": 288
+      },
+      "successful_requests_per_second": 38.60339873431844,
+      "all_request_latency": {
+        "n": 288,
+        "p50_ms": 27.615199998021126,
+        "p95_ms": 33.336400002241135,
+        "p99_ms": 36.519400000572205,
+        "min_ms": 11.045200005173683,
+        "max_ms": 57.60910001397133,
+        "mean_ms": 25.77566145810609
+      },
+      "successful_request_latency": {
+        "n": 288,
+        "p50_ms": 27.615199998021126,
+        "p95_ms": 33.336400002241135,
+        "p99_ms": 36.519400000572205,
+        "min_ms": 11.045200005173683,
+        "max_ms": 57.60910001397133,
+        "mean_ms": 25.77566145810609
+      },
+      "batch_duration_ms": 7460.483000010252
+    },
+    {
+      "concurrency": 2,
+      "requests": 288,
+      "successful": 288,
+      "http_statuses": {
+        "200": 288
+      },
+      "successful_requests_per_second": 57.55507020998524,
+      "all_request_latency": {
+        "n": 288,
+        "p50_ms": 32.30240000784397,
+        "p95_ms": 52.07310000061989,
+        "p99_ms": 69.83120000362396,
+        "min_ms": 16.433100000023842,
+        "max_ms": 137.8619000017643,
+        "mean_ms": 34.22483784736445
+      },
+      "successful_request_latency": {
+        "n": 288,
+        "p50_ms": 32.30240000784397,
+        "p95_ms": 52.07310000061989,
+        "p99_ms": 69.83120000362396,
+        "min_ms": 16.433100000023842,
+        "max_ms": 137.8619000017643,
+        "mean_ms": 34.22483784736445
+      },
+      "batch_duration_ms": 5003.9032000005245
+    },
+    {
+      "concurrency": 8,
+      "requests": 288,
+      "successful": 288,
+      "http_statuses": {
+        "200": 288
+      },
+      "successful_requests_per_second": 62.839322796898436,
+      "all_request_latency": {
+        "n": 288,
+        "p50_ms": 111.38489998877048,
+        "p95_ms": 196.98270000517368,
+        "p99_ms": 218.00530000030994,
+        "min_ms": 24.45660001039505,
+        "max_ms": 223.43590000271797,
+        "mean_ms": 116.45866249993236
+      },
+      "successful_request_latency": {
+        "n": 288,
+        "p50_ms": 111.38489998877048,
+        "p95_ms": 196.98270000517368,
+        "p99_ms": 218.00530000030994,
+        "min_ms": 24.45660001039505,
+        "max_ms": 223.43590000271797,
+        "mean_ms": 116.45866249993236
+      },
+      "batch_duration_ms": 4583.117500022054
+    },
+    {
+      "concurrency": 32,
+      "requests": 288,
+      "successful": 162,
+      "http_statuses": {
+        "429": 126,
+        "200": 162
+      },
+      "successful_requests_per_second": 68.2645688590484,
+      "all_request_latency": {
+        "n": 288,
+        "p50_ms": 78.54449999332428,
+        "p95_ms": 234.5738999992609,
+        "p99_ms": 275.0326999872923,
+        "min_ms": 13.920199990272522,
+        "max_ms": 275.9375,
+        "mean_ms": 101.76893715244822
+      },
+      "successful_request_latency": {
+        "n": 162,
+        "p50_ms": 156.52639999985695,
+        "p95_ms": 254.10790000855923,
+        "p99_ms": 275.0486000031233,
+        "min_ms": 34.183899998664856,
+        "max_ms": 275.9375,
+        "mean_ms": 156.17450123455055
+      },
+      "batch_duration_ms": 2373.119800031185
+    }
+  ],
+  "unexpected_failures": 0,
+  "failure_examples": [],
+  "raw_observations": 16308,
+  "source_revision": "33ff3dbb8bef2f450d6aa0e47d2a86fc42d76c2e"
+}

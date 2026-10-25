@@ -1,0 +1,9 @@
+{
+  "scope": "Post-run figure rendering only; measured application used Python 3.12.13 and source 33ff3db.",
+  "python": "3.13.1",
+  "matplotlib": "3.10.0",
+  "figure_sha256": {
+    "latency-and-coverage.png": "1a1adcad1ef4952cc51566d9766923235c7d3aa9eff5d126eabaf1b6a27ee6a8",
+    "latency-and-coverage.svg": "1fce1a20667e601ee36c719f2f2086f700bb0dc635e75ead080369e2fa196886"
+  }
+}

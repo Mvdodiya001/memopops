@@ -33,3 +33,9 @@ Retain generated cases, raw observations, summary JSON, hashes and the exact com
 No LLM natural-language translation is evaluated. Facts/evidence are synthetic and accepted as test premises; factual truth is not assessed. No paid model, external competitor, container restart or user workspace is involved. Correctness of the API test store is separate from FalkorDB transaction semantics. Warmups exercise application paths but do not eliminate Windows scheduling, dynamic CPU frequency or other laptop activity.
 
 Method references: [Google Benchmark guidance on warmup, repetition, interleaving and variance](https://google.github.io/benchmark/user_guide.html); [Python 3.12 high-resolution performance timing](https://docs.python.org/3.12/library/time.html#time.perf_counter_ns). This harness follows those measurement principles; it does not use the Google Benchmark library.
+
+## Post-run analysis tools
+
+`uv run --locked python -m evaluation.diagnose_benchmark PATH` performs separate untimed retries to explain observed proof limits; it never replaces primary observations. `evaluation/plot_benchmark.py PATH` renders the summary with matplotlib and verifies raw-data checksums first. Plotting is an optional analysis dependency, not a service dependency; the published figure used matplotlib 3.10.0 in a separate Python environment.
+
+Interpretation details: uniqueness means distinct canonical raw JSON, not logical inequivalence; generated formula recursion depth is 0–3. The contention phase includes its initial request startup and has no separately discarded warmup. Those boundaries are visible in the frozen harness. Exact measured artifact bytes are preserved by the results directory's .gitattributes so checksums survive Git checkout on another platform.

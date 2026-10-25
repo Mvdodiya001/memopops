@@ -1,5 +1,7 @@
 # memopops
 
+Measured results: the [October 25 benchmark report](docs/evaluation/benchmark-2026-10-25/REPORT.md) publishes 3,000 synthetic truth-table checks, raw latency/coverage observations, correction trials and mutation probes. Read the [blog interpretation](docs/evaluation/benchmark-2026-10-25/BLOG_RESULTS.md) alongside the results: the solver remains correct on the measured cases, while the bounded certificate generator loses coverage on larger inputs. API timings use an in-memory test store and exclude FalkorDB/network costs. [Reproduction protocol](docs/BENCHMARK_PROTOCOL.md).
+
 For everyday use beyond the release demonstration, start with the [product guide](docs/PRODUCT_GUIDE.md): create a custom proposition workspace, add evidence-backed facts and rules, ask compound questions, correct or retract outdated memory, and reopen saved questions. You can run the API directly against an existing FalkorDB with `uv run --locked python -m memopops --env-file .env --port 8001`; Docker is optional. Propositional logic and independent proof checking remain the core. See the [research and product decisions](docs/PRODUCT_RESEARCH_2026-10-25.md) for this iteration's rationale and explicit limits.
 
 Proof-carrying shared memory for AI agents, targeting Graph Hacks Track 02. Working concept: persistent propositions, evidence, revisions, and proof dependencies in FalkorDB, with a separate propositional-logic checker.
