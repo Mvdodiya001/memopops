@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "source_files_verified": 19,
+  "primary_data_hashes_verified": 6,
+  "raw_observations": 16308,
+  "independently_reclassified_cases": 3000,
+  "oracle_matches": 3000,
+  "lifecycle_cycles": 90,
+  "mutation_probes_rejected": 600,
+  "sampled_certificate_statuses": {
+    "VERIFIED": 234,
+    "BUDGET_EXCEEDED": 6
+  },
+  "scaling_certificates": {
+    "4": {
+      "verified": 180,
+      "attempted": 180
+    },
+    "8": {
+      "verified": 180,
+      "attempted": 180
+    },
+    "16": {
+      "verified": 60,
+      "attempted": 180
+    },
+    "32": {
+      "verified": 60,
+      "attempted": 180
+    },
+    "64": {
+      "verified": 0,
+      "attempted": 180
+    },
+    "128": {
+      "verified": 0,
+      "attempted": 180
+    },
+    "256": {
+      "verified": 0,
+      "attempted": 180
+    }
+  },
+  "article_example_replay": {
+    "revision_12": "PROVED",
+    "revision_13": "REFUTED",
+    "no_negative_policy": "UNKNOWN"
+  },
+  "exported_asset_hashes_verified": 8,
+  "png_dimensions": {
+    "01-memory-with-reasons.png": [
+      2520,
+      1206
+    ],
+    "02-architecture.png": [
+      2520,
+      1007
+    ],
+    "03-revision-walkthrough.png": [
+      2520,
+      1440
+    ],
+    "04-measured-results.png": [
+      2520,
+      1467
+    ]
+  }
+}

@@ -58,9 +58,9 @@ This distinction also sets the boundary of the guarantee. A valid proof cannot m
 
 ## What the graph remembers
 
-FalkorDB stores the relationships between workspaces, immutable revisions, assertions, formulas, source evidence, and saved query results. A saved answer records which revision it used and the premises referenced by its proof.
+FalkorDB stores the relationships between workspaces, immutable revisions, assertions, formulas, source evidence, and saved query results. A saved answer records which revision it used. When it has a checked proof, its dependency links identify the premises used by that proof; otherwise, the system conservatively records dependencies on the full snapshot.
 
-These relationships become particularly useful during a correction. Starting from a replaced assertion, the graph can find answers that used it and identify candidates for rechecking.
+These relationships become particularly useful during a correction. Starting from a replaced assertion, the current impact view finds dependent answers at the immediately preceding revision and identifies candidates for rechecking.
 
 An affected answer is not automatically false. Another route through the accepted rules might still establish the same conclusion. Dependency traversal tells us where to look; reasoning over the new revision determines what follows now.
 
@@ -80,11 +80,11 @@ The construction is easier to see step by step:
 
 *The same question can have different answers at different revisions. Both explanations remain attached to the premises under which they were produced.*
 
-At revision 12, the accepted memory says that API v2 is active and the tests pass. The positive release policy establishes readiness, and the checked answer is saved against that revision.
+Using illustrative revision numbers, at revision 12 the accepted memory says that API v2 is active and the tests pass. The positive release policy establishes readiness, and the checked answer is saved against that revision.
 
 An operator then replaces the test assertion using the corrected source. That creates revision 13. The old revision remains available, along with its original answer.
 
-The dependency graph locates earlier answers that used the replaced assertion. Rechecking readiness against revision 13 now applies the explicit negative policy: failed tests imply that the release is not ready.
+The dependency graph locates affected answers from revision 12. A reader can then ask the question again at revision 13. This recheck applies the explicit negative policy: failed tests imply that the release is not ready. Finding an affected answer does not automatically rerun it.
 
 The earlier proof can still be valid for revision 12. It does not certify the current state at revision 13. Keeping both records makes that difference inspectable.
 
@@ -102,7 +102,7 @@ Unknown is useful information. Missing approval does not mean approval was denie
 
 Inconsistent memory receives its own status. A solver that cannot finish also receives a separate status. Neither should be presented as a successful proof or ordinary lack of knowledge.
 
-For decisive answers in certificate mode, a bounded proof generator produces a certificate. A separately implemented checker validates its logical steps and bindings to the workspace, revision, question, and accepted assertions. For unknown answers, checked assignments demonstrate the two remaining possibilities.
+For decisive answers in certificate mode, a bounded proof generator attempts to produce a certificate. When generation succeeds, a separately implemented checker validates its logical steps and bindings to the workspace, revision, question, and accepted assertions. For unknown answers in this mode, checked assignments demonstrate the two remaining possibilities.
 
 The checker is independently implemented and tested; it has not been formally verified in a proof assistant. The application also exposes an explicit solver-only mode. A solver classification and an independently verified certificate are visible as separate outcomes.
 
@@ -128,7 +128,7 @@ The second limitation is **the scope of the evaluation**. These were synthetic B
 
 ## How this connects to earlier ideas
 
-Keeping reasons behind beliefs has a long history. Jon Doyle's [work on truth maintenance](https://dspace.mit.edu/handle/1721.1/5733) describes maintaining reasons and revising beliefs when assumptions change. Separately checked solver certificates are also established practice, illustrated by [work on LRAT proof checking](https://arxiv.org/abs/1612.02353). Graph-based agent memory systems such as [Graphiti](https://github.com/getzep/graphiti) address changing, interconnected information over time.
+Keeping reasons behind beliefs has a long history. Jon Doyle's [work on truth maintenance](https://dspace.mit.edu/handle/1721.1/5733) describes maintaining reasons and revising beliefs when assumptions change. Separately checked solver certificates are also established practice, illustrated by [work on LRAT proof checking](https://arxiv.org/abs/1612.02353). Temporal graph frameworks such as [Graphiti](https://github.com/getzep/graphiti) also address changing, interconnected information for agents.
 
 Our project brings explicit propositions, revisioned graph memory, and independent checking together in an inspectable shared-agent workflow. We see it as an engineering exploration of that combination, with measurable behavior and visible limits.
 
