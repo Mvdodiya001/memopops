@@ -1,0 +1,16 @@
+{
+  "summary_path": "docs/evaluation/benchmark-2026-10-25/summary.json",
+  "summary_sha256": "c3b08333e92c810d37be19e5a44cd541ac99edfeb8c07405ed0dcb10c69d09cd",
+  "measured_source_revision": "33ff3dbb8bef2f450d6aa0e47d2a86fc42d76c2e",
+  "matplotlib_version": "3.10.0",
+  "assets": {
+    "01-memory-with-reasons.png": "fb95f4d47b86e71770690be53ea582becbff821ade6673976fa301fdbd0f0e66",
+    "01-memory-with-reasons.svg": "dabf5d50d835da0f0e6750382ce078ea0f70e4055c0efc9e0df58502e693d948",
+    "02-architecture.png": "0da1586c01860439cd785e5656678df31da34ee7343d1312543356ec8674d39f",
+    "02-architecture.svg": "b43f5e09e8d6ba067654db824e82af40b9b828f79610760176fd58f45e082c16",
+    "03-revision-walkthrough.png": "23c900717de6341fbec91766bf29699d1be47fe43ec898652361b7f9ad72e450",
+    "03-revision-walkthrough.svg": "f048b5bd10c41f81f009400ae082cca1fc2e46ff0f74ed86432591e3e98127d7",
+    "04-measured-results.png": "adbde2333dc2e23c4d22b9c75bdd9bfc5132dfbb6aa374bd29e783fc363d6582",
+    "04-measured-results.svg": "a625767b987b74e37f35e1da9b3cac529089b87c76ba465802d8ada5776fa2dd"
+  }
+}

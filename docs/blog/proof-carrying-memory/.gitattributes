@@ -1,0 +1,3 @@
+# Keep exported vector and provenance bytes stable across Windows checkouts.
+*.svg text eol=lf
+*.json text eol=lf

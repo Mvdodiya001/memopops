@@ -1,0 +1,86 @@
+{
+  "measured_at_utc": "2026-10-25T09:25:35.378701+00:00",
+  "source_revision": "33ff3dbb8bef2f450d6aa0e47d2a86fc42d76c2e",
+  "git_dirty": false,
+  "python": "3.12.13",
+  "os": "Windows-11-10.0.26200-SP0",
+  "hardware": {
+    "cpu": "Intel(R) Core(TM) i7-14650HX",
+    "logical_cpus": 24,
+    "ram_bytes": 16961626112
+  },
+  "packages": {
+    "z3-solver": "5.3.1.0",
+    "fastapi": "0.143.3",
+    "pydantic": "2.14.1",
+    "httpx": "0.28.1",
+    "falkordb": "1.8.0"
+  },
+  "source_sha256": {
+    "evaluation/benchmark.py": "3613a7bce165d2525b60c5b4070980e9ca5e53a08cd98c3d43b736bcee187320",
+    "evaluation/benchmark_cases.py": "6edf4d7c0ac414d129dd958fcc06924f81a0d60c2c16b907f291f814fb656be1",
+    "evaluation/benchmark_report.py": "e19a531988f469e73c7fe17676b5465386c3ff6f02726689b4fc171ba9a63403",
+    "evaluation/lab_store.py": "3ab7f04375b8e1b567e1c3aea1a2eca80b5afac8d9e909247f4dbbdeafdb7182",
+    "packages/proofcheck/src/proofcheck/__init__.py": "e50db931f3024fd377a0fba9fad5110f6641a9099464c4c2d14c4efc59361cd6",
+    "packages/proofcheck/src/proofcheck/__main__.py": "ce84aafb73f939d816696058f2551365bb0d89cfd744ccdacbbc68d31e1a9819",
+    "packages/proofcheck/src/proofcheck/check.py": "f400c84e3ec2414deff86f9afae35b8287ada09f608dbe5e9d74244ba3335f04",
+    "packages/proofcheck/src/proofcheck/encode.py": "cfaca53585b8b29a4b19c767157772169c12f19a687a2a6719bf7a74abe0bf04",
+    "packages/proofcheck/src/proofcheck/formula.py": "024951dc1020bdf18de1dbc7069086a1ad9281c15c85c0b2e8677887e0cf3b69",
+    "packages/proofcheck/src/proofcheck/limits.py": "16b112feb48a2b6cc186a97403a2c960f5abfe88079db9dd5ead6c0e14b7d2be",
+    "src/memopops/__init__.py": "d76e72dbb5ada06888532242aaa347998594bae5fcf2b60355e7c7a1441499cb",
+    "src/memopops/__main__.py": "a88140a6ee6ce4a2a2507552c8f1e0739f70cdd77904297288daaa76194d636f",
+    "src/memopops/api.py": "8f79df2c42c4397860fc331002068ab8d69a316e9a248d7b6c902710437e8b58",
+    "src/memopops/certificates.py": "304191e6e7edd0bc71f6de1b839b272e5e72e6d9d81ee741c049a402a263ae5b",
+    "src/memopops/formula.py": "75386128ca8bd471c4600ad9c7f2f51d4065c0e8a969b282a1ac62281e9ba697",
+    "src/memopops/revisions.py": "9ad46e5776896d604b8ff018bc62e20a10c798b88f61a5be8e548a1d56bb16db",
+    "src/memopops/solver.py": "4702941fc648d29b2659baf6ab638c05e0e78f1e433c27e75eddfe50fe41622f",
+    "src/memopops/store.py": "e09d6adb98a6653de188cd1304db3621dff7b4aa69091be928d5d04cd92ff40b",
+    "uv.lock": "d4804375ff2c66891cc1398d8333d67a82ced87890e923c5178d92dbabfb0437"
+  },
+  "database_scope": "unavailable: configured cloud DNS failure; local connection refused",
+  "api_store": "synthetic LabSnapshotStore; no network or FalkorDB costs",
+  "protocol": {
+    "seeds": [
+      20261025,
+      20261026,
+      20261027
+    ],
+    "cases_per_seed": 1000,
+    "solver_samples": 30,
+    "api_samples": 10,
+    "warmup": 5,
+    "lifecycle_trials": 30
+  },
+  "command": [
+    "python",
+    "-m",
+    "evaluation.benchmark",
+    "--output",
+    "docs/evaluation/benchmark-2026-10-25",
+    "--seeds",
+    "20261025",
+    "20261026",
+    "20261027",
+    "--cases-per-seed",
+    "1000",
+    "--solver-samples",
+    "30",
+    "--api-samples",
+    "10",
+    "--warmup",
+    "5",
+    "--lifecycle-trials",
+    "30"
+  ],
+  "dataset_sha256": {
+    "cases-20261025.jsonl": "50f220851b746fdf74823151139d720f55158da52ed448f7c802920287a607db",
+    "cases-20261026.jsonl": "e974029f9dc433d8479c8592a5c810fdcc12da790c75962dc6bd0db7b5bb284e",
+    "cases-20261027.jsonl": "6dc93f0eae54f27f176ffbd7eef2606d6c4085a56ed377818b31875ed7c98e14"
+  },
+  "unique_correctness_cases": 3000,
+  "result_sha256": {
+    "observations-20261025.jsonl": "264b56a993353bec58f111bc852e2d72d4b371fb4593b564d97ee654867a6720",
+    "observations-20261026.jsonl": "f996d3191b321e168822e6bfe5d92c57af80e8dac0e993a8215f2186cebfee5b",
+    "observations-20261027.jsonl": "9224baa15ff32a5efd40e777bc70a9b5d3b89e814524db83b9a2425518f051a5"
+  }
+}

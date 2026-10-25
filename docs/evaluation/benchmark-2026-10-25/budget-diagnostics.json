@@ -1,0 +1,41 @@
+{
+  "scope": "Untimed post-run diagnosis, never mixed into primary measurements or coverage.",
+  "results": [
+    {
+      "case_id": "04824746237498dad158214e7cbe9a943d8293f6f11b197eef4b04ea7cfc1fb4",
+      "seed": 20261025,
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "case_id": "74cc2cebd7068e9c7c23de4f089dcbc8f7d2d6f8337e28cdafecd9b5834698c9",
+      "seed": 20261026,
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "case_id": "3f5c8230f7aa6a5f3b6f418f87a665fad8f80a131879af97ba83ca33c36791ea",
+      "seed": 20261026,
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "case_id": "497b723cd11727e5963fb242860594196abae3c15e4444fd762a69a213e1dcd4",
+      "seed": 20261026,
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "case_id": "0360777b2f52c9ab9f2f1a7ecb33c580ebefe63419d374172be039ff933182d4",
+      "seed": 20261026,
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    },
+    {
+      "case_id": "38121d4a1dd70476bf0209eafbd856c1f459964d39d1a4c62262b0c191290d68",
+      "seed": 20261027,
+      "status": "BUDGET_EXCEEDED",
+      "reason": "derived clause budget exceeded"
+    }
+  ]
+}
