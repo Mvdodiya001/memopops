@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -26,6 +27,10 @@ class SnapshotNotFoundError(LookupError):
 
 class SnapshotIntegrityError(RuntimeError):
     """Stored graph contents do not match their immutable revision manifest."""
+
+
+class WorkspaceExistsError(ValueError):
+    """Initialization must never overwrite an existing workspace."""
 
 
 class IdempotencyConflictError(RuntimeError):
@@ -124,6 +129,55 @@ class FalkorSnapshotStore:
 
     def ping(self) -> bool:
         return bool(self._get_client().connection.ping())
+
+    def initialize_workspace(self, workspace_id: str, atoms: list[dict[str, str]], actor_id: str) -> dict[str, str]:
+        """Atomically create a fixed vocabulary and empty initial revision; identical retries are safe."""
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        digest = hashlib.sha256(json.dumps(sorted(atoms, key=lambda a: a['id']), sort_keys=True).encode()).hexdigest()
+        revision_id = 'rev_' + uuid4().hex
+        knowledge_hash = calculate_knowledge_hash([])
+        rows = graph.query(
+            "MERGE (w:Workspace {id: $workspace_id}) "
+            "ON CREATE SET w.head_revision = $revision_id, w.sequence = 1, "
+            "w.initial_revision = $revision_id, w.bootstrap_hash = $digest "
+            "WITH w WHERE w.initial_revision = $revision_id "
+            "CREATE (r:Revision {id: $revision_id, sequence: 1, knowledge_hash: $knowledge_hash, "
+            "semantics_version: 'boolean-v1', reason: 'Workspace initialized', "
+            "acceptance: 'human_confirmed', actor_id: $actor_id, created_at: $created_at}) "
+            "WITH w, r UNWIND $atoms AS item "
+            "CREATE (:Atom {id: item.id, label: item.label, meaning: item.meaning, scope: item.scope}) "
+            "RETURN count(*)",
+            {'workspace_id': workspace_id, 'revision_id': revision_id, 'digest': digest,
+             'knowledge_hash': knowledge_hash, 'actor_id': actor_id, 'atoms': atoms,
+             'created_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')},
+        ).result_set
+        if not rows or not rows[0][0]:
+            prior = graph.query(
+                "MATCH (w:Workspace {id: $workspace_id}) RETURN w.bootstrap_hash, w.initial_revision",
+                {'workspace_id': workspace_id},
+            ).result_set
+            if not prior or prior[0][0] != digest:
+                raise WorkspaceExistsError('Workspace already exists with a different vocabulary')
+            revision_id = prior[0][1]
+        return {'workspace_id': workspace_id, 'revision_id': revision_id, 'knowledge_hash': knowledge_hash}
+
+    def list_queries(self, workspace_id: str, *, before: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        graph = self._get_client().select_graph(graph_name_for_workspace(workspace_id))
+        before_time = None
+        if before:
+            prior = self.get_query_result(workspace_id, before)
+            if prior is None:
+                raise SnapshotNotFoundError(before)
+            before_time = prior.get('created_at', '')
+        rows = graph.query(
+            "MATCH (q:QueryResult {workspace_id: $workspace_id}) "
+            "WHERE $before_time IS NULL OR coalesce(q.created_at, '') < $before_time "
+            "OR (coalesce(q.created_at, '') = $before_time AND q.id < $before_id) "
+            "RETURN coalesce(q.summary_json, q.result_json) ORDER BY coalesce(q.created_at, '') DESC, q.id DESC LIMIT $limit",
+            {'workspace_id': workspace_id, 'before_time': before_time, 'before_id': before, 'limit': limit},
+        ).result_set
+        fields = ('query_id', 'revision_id', 'query', 'result', 'proof_status', 'created_at', 'actor_id')
+        return [{key: payload.get(key) for key in fields} for payload in (json.loads(row[0]) for row in rows)]
 
     def close(self) -> None:
         if self._client is not None:
@@ -416,6 +470,9 @@ class FalkorSnapshotStore:
         serialized = json.dumps(
             result_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
         )
+        summary = json.dumps({key: result_payload.get(key) for key in (
+            'query_id', 'revision_id', 'query', 'result', 'proof_status', 'created_at', 'actor_id'
+        )}, sort_keys=True, separators=(',', ':'), allow_nan=False)
         created = graph.query(
             "MATCH (r:Revision {id: $revision_id}) "
             "OPTIONAL MATCH (r)-[:INCLUDES]->(active:Assertion) "
@@ -426,7 +483,7 @@ class FalkorSnapshotStore:
             "WHERE r IS NOT NULL AND prior IS NULL AND size(used_assertions) = size($uses_premise_ids) "
             "CREATE (q:QueryResult {id: $query_id, workspace_id: $workspace_id, "
             "revision_id: $revision_id, actor_id: $actor_id, created_at: $created_at, "
-            "request_hash: $request_hash, result_json: $result_json}) "
+            "request_hash: $request_hash, result_json: $result_json, summary_json: $summary_json}) "
             "CREATE (q)-[:AT_REVISION]->(r) "
             "FOREACH (a IN used_assertions | CREATE (q)-[:USES_PREMISE]->(a)) "
             "CREATE (receipt:RequestReceipt {key: $key, payload_hash: $request_hash, "
@@ -440,6 +497,7 @@ class FalkorSnapshotStore:
                 "workspace_id": workspace_id,
                 "request_hash": request_hash,
                 "result_json": serialized,
+                "summary_json": summary,
                 "uses_premise_ids": uses_premise_ids,
                 "actor_id": result_payload.get("actor_id"),
                 "created_at": result_payload.get("created_at"),
@@ -655,6 +713,9 @@ class FalkorSnapshotStore:
             "revision_id": snapshot.revision_id,
             "knowledge_hash": snapshot.knowledge_hash,
             "atom_ids": sorted(snapshot.atom_ids),
+            "atoms": [dict(zip(('id', 'label', 'meaning', 'scope'), row)) for row in graph.query(
+                "MATCH (atom:Atom) RETURN atom.id, atom.label, atom.meaning, atom.scope ORDER BY atom.id"
+            ).result_set],
             "assertions": [found[key] for key in sorted(found)],
         }
 

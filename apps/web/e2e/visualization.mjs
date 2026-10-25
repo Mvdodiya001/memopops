@@ -352,6 +352,90 @@ try {
     .slice(start)
     .filter((r) => ["POST", "PUT", "PATCH", "DELETE"].includes(r.method))
   if (mutations.length) throw new Error("Recorded walkthrough issued a mutation request")
+  // A genuinely empty custom workspace, distinct from the release demonstration.
+  await send("Page.navigate", { url: base })
+  await wait("document.body.innerText.includes('Connect to the memory service')")
+  await fill("Workspace", "workspace_custom")
+  await fill("Bearer token", "custom-operator-token")
+  await click("summary", "Create your own workspace")
+  const setField = async (label, value, index = 0) => {
+    const found = await evaluate(`(() => {
+      const node = [...document.querySelectorAll('label')].filter(n => (n.querySelector('span')?.innerText ?? n.innerText).trim() === ${JSON.stringify(label)})[${index}];
+      const input = node?.querySelector('input, textarea, select'); if (!input) return false;
+      const prototype = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : input.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, ${JSON.stringify(value)});
+      input.dispatchEvent(new Event(input.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true })); return true;
+    })()`)
+    if (!found) throw new Error(`Missing editable field ${label}`)
+    await delay(60)
+  }
+  await click("button", "Add proposition")
+  for (const [index, id] of ['p', 'q'].entries()) {
+    await setField('ID (for example, tests_pass)', id, index)
+    await setField('Short label', id === 'p' ? 'Tests pass' : 'Approval', index)
+    await setField('Precise meaning', id === 'p' ? 'All Orion v3 tests pass' : 'Orion v3 is approved under the recorded policy', index)
+    await setField('Scope / project version', 'Orion version 3', index)
+  }
+  await click('button', 'Create workspace')
+  await wait("document.body.innerText.includes('Accepted memory and its sources') && document.body.innerText.includes('workspace_custom')")
+  await click('button', 'Manage facts and rules')
+  const observation = async (reason) => {
+    await setField('Reason', reason)
+    await setField('Evidence URI', 'fixture://orion/review')
+    await setField('Evidence excerpt', 'Synthetic review evidence for the custom workspace browser check.')
+    await setField('Observed at (local time)', '2026-10-25T13:00')
+  }
+  await observation('Record passing tests')
+  await click('button', 'Submit for check')
+  await wait("document.body.innerText.includes('1 accepted')")
+  await click('summary', 'Write a rule or compound expression')
+  await setField('Memory expression', 'p <-> q')
+  await observation('Record the explicit approval policy')
+  await click('button', 'Submit for check')
+  await wait("document.body.innerText.includes('2 accepted')")
+  await click('a', 'Queries')
+  await fill('Atom', 'q')
+  await click('button', 'Check')
+  await wait("document.body.innerText.includes('Proof verified')")
+  await click('summary', 'Saved questions')
+  await wait("document.querySelectorAll('.memory-list .memory-row').length > 0")
+  await shot('custom-workspace-query')
+  await click('a', 'Memory graph')
+  await click('button', 'List')
+  await wait("[...document.querySelectorAll('label span')].some(n => n.innerText === 'Change')")
+  await setField('Change', 'replace')
+  // Select the atomic p claim regardless of UUID sort order.
+  const targetId = await evaluate("[...[...document.querySelectorAll('label')].find(n => n.querySelector('span')?.innerText.trim() === 'Claim to change').querySelector('select').options].find(o => o.text.startsWith('p ·')).value")
+  await setField('Claim to change', targetId)
+  await click('summary', 'Write a rule or compound expression')
+  await setField('Memory expression', '!p')
+  await observation('Correct the obsolete passing-tests observation')
+  await click('button', 'Submit for check')
+  await wait("[...document.querySelectorAll('.memory-list code')].some(n => n.innerText.trim() === '¬p')")
+  await click('a', 'Queries')
+  await fill('Atom', 'q')
+  await click('button', 'Check')
+  await wait("document.body.innerText.includes('Ruled out by memory')")
+  await shot('custom-workspace-corrected')
+  await click('a', 'Memory graph')
+  await click('button', 'List')
+  await wait("[...document.querySelectorAll('label span')].some(n => n.innerText === 'Change')")
+  await setField('Change', 'retract')
+  const retractId = await evaluate("[...[...document.querySelectorAll('label')].find(n => n.querySelector('span')?.innerText.trim() === 'Claim to change').querySelector('select').options].find(o => o.text.startsWith('¬p ·')).value")
+  await setField('Claim to change', retractId)
+  await setField('Reason', 'Withdraw the observation while preserving the policy')
+  await click('button', 'Submit for check')
+  await wait("document.body.innerText.includes('1 accepted')")
+  await click('a', 'Queries')
+  await fill('Atom', 'q')
+  await click('button', 'Check')
+  await wait("document.body.innerText.includes('Not established')")
+  await click('summary', 'Saved questions')
+  await wait("[...document.querySelectorAll('.memory-list button')].some(n => n.innerText.includes('PROVED'))")
+  await evaluate("[...document.querySelectorAll('.memory-list button')].find(n => n.innerText.includes('PROVED')).click()")
+  await wait("document.body.innerText.includes('Follows from memory')")
+  if (await evaluate("[...document.querySelectorAll('button')].some(n => n.innerText.includes('Record PROCEED decision'))")) throw new Error('Historical query enabled a current decision')
+  await shot('custom-workspace-historical-query')
   if (errors.length) throw new Error(`Browser exceptions: ${errors.join()}`)
   await writeFile(
     path.join(output, "browser-report.json"),
@@ -365,6 +449,12 @@ try {
           "unchecked-certificate-gate",
           "decision-lost-response-idempotency",
           "operator-evidence-form",
+          "custom-empty-workspace",
+          "compound-rule-certified-query",
+          "saved-question-history",
+          "premise-replacement",
+          "evidence-free-retraction",
+          "historical-question-reopen",
         ],
         widths: [1920, 1440, 1024, 390],
         source: "synthetic LabSnapshotStore and scripted DemoRunner artifacts",

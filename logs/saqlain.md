@@ -1,5 +1,19 @@
 # Saqlain activity log
 
+## S-20261025-01
+
+- Human / agent: Saqlain / Codex. Status: in-progress. Branch: codex/saqlain/usable-workspaces.
+- Objective: turn the fixed demonstration into a usable evidence-backed propositional workspace, preserving immutable revisions, authorization, full-snapshot reasoning and independent certificates.
+- Scope: workspace initialization and proposition meanings, query history, deterministic formula editing, corrections/retractions, no-Docker host startup, documentation and focused regression/browser checks.
+- Research: primary Graphiti, LangMem and Letta documentation; retain explicit source/provenance, namespaces and controlled writes. No natural-language extraction is trusted as a logical premise without operator review.
+- Baseline: local main includes the completed October 18 correctness audit. Direct GitHub fetch failed with a network timeout; preserve the existing stash and retry publication after verification. No credentials or existing cloud data will be changed.
+- Updated: 2026-10-25T13:34:43+05:30. Status: ready-for-review. Git fetch subsequently succeeded through the existing local proxy; origin/main still matches the audited baseline.
+- Implementation: custom operator-authorized empty workspace initialization with fixed proposition definitions and safe identical retries; real proposition metadata in memory responses and a readable dictionary; bounded deterministic expression parser for all existing Boolean operators; sourced add/replace/retract controls; quarantined formula/source inspection; saved-question keyset pagination and historical reopening; actual question persistence and slim history summaries; generic client helpers; private literal-env host startup without Docker.
+- Usability corrections discovered during browser review: a saved question originally lacked its expression; new records retain it and older records show an unavailable label. Revision following could remount an editor and erase its save confirmation; the confirmation is now owned by the workspace screen. Withheld certificates and historical answers still cannot suggest current decisive actions.
+- Research: docs/PRODUCT_RESEARCH_2026-10-25.md records primary Graphiti/LangMem/Letta sources and design tradeoffs. docs/PRODUCT_GUIDE.md documents setup, vocabulary scopes, evidence, explicit policies, corrections, history and limits. No automatic natural-language acceptance, vector-search truncation, first-order reasoning or general-chat-memory claim was introduced.
+- Checks: 194 pytest tests and 3 subtests passed; independent checker 42 passed; frontend 41 tests, typecheck and production build passed; acceptance 4/4; compileall, startup help and source/wheel build passed. Extended Chrome suite passed the prior visualization gates plus creation of an empty non-demo workspace, a compound equivalence policy, verified proof, premise replacement, verified refutation, evidence-free retraction, UNKNOWN witnesses and historical question reopening without a current decision control. Screenshots were visually inspected; browser report shows no exceptions and zero replay mutations. Generated outputs remain ignored.
+- Limits: both previously supplied cloud DNS names fail resolution. New initialization/history Cypher is covered by adapter tests but has not been executed against a reachable FalkorDB in this iteration. No cloud workspace was created or changed; no Docker or live-model work. Existing demo behavior and private configuration are preserved. Publication will be recorded after remote verification.
+
 Task-level notes for Saqlain and agents working on his behalf. Times include timezone. Do not record secrets or hidden reasoning.
 
 ## S-20261017-01

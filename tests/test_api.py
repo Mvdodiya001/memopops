@@ -257,6 +257,63 @@ def request_body(query, key="query-1"):
     }
 
 
+def test_workspace_initialization_requires_operator_and_correct_tenant(client, monkeypatch):
+    calls = []
+    def initialize(self, workspace, atoms, actor):
+        calls.append((workspace, atoms, actor))
+        return {'workspace_id': workspace, 'revision_id': 'initial', 'knowledge_hash': 'empty'}
+    monkeypatch.setattr(FakeStore, 'initialize_workspace', initialize, raising=False)
+    body = {'atoms': [{'id': 'p', 'label': 'P', 'meaning': 'The specified test passes', 'scope': 'version 3'}]}
+    path = '/api/v1/workspaces/demo/initialize'
+    assert client.post(path, json=body).status_code == 401
+    for role in ('reader', 'writer'):
+        assert client.post(path, json=body, headers={'Authorization': f'Bearer {role}-token'}).status_code == 403
+    headers = {'Authorization': 'Bearer operator-token'}
+    assert client.post('/api/v1/workspaces/other/initialize', json=body, headers=headers).status_code == 404
+    assert not calls
+    assert client.post(path, json=body, headers=headers).status_code == 201
+    assert calls[0][0] == 'demo' and calls[0][2].startswith('actor_')
+    assert calls[0][1] == body['atoms']
+
+
+@pytest.mark.parametrize('atoms', [[], [{'id': 'P', 'label': 'x', 'meaning': 'x', 'scope': 'x'}],
+    [{'id': 'p', 'label': ' ', 'meaning': 'x', 'scope': 'x'}],
+    [{'id': 'p', 'label': 'x', 'meaning': 'x', 'scope': 'x'}] * 2])
+def test_workspace_initialization_rejects_invalid_vocabulary_before_writing(client, monkeypatch, atoms):
+    def fail(*args):
+        raise AssertionError('invalid input must not reach persistence')
+    monkeypatch.setattr(FakeStore, 'initialize_workspace', fail, raising=False)
+    response = client.post('/api/v1/workspaces/demo/initialize', json={'atoms': atoms}, headers={'Authorization': 'Bearer operator-token'})
+    assert response.status_code == 422
+
+
+def test_workspace_initialization_conflict_never_resets_existing_workspace(client, monkeypatch):
+    from memopops.store import WorkspaceExistsError
+    def conflict(*args):
+        raise WorkspaceExistsError('Workspace already exists')
+    monkeypatch.setattr(FakeStore, 'initialize_workspace', conflict, raising=False)
+    response = client.post('/api/v1/workspaces/demo/initialize', json={'atoms': [{'id': 'p', 'label': 'P', 'meaning': 'P in this scope', 'scope': 's'}]}, headers={'Authorization': 'Bearer operator-token'})
+    assert response.status_code == 409
+
+
+def test_query_history_is_scoped_bounded_and_labels_historical_results(client, monkeypatch):
+    calls = []
+    def queries(self, workspace, **kwargs):
+        calls.append((workspace, kwargs))
+        return [{'query_id': 'old', 'revision_id': 'old_revision', 'result': 'PROVED', 'proof_status': 'VERIFIED'}]
+    monkeypatch.setattr(FakeStore, 'list_queries', queries, raising=False)
+    headers = {'Authorization': 'Bearer reader-token'}
+    path = '/api/v1/workspaces/demo/queries'
+    assert client.get(path).status_code == 401
+    assert client.get('/api/v1/workspaces/other/queries', headers=headers).status_code == 404
+    assert client.get(path+'?limit=51', headers=headers).status_code == 422
+    response = client.get(path+'?limit=1&before=cursor', headers=headers)
+    assert response.status_code == 200
+    assert response.json()['items'][0]['freshness'] == 'HISTORICAL'
+    assert response.json()['next_cursor'] == 'old'
+    assert calls == [('demo', {'before': 'cursor', 'limit': 1})]
+
+
 def test_workspace_discovery_is_authenticated_and_scoped_to_principal(client):
     listed = client.get(
         "/api/v1/workspaces", headers={"Authorization": "Bearer reader-token"}

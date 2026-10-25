@@ -20,6 +20,7 @@ from scripts.demo_video import DemoRunner
 
 def main():
     roles = {f"local-{role}-token": {"workspace_id": WORKSPACE_ID, "role": role} for role in ("reader", "writer", "operator")}
+    roles['custom-operator-token'] = {'workspace_id': 'workspace_custom', 'role': 'operator'}
     os.environ["MEMOPOPS_AUTH_TOKENS"] = json.dumps(roles)
     recorded_store = LabSnapshotStore()
     transport = AsgiTransport(create_app(recorded_store))
@@ -32,7 +33,18 @@ def main():
     )
     with Path(".artifacts/frontend-browser/producer.log").open("w", encoding="utf-8") as output, redirect_stdout(output):
         runner.run(["preflight", "memory", "reader", "uncertain", "writer", "correction", "resume", "verify", "graph"])
-    app = create_app(LabSnapshotStore())
+    class BrowserStores:
+        def __init__(self):
+            self.demo = LabSnapshotStore()
+            self.custom = LabSnapshotStore(workspace_id='workspace_custom', empty=True)
+
+        def __getattr__(self, name):
+            def dispatch(*args, **kwargs):
+                target = self.custom if args and args[0] == 'workspace_custom' else self.demo
+                return getattr(target, name)(*args, **kwargs)
+            return dispatch
+
+    app = create_app(BrowserStores())
 
     @app.get("/__fixture/visualization")
     def fixture_identity():

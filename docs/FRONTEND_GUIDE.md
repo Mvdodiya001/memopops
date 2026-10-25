@@ -1,5 +1,7 @@
 # Visual memory workspace
 
+For custom workspaces, explicit compound formulas, evidence-backed corrections/retractions and saved questions, see the [product guide](PRODUCT_GUIDE.md). The recorded walkthrough below remains a separate view of previously generated run artifacts.
+
 The frontend provides a live memory graph, query-support graphs, revision comparison, and a recorded-run walkthrough. API, database schema, agent behavior, solver, checker, and terminal demo contracts remain unchanged.
 
 ## Start

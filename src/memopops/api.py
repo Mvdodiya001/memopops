@@ -42,6 +42,7 @@ from memopops.store import (
     IdempotencyConflictError,
     SnapshotIntegrityError,
     SnapshotNotFoundError,
+    WorkspaceExistsError,
     RevisionHeadConflictError,
 )
 
@@ -51,6 +52,8 @@ class SnapshotReader(Protocol):
     def close(self) -> None: ...
     def load_snapshot(self, workspace_id: str, revision_id: str) -> Any: ...
     def load_memory(self, workspace_id: str, revision_id: str) -> dict[str, Any]: ...
+    def initialize_workspace(self, workspace_id: str, atoms: list[dict[str, str]], actor_id: str) -> dict[str, str]: ...
+    def list_queries(self, workspace_id: str, *, before: str | None = None, limit: int = 50) -> list[dict[str, Any]]: ...
     def list_revisions(
         self, workspace_id: str, *, before_sequence: int | None = None, limit: int = 50
     ) -> list[dict[str, Any]]: ...
@@ -114,6 +117,19 @@ class QueryRequest(BaseModel):
     idempotency_key: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
     query: dict[str, Any]
     proof_mode: Literal["certificate", "solver"] = "certificate"
+
+
+class PropositionDefinition(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
+    label: str = Field(min_length=1, max_length=120)
+    meaning: str = Field(min_length=1, max_length=1000)
+    scope: str = Field(min_length=1, max_length=200)
+
+
+class WorkspaceInitialization(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    atoms: list[PropositionDefinition] = Field(min_length=1, max_length=128)
 
 
 class RevisionRequest(BaseModel):
@@ -320,6 +336,46 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             raise
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Memory snapshot is unavailable") from exc
+
+    @app.post("/api/v1/workspaces/{workspace_id}/initialize", status_code=201)
+    def initialize_workspace(
+        workspace_id: str,
+        request: WorkspaceInitialization,
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, str]:
+        authorize_workspace(workspace_id, principal)
+        if principal['role'] != 'operator':
+            raise HTTPException(status_code=403, detail='Operator role required to initialize a workspace')
+        atoms = [atom.model_dump() for atom in request.atoms]
+        if len({atom['id'] for atom in atoms}) != len(atoms):
+            raise HTTPException(status_code=422, detail='Proposition IDs must be unique')
+        if any(not value.strip() for atom in atoms for value in atom.values()):
+            raise HTTPException(status_code=422, detail='Proposition definitions must not be blank')
+        try:
+            return memory_store.initialize_workspace(workspace_id, atoms, principal['actor_id'])
+        except WorkspaceExistsError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail='Workspace could not be initialized') from exc
+
+    @app.get("/api/v1/workspaces/{workspace_id}/queries")
+    def read_queries(
+        workspace_id: str,
+        before: str | None = Query(default=None, min_length=1, max_length=128),
+        limit: int = Query(default=25, ge=1, le=50),
+        principal: dict[str, str] = Depends(authenticate),
+    ) -> dict[str, Any]:
+        authorize_workspace(workspace_id, principal)
+        try:
+            items = memory_store.list_queries(workspace_id, before=before, limit=limit)
+            head = memory_store.current_head(workspace_id)
+        except SnapshotNotFoundError as exc:
+            raise HTTPException(status_code=404, detail='Query cursor not found') from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail='Query history is unavailable') from exc
+        for item in items:
+            item['freshness'] = 'CURRENT_AS_OF_READ' if item['revision_id'] == head else 'HISTORICAL'
+        return {'items': items, 'next_cursor': items[-1]['query_id'] if len(items) == limit else None}
 
     @app.get("/api/v1/workspaces/{workspace_id}/revisions")
     def read_revisions(
@@ -829,6 +885,7 @@ def create_app(store: SnapshotReader | None = None) -> FastAPI:
             "semantics_version": SEMANTICS_VERSION,
             "knowledge_hash": snapshot.knowledge_hash,
             "query_hash": query_digest,
+            "query": formula_to_json(formula),
             "result": evaluation.result.value,
             "proof_status": proof_status,
             "witnesses_verified": witnesses_verified,

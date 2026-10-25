@@ -40,6 +40,16 @@ class MemoryClient:
     def workspace(self) -> tuple[int, dict[str, Any]]:
         return self._request("GET", self._path())
 
+    def initialize_workspace(self, atoms: list[dict[str, str]]) -> tuple[int, dict[str, Any]]:
+        """Operator-only initialization; never resets an existing workspace."""
+        return self._request('POST', self._path('/initialize'), {'atoms': atoms})
+
+    def query_history(self, *, before: str | None = None, limit: int = 25) -> tuple[int, dict[str, Any]]:
+        parameters: dict[str, str | int] = {'limit': limit}
+        if before:
+            parameters['before'] = before
+        return self._request('GET', self._path('/queries?') + urlencode(parameters))
+
     def memory(self, revision_id: str | None = None) -> tuple[int, dict[str, Any]]:
         path = self._path("/memory")
         if revision_id:

@@ -21,10 +21,14 @@ import {
   listWorkspaces,
   postDecision,
   postQuery,
-  postRevision,
+  getQueryResult,
 } from "../api/client"
 import type { Formula, QueryResponse } from "../api/types"
 import { ResultCard } from "../components/ResultCard"
+import { MemoryEditor } from "../components/MemoryEditor"
+import { WorkspaceSetup } from "../components/WorkspaceSetup"
+import { QueryHistory } from "../components/QueryHistory"
+import { parseExpression } from "../model/expression"
 import { Shell } from "../components/Shell"
 import { RevisionComparison } from "../components/RevisionComparison"
 import { MemoryGraphView, QuerySupport } from "./MemoryGraphView"
@@ -209,6 +213,10 @@ function ConnectForm(props: {
           {pending ? "Connecting…" : "Connect"}
         </button>
       </form>
+      <WorkspaceSetup workspaceId={workspaceId} token={token} onReady={(revision) => {
+        props.onConnect({ workspaceId, token, canWrite: true, followInitially: true })
+        props.navigate(hrefFor(new URL(window.location.href), { workspaceId, revisionId: revision, section: 'memory', source: 'api', preview: null }))
+      }} />
     </main>
   )
 }
@@ -226,6 +234,7 @@ function WorkspaceScreen(props: {
   const [followError, setFollowError] = useState(false)
   const [followAttempt, setFollowAttempt] = useState(0)
   const [view, setView] = useState<"graph" | "list">("graph")
+  const [changeNotice, setChangeNotice] = useState("")
   const visible = usePageVisible()
   const workspaceId = props.location.workspaceId
   const token = props.token
@@ -377,6 +386,8 @@ function WorkspaceScreen(props: {
             headRevisionId={headRevisionId}
             token={token}
             canAsk={Boolean(revisionId && token)}
+            atoms={visibleMemory?.atoms ?? []}
+            onRevision={(revision) => { setFollowHead(false); go({ revisionId: revision, section: 'queries' }) }}
             onCurrent={() => {
               setFollowHead(true)
               go({ section: "queries", revisionId: headRevisionId ?? revisionId })
@@ -460,7 +471,14 @@ function WorkspaceScreen(props: {
               <button type="button" onClick={props.onDisconnect}>
                 Disconnect
               </button>
+              {props.canWrite && !historical && view === 'graph' && <button type="button" onClick={() => setView('list')}>Manage facts and rules</button>}
             </div>
+            {changeNotice && <p className="callout" role="status">{changeNotice}</p>}
+            {visibleMemory && <details className="panel">
+              <summary className="section-title">Proposition dictionary · {visibleMemory.atoms.length}</summary>
+              <p className="meta">A proposition has one precise meaning within its scope. Missing information remains unknown.</p>
+              <dl>{visibleMemory.atoms.map(atom => <div key={atom.id}><dt><code>{atom.id}</code> · {atom.label}</dt><dd>{atom.meaning}<br /><span className="meta">Scope: {atom.scope}</span></dd></div>)}</dl>
+            </details>}
             {followHead && followError && (
               <p className="callout" role="alert">
                 The latest snapshot could not be loaded. The prior revision is retained. Use Refresh
@@ -497,7 +515,10 @@ function WorkspaceScreen(props: {
                 workspaceId={workspaceId}
                 revisionId={revisionId}
                 token={token}
-                onCommitted={(next) => go({ revisionId: next, section: "memory" })}
+                onCommitted={(next) => {
+                  setChangeNotice(`Saved as a new revision: ${next}. Earlier claims and evidence remain in history.`)
+                  go({ revisionId: next, section: "memory" })
+                }}
               />
             )}
           </>
@@ -553,6 +574,10 @@ function LiveQuarantine(props: {
                   {item.submitted_request.mutations.length} mutation(s)
                 </code>
               ) : null}
+              {item.submitted_request?.mutations?.map((change, index) => <div key={index}>
+                <p>{change.op === 'retract' ? `Retract ${change.target_assertion_id}` : `${change.op === 'replace' ? `Replace ${change.target_assertion_id} with` : 'Add'} ${prettyFormula(change.assertion.formula)}`}</p>
+                {change.op !== 'retract' && change.assertion.evidence.map((source, i) => <blockquote key={i}>{source.excerpt}<footer className="meta">{source.uri} · {source.observed_at}</footer></blockquote>)}
+              </div>)}
             </div>
           </li>
         ))}
@@ -600,6 +625,7 @@ function LiveMemory(props: {
           revisionId={props.revisionId}
           token={props.token}
           atoms={props.atoms}
+          assertions={props.assertions}
           onCommitted={props.onCommitted}
         />
       ) : null}
@@ -628,163 +654,10 @@ function AddMemory(props: {
   revisionId: string
   token: string
   atoms: { id: string; label: string }[]
+  assertions: { id: string; formula: Formula }[]
   onCommitted: (revisionId: string) => void
 }) {
-  const client = useQueryClient()
-  const [atomId, setAtomId] = useState(props.atoms[0]?.id ?? "")
-  const [negated, setNegated] = useState(false)
-  const [reason, setReason] = useState("")
-  const [evidenceUri, setEvidenceUri] = useState("")
-  const [evidenceExcerpt, setEvidenceExcerpt] = useState("")
-  const [observedAt, setObservedAt] = useState("")
-  const [notice, setNotice] = useState("")
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
-  useEffect(() => {
-    setIdempotencyKey(crypto.randomUUID())
-  }, [atomId, negated, reason, evidenceUri, evidenceExcerpt, observedAt, props.revisionId])
-  const mutation = useMutation({
-    mutationFn: () =>
-      postRevision(
-        props.workspaceId,
-        {
-          expected_revision: props.revisionId,
-          idempotency_key: idempotencyKey,
-          reason,
-          acceptance: "human_confirmed",
-          mutations: [
-            {
-              op: "add",
-              assertion: {
-                client_ref: "inspector-add",
-                formula: negated
-                  ? { op: "not", arg: { op: "atom", id: atomId } }
-                  : { op: "atom", id: atomId },
-                evidence: [
-                  {
-                    uri: evidenceUri.trim(),
-                    excerpt: evidenceExcerpt.trim(),
-                    observed_at: new Date(observedAt).toISOString(),
-                  },
-                ],
-              },
-            },
-          ],
-        },
-        { token: props.token },
-      ),
-    onSuccess: async (result) => {
-      if (result.status === 201 && result.body.revision_id) {
-        await client.invalidateQueries()
-        setIdempotencyKey(crypto.randomUUID())
-        props.onCommitted(result.body.revision_id)
-        setNotice("")
-        return
-      }
-      setNotice(
-        result.body.reason ||
-          "The service accepted the request without changing the current revision.",
-      )
-    },
-    onError: (error) => {
-      const message =
-        error instanceof ApiError ? error.message : "The memory service could not save this."
-      setNotice(
-        error instanceof ApiError && error.status === 409
-          ? `${message} Review the revision, then submit again.`
-          : message,
-      )
-      if (error instanceof ApiError && error.status === 409) setIdempotencyKey(crypto.randomUUID())
-    },
-  })
-  return (
-    <form
-      className="panel"
-      onSubmit={(event) => {
-        event.preventDefault()
-        mutation.mutate()
-      }}
-    >
-      <h2 className="section-title">Add memory</h2>
-      <label className="revision-control">
-        <span>Atom</span>
-        <select value={atomId} onChange={(event) => setAtomId(event.target.value)}>
-          {props.atoms.map((atom) => (
-            <option key={atom.id} value={atom.id}>
-              {atom.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="cluster">
-        <input
-          type="checkbox"
-          checked={negated}
-          onChange={(event) => setNegated(event.target.checked)}
-        />{" "}
-        Assert the negation
-      </label>
-      <label className="revision-control">
-        <span>Reason</span>
-        <input
-          type="text"
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-          required
-        />
-      </label>
-      <label className="revision-control">
-        <span>Evidence URI</span>
-        <input
-          type="text"
-          required
-          maxLength={2048}
-          value={evidenceUri}
-          onChange={(event) => setEvidenceUri(event.target.value)}
-          placeholder="https://… or fixture://…"
-        />
-      </label>
-      <label className="revision-control">
-        <span>Evidence excerpt</span>
-        <textarea
-          required
-          maxLength={2000}
-          value={evidenceExcerpt}
-          onChange={(event) => setEvidenceExcerpt(event.target.value)}
-        />
-      </label>
-      <label className="revision-control">
-        <span>Observed at (local time)</span>
-        <input
-          type="datetime-local"
-          required
-          value={observedAt}
-          onChange={(event) => setObservedAt(event.target.value)}
-        />
-      </label>
-      <p className="meta">
-        The observation time is saved in UTC. Evidence records the source; it does not certify its
-        factual accuracy.
-      </p>
-      {notice ? (
-        <p className="callout" role="status">
-          {notice}
-        </p>
-      ) : null}
-      <button
-        className="primary"
-        type="submit"
-        disabled={
-          mutation.isPending ||
-          !reason.trim() ||
-          !evidenceUri.trim() ||
-          !evidenceExcerpt.trim() ||
-          !observedAt
-        }
-      >
-        {mutation.isPending ? "Saving…" : "Submit for check"}
-      </button>
-    </form>
-  )
+  return <MemoryEditor {...props} />
 }
 
 function LiveQuery(props: {
@@ -793,9 +666,14 @@ function LiveQuery(props: {
   headRevisionId?: string
   token: string
   canAsk: boolean
+  atoms: { id: string; label: string }[]
+  onRevision: (revision: string) => void
   onCurrent: () => void
 }) {
-  const [atomId, setAtomId] = useState("release_ready")
+  const cache = useQueryClient()
+  const [atomId, setAtomId] = useState(props.atoms[0]?.id ?? "")
+  const [expression, setExpression] = useState("")
+  useEffect(() => { if (!atomId && props.atoms.length) setAtomId(props.atoms[0].id) }, [atomId, props.atoms])
   const [negated, setNegated] = useState(false)
   const [result, setResult] = useState<QueryResponse | null>(null)
   const [resultFormula, setResultFormula] = useState<Formula | null>(null)
@@ -803,7 +681,7 @@ function LiveQuery(props: {
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
   useEffect(() => {
     setIdempotencyKey(crypto.randomUUID())
-  }, [atomId, negated, props.revisionId])
+  }, [atomId, negated, expression, props.revisionId])
   const visible =
     result &&
     result.workspace_id === props.location.workspaceId &&
@@ -825,6 +703,7 @@ function LiveQuery(props: {
       setError("")
       setResult(response)
       setResultFormula(submitted)
+      void cache.invalidateQueries({ queryKey: ["query-history"] })
       setIdempotencyKey(crypto.randomUUID())
     },
     onError: (caught) => {
@@ -842,9 +721,12 @@ function LiveQuery(props: {
         setIdempotencyKey(crypto.randomUUID())
     },
   })
-  const formula: Formula = negated
-    ? { op: "not", arg: { op: "atom", id: atomId } }
-    : { op: "atom", id: atomId }
+  let formula: Formula = { op: "atom", id: atomId }
+  let formulaError = ""
+  try {
+    formula = parseExpression(expression.trim() || atomId, props.atoms.map(atom => atom.id))
+    if (!expression.trim() && negated) formula = { op: "not", arg: formula }
+  } catch (caught) { formulaError = caught instanceof Error ? caught.message : "Invalid formula" }
   const presentation = visible
     ? presentResult({
         result: visible.result,
@@ -867,7 +749,7 @@ function LiveQuery(props: {
         className="query-box"
         onSubmit={(event) => {
           event.preventDefault()
-          if (props.canAsk) mutation.mutate(formula)
+          if (props.canAsk && !formulaError) mutation.mutate(formula)
         }}
       >
         <label className="revision-control">
@@ -876,6 +758,8 @@ function LiveQuery(props: {
         </label>
         <details>
           <summary>Advanced formula</summary>
+          <label className="revision-control"><span>Query expression</span><textarea value={expression} maxLength={4096} onChange={event => setExpression(event.target.value)} placeholder="(api_v2 & tests_pass) -> release_ready" /></label>
+          <p className="meta">An expression overrides the atom/negation controls. Use !, &amp;, |, -&gt;, &lt;-&gt; and parentheses. Precedence: not, and, or, implies, equivalent. Implication groups to the right.</p>
           <label className="cluster">
             <input
               type="checkbox"
@@ -885,15 +769,25 @@ function LiveQuery(props: {
             Query the negation
           </label>
         </details>
+        {formulaError && <p className="callout" role="alert">{formulaError}</p>}
+        {!formulaError && <p className="formula">{prettyFormula(formula)}</p>}
         {error ? (
           <p className="callout" role="alert">
             {error}
           </p>
         ) : null}
-        <button className="primary" type="submit" disabled={!props.canAsk || mutation.isPending}>
+        <button className="primary" type="submit" disabled={!props.canAsk || mutation.isPending || Boolean(formulaError)}>
           {mutation.isPending ? "Checking…" : "Check"}
         </button>
       </form>
+      <QueryHistory workspaceId={props.location.workspaceId} token={props.token} onOpen={item => {
+        setError("")
+        void getQueryResult(props.location.workspaceId, item.query_id, { token: props.token }).then(response => {
+          props.onRevision(response.revision_id)
+          setResult(response)
+          setResultFormula(response.query ?? null)
+        }).catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Saved question could not be opened."))
+      }} />
       {result && !visible ? (
         <p className="callout" role="status">
           A result arrived for a different revision and was not shown.

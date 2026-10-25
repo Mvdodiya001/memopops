@@ -59,6 +59,7 @@ type ApiMemory = {
   revision_id: string
   knowledge_hash: string
   atom_ids: string[]
+  atoms?: AtomRecord[]
   assertions: Array<{
     id: string
     formula: MemoryDocument["assertions"][number]["formula"]
@@ -68,7 +69,10 @@ type ApiMemory = {
 }
 
 function normalizeMemory(payload: ApiMemory): MemoryDocument {
-  const atoms: AtomRecord[] = payload.atom_ids.map((id) => ({ id, label: id, meaning: id, scope: payload.workspace_id }))
+  const atoms: AtomRecord[] = payload.atom_ids.map((id) => {
+    const definition = payload.atoms?.find(atom => atom.id === id)
+    return { id, label: definition?.label || id, meaning: definition?.meaning || id, scope: definition?.scope || payload.workspace_id }
+  })
   return {
     workspace_id: payload.workspace_id,
     revision_id: payload.revision_id,
@@ -104,6 +108,16 @@ export async function listWorkspaces(options?: RequestOptions): Promise<Workspac
 
 export function getWorkspace(workspaceId: string, options?: RequestOptions): Promise<WorkspaceDocument> {
   return request(workspacePath(workspaceId, ""), options)
+}
+
+export function initializeWorkspace(workspaceId: string, atoms: AtomRecord[], options?: RequestOptions): Promise<{ revision_id: string }> {
+  return request(workspacePath(workspaceId, "/initialize"), { ...options, method: "POST", body: JSON.stringify({ atoms }) })
+}
+
+export type QuerySummary = Pick<QueryResponse, "query_id" | "revision_id" | "query" | "result" | "proof_status" | "freshness"> & { created_at?: string }
+
+export function getQueryHistory(workspaceId: string, options?: RequestOptions, before?: string): Promise<{ items: QuerySummary[]; next_cursor: string | null }> {
+  return request(workspacePath(workspaceId, `/queries?limit=25${before ? `&before=${encodeURIComponent(before)}` : ""}`), options)
 }
 
 export async function getMemory(workspaceId: string, revisionId: string, options?: RequestOptions): Promise<MemoryDocument> {

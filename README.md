@@ -1,5 +1,7 @@
 # memopops
 
+For everyday use beyond the release demonstration, start with the [product guide](docs/PRODUCT_GUIDE.md): create a custom proposition workspace, add evidence-backed facts and rules, ask compound questions, correct or retract outdated memory, and reopen saved questions. You can run the API directly against an existing FalkorDB with `uv run --locked python -m memopops --env-file .env --port 8001`; Docker is optional. Propositional logic and independent proof checking remain the core. See the [research and product decisions](docs/PRODUCT_RESEARCH_2026-10-25.md) for this iteration's rationale and explicit limits.
+
 Proof-carrying shared memory for AI agents, targeting Graph Hacks Track 02. Working concept: persistent propositions, evidence, revisions, and proof dependencies in FalkorDB, with a separate propositional-logic checker.
 
 Status: hackathon implementation on `main` — proof-carrying shared memory with FalkorDB, independent checker, web inspector, scripted agents, and acceptance evaluation. Submission preparation uses complete local setup rather than public application deployment. The real FalkorDB recording and local persistence/restart rehearsal still need completion; see the [submission execution plan](docs/submission/PLAN.md).

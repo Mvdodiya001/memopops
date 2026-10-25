@@ -388,3 +388,16 @@ th, td { text-align: left; padding: var(--space-2); border-bottom: 1px solid var
     scroll-behavior: auto !important;
   }
 }
+
+.workspace-setup { margin-top: 24px; }
+.workspace-setup > summary { cursor: pointer; font-weight: 600; }
+.workspace-setup fieldset, .panel > fieldset {
+  border: 1px solid var(--border, #dce1e7);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  min-width: 0;
+}
+.workspace-setup legend, .panel > fieldset > legend { padding: 0 8px; font-weight: 600; }
+.workspace-setup input, .workspace-setup textarea { width: 100%; min-width: 0; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }

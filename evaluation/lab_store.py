@@ -30,6 +30,7 @@ from memopops.store import (
     Snapshot,
     SnapshotIntegrityError,
     SnapshotNotFoundError,
+    WorkspaceExistsError,
     calculate_knowledge_hash,
 )
 
@@ -44,7 +45,12 @@ class StoredAssertion:
 
 
 class LabSnapshotStore:
-    def __init__(self) -> None:
+    def __init__(self, *, workspace_id: str = WORKSPACE_ID, empty: bool = False) -> None:
+        self.workspace_id = workspace_id
+        self._atom_ids = ATOM_IDS
+        self._atom_definitions = [{"id": atom, "label": atom, "meaning": atom, "scope": workspace_id} for atom in sorted(ATOM_IDS)]
+        self._bootstrap_atoms = None
+        self._initial_revision = None
         self._lock = RLock()
         records = demo_assertions()
         stored = []
@@ -78,6 +84,31 @@ class LabSnapshotStore:
         self._decision_receipts: dict[str, tuple[str, dict[str, Any]]] = {}
         self._query_premises: dict[str, list[str]] = {}
         self.quarantined: list[dict[str, Any]] = []
+        if empty:
+            self.head = None
+            self._members.clear()
+            self._meta.clear()
+            self._atom_ids = frozenset()
+            self._atom_definitions = []
+
+    def initialize_workspace(self, workspace_id: str, atoms: list[dict[str, str]], actor_id: str) -> dict[str, str]:
+        with self._lock:
+            if workspace_id != self.workspace_id:
+                raise SnapshotNotFoundError(workspace_id)
+            normalized = sorted(atoms, key=lambda atom: atom['id'])
+            if self.head is not None:
+                if self._bootstrap_atoms != normalized:
+                    raise WorkspaceExistsError('Workspace already exists with a different vocabulary')
+                return {'workspace_id': workspace_id, 'revision_id': self._initial_revision, 'knowledge_hash': calculate_knowledge_hash([])}
+            revision = 'rev_' + uuid4().hex
+            self._bootstrap_atoms = normalized
+            self._atom_definitions = normalized
+            self._atom_ids = frozenset(atom['id'] for atom in atoms)
+            self._initial_revision = revision
+            self._members[revision] = ()
+            self._meta[revision] = {'revision_id': revision, 'parent_revision_id': None, 'sequence': 1, 'knowledge_hash': calculate_knowledge_hash([]), 'reason': 'Workspace initialized', 'acceptance': 'human_confirmed', 'actor_id': actor_id, 'created_at': '2026-10-25T00:00:00Z', 'removed_assertion_ids': []}
+            self.head = revision
+            return {'workspace_id': workspace_id, 'revision_id': revision, 'knowledge_hash': calculate_knowledge_hash([])}
 
     def ping(self) -> bool:
         return True
@@ -87,7 +118,7 @@ class LabSnapshotStore:
 
     def current_head(self, workspace_id: str) -> str | None:
         with self._lock:
-            if workspace_id != WORKSPACE_ID:
+            if workspace_id != self.workspace_id:
                 return None
             return self.head
 
@@ -99,7 +130,7 @@ class LabSnapshotStore:
                 workspace_id=workspace_id,
                 revision_id=revision_id,
                 knowledge_hash=meta["knowledge_hash"],
-                atom_ids=ATOM_IDS,
+                atom_ids=self._atom_ids,
                 assertions=tuple(item.record for item in members),
             )
 
@@ -129,7 +160,8 @@ class LabSnapshotStore:
                 "workspace_id": workspace_id,
                 "revision_id": revision_id,
                 "knowledge_hash": meta["knowledge_hash"],
-                "atom_ids": sorted(ATOM_IDS),
+                "atom_ids": sorted(self._atom_ids),
+                "atoms": [dict(atom) for atom in self._atom_definitions],
                 "assertions": sorted(assertions, key=lambda item: item["id"]),
             }
 
@@ -137,7 +169,7 @@ class LabSnapshotStore:
         self, workspace_id: str, *, before_sequence: int | None = None, limit: int = 50
     ) -> list[dict[str, Any]]:
         with self._lock:
-            if workspace_id != WORKSPACE_ID or self.head is None:
+            if workspace_id != self.workspace_id or self.head is None:
                 return []
             items = [
                 {key: value for key, value in meta.items() if key != "removed_assertion_ids"}
@@ -209,12 +241,27 @@ class LabSnapshotStore:
 
     def get_query_result(self, workspace_id: str, query_id: str) -> dict[str, Any] | None:
         with self._lock:
-            if workspace_id != WORKSPACE_ID:
+            if workspace_id != self.workspace_id:
                 return None
             for _digest, result in self._query_receipts.values():
                 if result.get("query_id") == query_id:
                     return result
             return None
+
+    def list_queries(self, workspace_id: str, *, before: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        with self._lock:
+            if workspace_id != self.workspace_id:
+                return []
+            values = [value for _, value in self._query_receipts.values()]
+            values.sort(key=lambda value: (value.get('created_at', ''), value['query_id']), reverse=True)
+            if before:
+                previous = self.get_query_result(workspace_id, before)
+                if previous is None:
+                    raise SnapshotNotFoundError(before)
+                cursor = (previous.get('created_at', ''), before)
+                values = [value for value in values if (value.get('created_at', ''), value['query_id']) < cursor]
+            fields = ('query_id', 'revision_id', 'query', 'result', 'proof_status', 'created_at', 'actor_id')
+            return [{key: value.get(key) for key in fields} for value in values[:limit]]
 
     def get_query_receipt(
         self, workspace_id: str, idempotency_key: str, request_hash: str
@@ -228,7 +275,7 @@ class LabSnapshotStore:
 
     def list_quarantined_proposals(self, workspace_id: str, *, limit: int = 50) -> list[dict[str, Any]]:
         with self._lock:
-            if workspace_id != WORKSPACE_ID:
+            if workspace_id != self.workspace_id:
                 return []
             records = []
             for proposal in self.quarantined[:limit]:
@@ -261,7 +308,7 @@ class LabSnapshotStore:
             prior = self.get_decision_receipt(workspace_id, idempotency_key, request_hash)
             if prior is not None:
                 return prior
-            if workspace_id != WORKSPACE_ID:
+            if workspace_id != self.workspace_id:
                 raise SnapshotNotFoundError(expected_revision_id)
             if expected_revision_id != self.head:
                 raise RevisionHeadConflictError(expected_revision_id, self.head)
@@ -341,7 +388,7 @@ class LabSnapshotStore:
             prior = self.get_revision_receipt(workspace_id, idempotency_key, request_hash)
             if prior is not None:
                 return prior
-            if workspace_id != WORKSPACE_ID or expected_revision_id not in self._members:
+            if workspace_id != self.workspace_id or expected_revision_id not in self._members:
                 raise SnapshotNotFoundError(expected_revision_id)
             if expected_revision_id != self.head:
                 raise RevisionHeadConflictError(expected_revision_id, self.head)
@@ -379,7 +426,7 @@ class LabSnapshotStore:
             return result
 
     def _require_members(self, workspace_id: str, revision_id: str) -> tuple[StoredAssertion, ...]:
-        if workspace_id != WORKSPACE_ID or revision_id not in self._members:
+        if workspace_id != self.workspace_id or revision_id not in self._members:
             raise SnapshotNotFoundError(revision_id)
         return self._members[revision_id]
 
@@ -390,7 +437,7 @@ class LabSnapshotStore:
         idempotency_key: str,
         request_hash: str,
     ) -> dict[str, Any] | None:
-        if workspace_id != WORKSPACE_ID or idempotency_key not in table:
+        if workspace_id != self.workspace_id or idempotency_key not in table:
             return None
         previous_hash, result = table[idempotency_key]
         if previous_hash != request_hash:
@@ -398,7 +445,7 @@ class LabSnapshotStore:
         return result
 
     def _stored_from_added(self, added: dict[str, Any]) -> StoredAssertion:
-        formula = parse_formula(json.loads(added["canonical_json"]), ATOM_IDS)
+        formula = parse_formula(json.loads(added["canonical_json"]), self._atom_ids)
         digest = formula_hash(formula)
         if digest != added["formula_hash"]:
             raise SnapshotIntegrityError("added assertion hash does not match its formula")

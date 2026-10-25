@@ -539,6 +539,8 @@ class MemoryGraph(FakeGraph):
         self.evidence_digest = evidence_digest
 
     def query(self, query, params=None):
+        if 'RETURN atom.id, atom.label' in query:
+            return Result([['p', 'P', 'P was confirmed.', 'test workspace']])
         if "a.actor_id AS actor_id" in query:
             return Result([[
                 "as_1",
@@ -566,6 +568,7 @@ def test_memory_read_returns_hash_verified_provenance_and_evidence():
     memory = store.load_memory("workspace-1", "rev_1")
 
     assert memory["revision_id"] == "rev_1"
+    assert memory['atoms'][0]['meaning'] == 'P was confirmed.'
     assert memory["assertions"][0]["actor_id"] == "actor_writer"
     assert memory["assertions"][0]["formula"] == ATOM_P
     assert memory["assertions"][0]["evidence"][0]["content_digest"] == digest
