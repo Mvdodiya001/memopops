@@ -2,12 +2,13 @@
 
 ## S-20261025-04
 
-- Human / agent: Saqlain / Codex. Status: ready-for-review. Branch: codex/saqlain/blog-verification, based on personal/main at 484f795.
+- Human / agent: Saqlain / Codex. Status: completed. Branch: codex/saqlain/blog-verification, based on personal/main at 484f795.
 - Objective: perform two distinct verification passes over the article and publishing kit. Pass 1 checks formal examples, source behavior and raw benchmark evidence; pass 2 checks independent interpretation, figure accuracy/layout, external references, links and exported asset provenance.
 - Scope: article/figure wording corrections if needed, a reproducible verification record, publishing instructions, and task logs. Preserve production code, the measured implementation and raw benchmark artifacts.
 - Pass 1 completed: 19 source and six byte-exact raw-data hashes verified; all 16,308 observations reproduce the entire summary. A new direct truth-table interpreter independently reclassified all 3,000 saved cases; raw counts confirm 90 lifecycle cycles, 600 rejected probes across 60 certificates, 234/240 generated-case proofs and the full scaling coverage boundary. Real solver/checker replay confirms the article's PROVED-to-REFUTED example; omitting the explicit negative policy gives UNKNOWN.
 - Pass 2 completed: implementation/UI interpretation, all four PNGs, eight exported asset hashes, SVG text/XML, links and original research references reviewed. Corrected certificate-attempt wording, certificate-mode witness scope, immediate-parent impact scope, explicit rerun requirement, full-snapshot fallback dependencies and illustrative revision IDs. Figures and benchmark numbers did not require changes. Public raw GitHub report fetched successfully after the web fetcher returned a cache miss.
 - Reproduction: .venv/Scripts/python.exe docs/blog/proof-carrying-memory/verify_article.py returns PASS; VERIFICATION.md explains the manual and automated checks, and verification-results.json records the output. Initial audit-script source line-ending assumption was corrected to accept original bytes or source-only CRLF normalization; all measured data still require exact bytes. No production test suite or timed benchmark rerun, database/network persistence claim, dependency change or private configuration change. Status: ready-for-review, awaiting publication of the corrections and verification kit.
+- Publication verified: correction/audit commit 1e3eba9 pushed directly to SaqlainSQX/memopops main; fetch/ancestor check passed and checkout is clean. The ready-for-review note above is superseded by this completed handoff. Only personal/main was updated; all benchmark results and figure bytes remained unchanged.
 
 ## S-20261025-03
 
