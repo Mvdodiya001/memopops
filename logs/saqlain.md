@@ -2,12 +2,13 @@
 
 ## S-20261025-03
 
-- Human / agent: Saqlain / Codex. Status: ready-for-review. Branch: codex/saqlain/blog-article, based on personal/main at a215a6d.
+- Human / agent: Saqlain / Codex. Status: completed. Branch: codex/saqlain/blog-article, based on personal/main at a215a6d.
 - Objective: write a publishable, idea-first article following the user's Spiral Fovea article structure, with coordinated original explanatory figures and a small, accurate selection of benchmark results.
 - Scope: docs/blog/proof-carrying-memory article, figure generator, PNG/SVG assets, and these activity logs. No application, benchmark source, measured artifacts or private reference material changes.
 - Success criteria: readable concrete story before implementation detail; correct distinction between evidence, logical entailment and revision freshness; metrics sourced to the published summary; explicit proof-scaling and evaluation-scope limits; visual inspection of each figure; publication to the personal repository only.
 - Delivery: 1,790-word Markdown article with four original matching figures (PNG at 2,520 px wide and editable SVG), alt text, captions, publishing instructions and an offline matplotlib renderer. Opens with the release-correction idea and selected measured positives; two limitations cover bounded proof generation and synthetic/in-memory scope. Related-work links were checked against the primary Doyle/MIT, LRAT/arXiv and Graphiti sources; no first-method or universal accuracy claim.
-- Verification: all four PNGs inspected visually, eight asset hashes and the benchmark summary checksum validated, PNG integrity/SVG XML and every local article/guide link checked. git diff --check passed before staging. No application change or new benchmark run; measured artifacts and private source reference remain untouched. Awaiting direct personal/main publication and verification.
+- Verification: all four PNGs inspected visually, eight asset hashes and the benchmark summary checksum validated, PNG integrity/SVG XML and every local article/guide link checked. git diff --cached --check and all eight staged-blob figure hash checks passed. Local attributes keep SVG bytes stable across Windows checkouts. No application change or new benchmark run; measured artifacts and private source reference remain untouched.
+- Publication: article and publishing kit committed as 17f1326 and pushed directly to SaqlainSQX/memopops main. Subsequent fetch and ancestor check confirmed remote inclusion; the original contributor repository was not pushed. Final log-only publication follows this verification. Blog-platform publication remains with the user; no account submission or external blog post was created.
 
 ## S-20261025-02
 
