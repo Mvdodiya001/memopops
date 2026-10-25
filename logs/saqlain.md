@@ -1,5 +1,13 @@
 # Saqlain activity log
 
+## S-20261025-02
+
+- Human / agent: Saqlain / Codex. Status: in-progress. Branch: codex/saqlain/blog-benchmark, based on personal/main at f66849a.
+- Objective: measure the current implementation for a defensible blog, not optimize it during measurement. Add a seeded benchmark harness, raw observations, reproducible protocol, statistical summaries and clearly scoped claims.
+- Planned measures: balanced truth-table-oracle correctness and witness validity; solver scaling across topologies/outcomes; fresh in-process API solver/certificate latency and proof coverage; certificate/context mutation rejection; revision lifecycle and explicit recomputation/stale-cache controls; concurrent revision guards and query contention. Three sequential fresh Python worker processes with declared seeds, warmups and sample counts.
+- Environment: source repository clean and both remotes synchronized. .env.cloud fails DNS resolution; .env targets a refused local connection. No database timing, restart durability, real-model quality, vector-memory comparison, or production throughput will be claimed. Tests use synthetic credentials/data only; no deployment settings will be changed. Results will be published to SaqlainSQX/memopops with source revision and artifact hashes.
+- Harness pilot: 32 balanced cases at seed 123, one timing sample per cell and two lifecycle trials completed with no unexpected failures; 17 benchmark-oracle/statistics regressions passed. The pilot exposed the anticipated certificate coverage boundary (not a product correction): logical classification continues after the 64-initial-clause proof bound is exceeded. Pilot outputs remain under ignored .artifacts/benchmark-pilot-01 and are not mixed into final measurements. Product code/limits have not changed. Freeze the harness commit before running the declared three-process evaluation.
+
 ## S-20261025-01
 
 - Human / agent: Saqlain / Codex. Status: completed (implementation and available checks; live persistence rehearsal remains limited below). Branch: codex/saqlain/usable-workspaces.
