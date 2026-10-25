@@ -1,28 +1,28 @@
 # memopops: Remembering Why an AI Agent Believes Something
 
-*How explicit propositions, a revision graph, and independently checked proofs can make shared agent memory easier to inspect and correct.*
+*How we built shared agent memory that keeps track of an answer's sources, reasoning, and history.*
 
 ![Accepted facts and a release policy lead to a revision-bound answer with evidence and a checked certificate.](figures/01-memory-with-reasons.png)
 
-Imagine two AI agents helping a team prepare a software release. One checks the tests and records that they passed. Another uses that information, together with the release policy, to conclude that the release is ready.
+Imagine two AI agents helping a team prepare a software release. One checks the tests and saves the result: everything passed. The other reads that result, checks the release policy, and concludes that the release is ready.
 
-A little later, the test result is corrected. The tests actually failed.
+A little later, someone corrects the test result. The tests actually failed.
 
-The new information can be stored immediately. But what happens to the earlier conclusion? Which answer depended on the old result? Can the second agent explain why it believed the release was ready, and whether that explanation still applies?
+Saving the correction is only part of the job. The earlier answer is still sitting in memory. Which result did it rely on? Does its reasoning still hold? Will the second agent notice that something changed?
 
-That question motivated our work on **memopops**: could shared agent memory retain the reasons behind an answer, and make those reasons checkable when the underlying information changes?
+We built **memopops** around that problem. We wanted agents to remember the reasons behind an answer, so those reasons could be checked again when the information changed.
 
-Our initial evaluation gave us encouraging results. Across **3,000 synthetic logic problems**, every classification matched a separate exhaustive truth-table evaluator. We also passed **90 controlled revision lifecycle cycles** and rejected **all 600 tested proof or context mutations**. These are bounded tests of the implemented reasoning and revision machinery; they give us a concrete starting point for evaluating the idea.
+The first results were encouraging. On **3,000 synthetic logic problems**, every answer classification matched a separate check that tried all possible truth assignments. All **90 controlled revision lifecycle cycles** passed, and the system rejected **all 600 tested changes to proofs or their context**. Those numbers describe our tests, with the limits we'll get to below.
 
 ## A quick look at agent memory
 
-An agent often needs information from an earlier interaction: a project decision, a test result, a user preference, or a rule agreed on by another agent.
+An agent often needs something from an earlier conversation: a project decision, a test result, a user preference, or a rule another agent was given.
 
-Storing and retrieving that information is useful. For our release example, however, finding the sentence “the release is ready” leaves several questions open. What supported it? Which version of the project did it describe? Did any of its premises change?
+Being able to find that information later is useful. But in our release example, finding the sentence “the release is ready” doesn't tell us enough. We still need to know what supported it, which version it described, and whether any of those supporting facts have changed.
 
-We wanted an answer to carry enough structure to revisit those questions.
+We wanted to be able to follow that trail.
 
-The starting point is a small distinction: a remembered assertion and a conclusion drawn from assertions play different roles. If we preserve that distinction, we can ask what follows from the currently accepted memory, rather than relying on an earlier summary alone.
+That starts with keeping the things we were told separate from the conclusions we drew. “The tests passed” is an accepted statement. “The release is ready” may be a conclusion that depends on it. Keeping that connection lets us revisit the conclusion when the test result changes.
 
 ## Why we start with propositions
 
@@ -32,121 +32,121 @@ Consider three statements about one particular release:
 - The tests pass.
 - The release is ready.
 
-Each statement has an explicit meaning and scope. We can then write a policy connecting them:
+Each statement needs a clear meaning and must refer to the same release. We can then write a rule connecting them:
 
 **(API v2 active AND tests pass) → release ready**
 
-If the first two statements are accepted, the conclusion follows under this policy. The system can record the premises and the rule that support it.
+If we've accepted the first two statements, this rule gives us the third. We can save both the answer and the statements that led to it.
 
-The direction of the rule matters. Learning that the tests did not pass does not, by itself, prove that the release is not ready. Perhaps another accepted policy could establish readiness.
+There's a small detail here that's easy to miss: the arrow goes one way. This rule alone doesn't say that failed tests make a release unready. Another policy might still allow it.
 
-For our correction example, we therefore include a second rule explicitly:
+For the correction in our example to rule out readiness, we need to say that explicitly:
 
 **NOT tests pass → NOT release ready**
 
-With that policy, a corrected negative test result supports a negative readiness answer. The relationship is written into the memory instead of being supplied by an unstated assumption.
+Now, when the corrected result says the tests failed, we have a stated reason to conclude that the release isn't ready. We haven't left the system to fill in that rule for itself.
 
-In the current application, users define a workspace vocabulary and author formulas using explicit logical operators. This keeps the formal meaning visible. Translating arbitrary conversation into trustworthy formulas remains a separate problem.
+In the app, users define what each proposition means and write formulas using operators such as AND, OR, and NOT. That takes more care than typing a sentence, but it makes the meaning visible. Turning free-form conversation into reliable formulas is a separate problem.
 
-## Keeping sources separate from consequences
+## Where a statement came from, and what follows from it
 
-A test report can support the assertion that the tests passed. A release policy can connect that assertion to readiness. These are different kinds of support.
+A test report tells us where “the tests passed” came from. The release rule tells us how that statement supports “the release is ready.” We keep both.
 
-The source explains where an accepted premise came from. The logical proof explains what follows if the accepted premises hold.
+The source gives us something to inspect. The proof gives us a way to check the reasoning.
 
-This distinction also sets the boundary of the guarantee. A valid proof cannot make an inaccurate test report accurate. It establishes a consequence of the formal premises we accepted. Recording evidence and requiring deliberate acceptance remain important parts of the workflow.
+Of course, a correct proof can't fix a wrong test report. It tells us what follows from the statements we accepted. Someone still needs to decide whether those statements deserve to be accepted in the first place. That's why sources and operator review are part of the workflow.
 
 ## What the graph remembers
 
-FalkorDB stores the relationships between workspaces, immutable revisions, assertions, formulas, source evidence, and saved query results. A saved answer records which revision it used. When it has a checked proof, its dependency links identify the premises used by that proof; otherwise, the system conservatively records dependencies on the full snapshot.
+We use FalkorDB to connect the pieces: workspaces, saved memory revisions, accepted statements, formulas, evidence, and answers. Each revision is kept as it was, and every saved answer names the revision it used.
 
-These relationships become particularly useful during a correction. Starting from a replaced assertion, the current impact view finds dependent answers at the immediately preceding revision and identifies candidates for rechecking.
+When an answer has a checked proof, we record links to the statements used in that proof. Otherwise, we take the cautious route and link it to the whole memory snapshot. After a correction, the impact view uses those links to find answers from the immediately preceding revision that need another look.
 
-An affected answer is not automatically false. Another route through the accepted rules might still establish the same conclusion. Dependency traversal tells us where to look; reasoning over the new revision determines what follows now.
+Finding an affected answer doesn't mean it's wrong. There might be another way to reach the same conclusion using the remaining facts. The links help us find what to revisit; asking the question against the new revision tells us whether the answer changes.
 
-The graph and the reasoning engine have separate responsibilities:
+Here's how the pieces fit together:
 
 ![Five stages: sourced input, FalkorDB revision graph, Z3 logical query, independent proof check, and saved answer.](figures/02-architecture.png)
 
-*FalkorDB retains the memory and its relationships. Z3 reasons over the complete accepted snapshot. In certificate mode, a separate checker validates the generated proof and its context.*
+*FalkorDB keeps the memory and its connections. Z3 checks what follows from all the accepted statements. In certificate mode, a separate program checks the generated proof and the context it belongs to.*
 
-Using the complete accepted snapshot matters. A small retrieved subset might omit a conflicting assertion elsewhere in the same revision. Checking the full snapshot allows the system to detect that inconsistency before presenting an ordinary logical answer.
+We check the whole accepted snapshot because a few retrieved statements might leave out a contradiction elsewhere in the memory. The consistency check needs to see that conflict before we give an ordinary logical answer.
 
 ## When a premise changes
 
-The construction is easier to see step by step:
+Let's return to the release example and follow the correction:
 
 ![Six steps show initial acceptance, a checked answer, a correction, dependency traversal, rechecking, and preserved history.](figures/03-revision-walkthrough.png)
 
-*The same question can have different answers at different revisions. Both explanations remain attached to the premises under which they were produced.*
+*The question stays the same. The accepted facts change. Each answer keeps the version of the memory that supported it.*
 
-Using illustrative revision numbers, at revision 12 the accepted memory says that API v2 is active and the tests pass. The positive release policy establishes readiness, and the checked answer is saved against that revision.
+Say we're at revision 12; these numbers are just for the example. The memory says API v2 is active and the tests pass. Under our release policy, the release is ready. We check the proof and save the answer with that revision.
 
-An operator then replaces the test assertion using the corrected source. That creates revision 13. The old revision remains available, along with its original answer.
+An operator then replaces the test statement using the corrected report. We now have revision 13. Revision 12 and its original answer are still there.
 
-The dependency graph locates affected answers from revision 12. A reader can then ask the question again at revision 13. This recheck applies the explicit negative policy: failed tests imply that the release is not ready. Finding an affected answer does not automatically rerun it.
+The graph helps us find the affected answer from revision 12. A reader can ask the question again at revision 13, where the failed-test rule gives us a different result: the release isn't ready. This rerun is an explicit step; finding an affected answer doesn't automatically recompute it.
 
-The earlier proof can still be valid for revision 12. It does not certify the current state at revision 13. Keeping both records makes that difference inspectable.
+The old proof can still be correct for the old facts. It just doesn't tell us whether the release is ready now. Keeping both versions lets us explain what changed without rewriting the history.
 
-Updates also name the revision they expect to change. If another writer advances the workspace first, the stale write is rejected rather than silently overwriting the newer state. A contradictory addition is retained in quarantine for inspection instead of being activated alongside an incompatible accepted premise.
+This also matters when two people or agents write at once. Each update names the revision it expects to change. If someone else has already moved the workspace forward, the stale update is rejected. And if a proposed addition contradicts the accepted memory, we keep it in quarantine for inspection without adding it to the active facts.
 
 ## What an answer actually means
 
-We first check whether the accepted memory is internally consistent. If it is, the question has three logical outcomes:
+Before answering, we check that the accepted statements can all hold together. If they can, a question has three possible logical outcomes:
 
-- **PROVED:** the question follows from the accepted premises.
-- **REFUTED:** its negation follows from the accepted premises.
-- **UNKNOWN:** the premises permit both possibilities.
+- **PROVED:** the accepted statements imply the answer is yes.
+- **REFUTED:** they imply the answer is no.
+- **UNKNOWN:** either answer is still possible given what we know.
 
-Unknown is useful information. Missing approval does not mean approval was denied; it may simply mean the memory cannot settle the question yet.
+“Unknown” is an answer we want the system to be comfortable giving. If approval isn't recorded, that doesn't mean it was denied. We may simply not know yet.
 
-Inconsistent memory receives its own status. A solver that cannot finish also receives a separate status. Neither should be presented as a successful proof or ordinary lack of knowledge.
+If the memory contradicts itself, we say so. If the solver can't finish, we report that separately too. Those cases need different responses from a normal unknown answer.
 
-For decisive answers in certificate mode, a bounded proof generator attempts to produce a certificate. When generation succeeds, a separately implemented checker validates its logical steps and bindings to the workspace, revision, question, and accepted assertions. For unknown answers in this mode, checked assignments demonstrate the two remaining possibilities.
+In certificate mode, a yes or no answer triggers an attempt to build a proof certificate within a fixed budget. If that succeeds, a separate checker goes through the proof and checks that it belongs to the right workspace, revision, question, and accepted statements. For an unknown answer in this mode, we check two assignments: one where the query is true and another where it's false, both compatible with the memory.
 
-The checker is independently implemented and tested; it has not been formally verified in a proof assistant. The application also exposes an explicit solver-only mode. A solver classification and an independently verified certificate are visible as separate outcomes.
+We implemented and tested the checker separately from the generator. We haven't formally verified it in a proof assistant. There's also an explicit solver-only mode in the app, and the interface keeps the solver's answer separate from whether a certificate was verified.
 
 ## What the experiments showed
 
-We evaluated the existing implementation without changing its limits to improve the score. The run used fixed seeds and three fresh Python worker processes, with the protocol, raw observations, and source revision published alongside the results.
+We benchmarked the implementation as it stood, keeping its existing limits. We used fixed seeds and three fresh Python worker processes, and published the setup, raw results, and exact source revision so others can inspect the run.
 
-The **3,000-case evaluation** covered proved, refuted, unknown, and inconsistent-memory outcomes equally. Every classification agreed with a separate evaluator that enumerated possible truth assignments. No returned witness failed that independent evaluation.
+The **3,000 problems** were evenly split across proved, refuted, unknown, and inconsistent-memory outcomes. Every classification matched a separate evaluator that tried all possible truth assignments. All returned example assignments also passed that independent check.
 
-The lifecycle checks exercised corrections, preserved historical answers, stale writes, and related revision safeguards. All **90 controlled cycles** passed. We also tested **600 mutations across 60 valid certificates**, including damaged proof content and mismatched workspace or revision context. None was jointly accepted by the proof and context checks.
+We also ran **90 controlled lifecycle cycles**, checking corrections, preserved historical answers, stale writes, and related safeguards. All passed. To test the certificate checks, we made **600 changes across 60 valid certificates**, including damaged proof content and mismatched workspace or revision information. Every altered case was rejected by the combined proof and context checks.
 
-In a smaller generated-case subset, **234 of 240 decisive queries received independently checked certificates**. The remaining six reached the configured proof budget and stayed uncertified.
+In a smaller subset of generated problems with yes or no answers, **234 of 240 queries received independently checked certificates**. The other six hit the proof budget and stayed uncertified.
 
 ![Measured correctness, lifecycle and mutation checks, alongside the separate scaling experiment's certificate coverage.](figures/04-measured-results.png)
 
-*The small generated-case certificate result and the scaling experiment are different samples. Showing them together makes the current boundary visible.*
+*The smaller certificate sample and the scaling workloads are separate experiments. The chart shows why the result from one shouldn't be applied to the other.*
 
 ## Where the current approach needs work
 
-The clearest limitation is **proof generation at larger sizes**. In the separate scaling workloads, all decisive requests at four and eight assertions received certificates. Coverage fell at 16 and 32; at 64, 128, and 256 assertions, none received a verified decisive certificate. The logical classifications remained correct, but the bounded proof generator could not supply the required proof. Improving that stage is a concrete engineering priority.
+The biggest thing to improve is **proof generation as the memory grows**. In the separate scaling workloads, every decisive request at four and eight assertions received a certificate. That dropped at 16 and 32. At 64, 128, and 256 assertions, none received a verified decisive certificate. The logical answers were still correct, but our bounded generator couldn't produce the proofs. That's the next part of the implementation we need to improve.
 
-The second limitation is **the scope of the evaluation**. These were synthetic Boolean problems and an in-memory API store. They do not measure free-form language understanding, source truthfulness, or live FalkorDB performance. The results support the tested formal workflow; broader claims need broader experiments.
+The other limit is **what we tested**. These were synthetic Boolean problems, and the API tests used an in-memory store. They don't tell us how well the system understands everyday language, whether a source is telling the truth, or how fast a live FalkorDB deployment would be. Those need their own experiments.
 
 ## How this connects to earlier ideas
 
 Keeping reasons behind beliefs has a long history. Jon Doyle's [work on truth maintenance](https://dspace.mit.edu/handle/1721.1/5733) describes maintaining reasons and revising beliefs when assumptions change. Separately checked solver certificates are also established practice, illustrated by [work on LRAT proof checking](https://arxiv.org/abs/1612.02353). Temporal graph frameworks such as [Graphiti](https://github.com/getzep/graphiti) also address changing, interconnected information for agents.
 
-Our project brings explicit propositions, revisioned graph memory, and independent checking together in an inspectable shared-agent workflow. We see it as an engineering exploration of that combination, with measurable behavior and visible limits.
+We're bringing those ideas together in a shared-agent workflow: explicit propositions, a graph that preserves revisions, and answers that can carry separately checked proofs. The useful contribution is in how those pieces work together and what we can measure about them.
 
 ## Questions we want to explore next
 
-The immediate priority is improving certificate generation without weakening the independent checks or losing the connection to the complete revision.
+First, we want to improve certificate generation while keeping the separate checks and the connection to the full memory revision.
 
-Another direction is helping people author propositions more easily. A language model could suggest a formula and its supporting source, while keeping review of the actual formal meaning explicit before acceptance.
+We'd also like to make propositions easier to write. A language model could suggest a formula and point to its source, with a person reviewing what the formula actually says before accepting it.
 
-We also want to evaluate the full graph-backed workflow under realistic persistence and concurrent-use conditions. The current benchmark gives us a reproducible foundation for measuring those changes.
+Then there's testing the whole graph-backed workflow with persistence and several users working at once. Having a reproducible benchmark gives us something concrete to compare against as we make those changes.
 
 ## A different starting point for shared memory
 
-The original question was simple: when an agent remembers an answer, can it also remember why that answer followed?
+We started with a small question: when an agent remembers an answer, can it also remember how it got there?
 
-For our release example, the useful record contains the question, the accepted facts, the policy connecting them, the supporting sources, and the revision where the reasoning was checked. When a premise changes, those relationships give us a way to revisit the answer without erasing its history.
+In the release example, that means keeping the question, the test result, the release rule, the sources, and the revision where we checked the reasoning. When the test result changes, we have a trail to follow back to the answer.
 
-That is the direction we are exploring with memopops: shared memory whose conclusions come with reasons we can inspect, check, and reconsider.
+That's what we want memopops to make easier: knowing why an answer made sense at the time, and knowing when it's time to ask again.
 
 ---
 

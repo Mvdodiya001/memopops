@@ -1,5 +1,13 @@
 # Saqlain activity log
 
+## S-20261025-05
+
+- Human / agent: Saqlain / Codex. Status: ready-for-review. Branch: codex/saqlain/blog-language, based on personal/main at 3ce45e6.
+- Objective: make the verified blog warmer and easier to read while preserving its structure, factual claims, formal examples, benchmark denominators and two stated limitations.
+- Scope: article prose, a follow-up note in the verification record and task logs. Figures, production source, raw measurements and verification utility remain unchanged. Check the revised language against the previous verified version and run the existing article audit.
+- Result: rewrote the article with simpler terms, natural contractions and a more conversational release story; preserved the reference structure, all four figures, evidence/logic distinction, immediate-parent impact scope, explicit reruns, unknown outcomes, certificate limits and benchmark denominators. Revised article is 1,998 words.
+- Verification: manually compared changed claims to the verified version; existing verify_article.py returns PASS with output identical to verification-results.json; git diff --check passed. Added the wording follow-up to VERIFICATION.md. Ready for direct personal/main publication; no production or figure changes.
+
 ## S-20261025-04
 
 - Human / agent: Saqlain / Codex. Status: completed. Branch: codex/saqlain/blog-verification, based on personal/main at 484f795.

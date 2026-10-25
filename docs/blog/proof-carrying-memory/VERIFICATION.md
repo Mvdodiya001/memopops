@@ -62,3 +62,7 @@ The actual audit used the existing environment directly:
 ```
 
 Both commands invoke the same utility; no new dependencies are required. The final run returned `"status": "PASS"`. Its [saved machine-readable output](verification-results.json) records the checked counts and example outcomes. The qualitative source review, external-source reading and visual inspection are manual checks, separate from that automated output.
+
+## Language revision follow-up
+
+On 2026-10-25, the user requested a more natural voice. Rewrote the prose with simpler explanations and conversational phrasing, keeping the same formal policies, benchmark counts, two limitations, images and references. Manually compared the revised claims with the verified version, including immediate-parent impact scope, explicit reruns, full-snapshot fallback dependencies and certificate-mode witness checks. Ran the existing verification utility again: PASS, with output identical to the saved verification results. This follow-up changes the article's wording, not the measured implementation or findings.
