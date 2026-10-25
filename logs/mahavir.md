@@ -102,3 +102,12 @@ Earlier text said publication was pending; the live UI integration was already m
 - Publication: implementation commits are local (`6540ef3`, `e5db90b` plus handoff updates); the branch was current with `origin/main` and passed post-merge checks, but push remains blocked because this checkout has no GitHub HTTPS credentials.
 - Follow-up: a manual live take appeared frozen at scene 2 because the first Gemini HTTPS response remained silent inside the 60-second socket timeout; the human interrupted it before fallback. Add visible request/retry status and a bounded configurable live-model timeout so a provider stall is observable and falls back promptly.
 - Follow-up outcome: live calls now print attempt/timeout/retry status, default to 10 seconds with one retry, and accept `--model-timeout` or `MEMOPOPS_MODEL_TIMEOUT_SECONDS`. A real live smoke exposed two provider timeouts followed by Google HTTP 429 quota exhaustion; the runner labeled and completed the reader scene with scripted fallback instead of hanging. Focused tests passed (10), and the release gate passed 154 pytest, 40 checker tests, web typecheck, 8 Vitest tests, production build, and 4/4 acceptance.
+
+## M-20261026-01
+
+- Updated: 2026-10-26T02:19:00+05:30
+- Human / agent: Mahavir / Cursor
+- Status: in-progress
+- Branch / scope: `codex/mahavir/sync-saqlain`; integrate the complete `SaqlainSQX/memopops` `main` history into Mahavir's repository without rewriting either history.
+- Objective and success criteria: preserve Mahavir's published work, include every commit currently on Saqlain's `main`, pass the repository release checks, and publish the integrated result to Mahavir's `main`.
+- Initial state: Mahavir's `origin/main` was at `f66849a`; Saqlain's `main` was at `317e451`. The former is an ancestor of the latter, while Mahavir's earlier adaptive-demo branch is also an ancestor, so no content conflict or history replacement is expected.
