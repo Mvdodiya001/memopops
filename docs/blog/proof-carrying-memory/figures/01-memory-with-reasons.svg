@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="482.4pt" viewBox="0 0 1008 482.4" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-25T15:40:35.062486</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>memopops blog figures</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 482.4
+L 1008 482.4
+L 1008 0
+L 0 0
+z
+" style="fill: #fcfbf7"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 53.28 232.56
+L 267.12 232.56
+Q 277.2 232.56 277.2 222.48
+L 277.2 164.88
+Q 277.2 154.8 267.12 154.8
+L 53.28 154.8
+Q 43.2 154.8 43.2 164.88
+L 43.2 222.48
+Q 43.2 232.56 53.28 232.56
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #eaf3ee; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 53.28 339.84
+L 267.12 339.84
+Q 277.2 339.84 277.2 329.76
+L 277.2 272.16
+Q 277.2 262.08 267.12 262.08
+L 53.28 262.08
+Q 43.2 262.08 43.2 272.16
+L 43.2 329.76
+Q 43.2 339.84 53.28 339.84
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #eef2f5; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 278.953418 194.64438
+Q 320.39971 217.43984 360.376543 239.427098
+" clip-path="url(#p72b37d1e6e)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 357.327311 235.01097
+L 360.376543 239.427098
+L 355.014101 239.216807
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 279.043066 300.176697
+Q 320.401595 282.599322 360.216681 265.677911
+" clip-path="url(#p72b37d1e6e)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 354.860355 265.346591
+L 360.216681 265.677911
+L 356.73783 269.76418
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 403.2 287.28
+C 412.556365 287.28 421.530778 283.562677 428.146727 276.946727
+C 434.762677 270.330778 438.48 261.356365 438.48 252
+C 438.48 242.643635 434.762677 233.669222 428.146727 227.053273
+C 421.530778 220.437323 412.556365 216.72 403.2 216.72
+C 393.843635 216.72 384.869222 220.437323 378.253273 227.053273
+C 371.637323 233.669222 367.92 242.643635 367.92 252
+C 367.92 261.356365 371.637323 270.330778 378.253273 276.946727
+C 384.869222 283.562677 393.843635 287.28 403.2 287.28
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #eaf3ee; stroke: #25837b; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 442.642368 252
+Q 487.441851 252 530.564282 252
+" clip-path="url(#p72b37d1e6e)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 525.764282 249.6
+L 530.564282 252
+L 525.764282 254.4
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 546.48 380.16
+L 947.52 380.16
+Q 957.6 380.16 957.6 370.08
+L 957.6 133.2
+Q 957.6 123.12 947.52 123.12
+L 546.48 123.12
+Q 536.4 123.12 536.4 133.2
+L 536.4 370.08
+Q 536.4 380.16 546.48 380.16
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #ffffff; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 838.8 167.04
+L 921.6 167.04
+Q 933.12 167.04 933.12 155.52
+L 933.12 153.36
+Q 933.12 141.84 921.6 141.84
+L 838.8 141.84
+Q 827.28 141.84 827.28 153.36
+L 827.28 155.52
+Q 827.28 167.04 838.8 167.04
+z
+" clip-path="url(#p72b37d1e6e)" style="fill: #eaf3ee; stroke: #eaf3ee; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 39.6 450
+L 968.4 450
+" clip-path="url(#p72b37d1e6e)" style="fill: none; stroke: #d8e1e0; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="39.6" y="32.999375" transform="rotate(-0 39.6 32.999375)">THE IDEA</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 25px; font-family: 'DejaVu Serif'; text-anchor: start; fill: #203d4d" x="39.6" y="76.560703" transform="rotate(-0 39.6 76.560703)">A memory should remember its reasons</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="39.6" y="105.995312" transform="rotate(-0 39.6 105.995312)">An answer is more useful when its premises, evidence and revision travel with it.</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="61.2" y="183.203438" transform="rotate(-0 61.2 183.203438)">ACCEPTED FACTS</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="61.2" y="210.67125" transform="rotate(-0 61.2 210.67125)">API v2 active · tests pass</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="61.2" y="290.483438" transform="rotate(-0 61.2 290.483438)">ACCEPTED POLICY</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 11.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="61.2" y="317.813281" transform="rotate(-0 61.2 317.813281)">Both hold → release ready</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 30px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #25837b" x="403.2" y="260.278125" transform="rotate(-0 403.2 260.278125)">∴</text>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #203d4d" x="403.2" y="316.344375" transform="rotate(-0 403.2 316.344375)">release_ready</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #5d6f77" x="403.2" y="344.759375" transform="rotate(-0 403.2 344.759375)">follows at revision 12</text>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="558.72" y="156.119375" transform="rotate(-0 558.72 156.119375)">A REVISION-BOUND ANSWER</text>
+   </g>
+   <g id="text_12">
+    <text style="font-weight: 700; font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #25837b" x="880.2" y="156.785469" transform="rotate(-0 880.2 156.785469)">VERIFIED</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="560.16" y="200.039375" transform="rotate(-0 560.16 200.039375)">Question</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="660.24" y="200.177344" transform="rotate(-0 660.24 200.177344)">Is this release ready?</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="560.16" y="234.599375" transform="rotate(-0 560.16 234.599375)">Premises</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="660.24" y="234.737344" transform="rotate(-0 660.24 234.737344)">Facts + explicit release policy</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="560.16" y="269.159375" transform="rotate(-0 560.16 269.159375)">Evidence</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="660.24" y="269.297344" transform="rotate(-0 660.24 269.297344)">Attached source records</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="560.16" y="303.719375" transform="rotate(-0 560.16 303.719375)">Context</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="660.24" y="303.857344" transform="rotate(-0 660.24 303.857344)">This workspace · revision 12</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="560.16" y="338.279375" transform="rotate(-0 560.16 338.279375)">Certificate</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 10.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="660.24" y="338.417344" transform="rotate(-0 660.24 338.417344)">Checked by a separate program</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="39.6" y="468.185469" transform="rotate(-0 39.6 468.185469)">Illustrative policy. A checked consequence is conditional on the accepted premises.</text>
+   </g>
+   <g id="text_24">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #25837b" x="968.4" y="468.323438" transform="rotate(-0 968.4 468.323438)">memopops</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p72b37d1e6e">
+   <rect x="0" y="0" width="1008" height="482.4"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1008pt" height="403.2pt" viewBox="0 0 1008 403.2" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-25T15:40:35.210157</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>memopops blog figures</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 403.2
+L 1008 403.2
+L 1008 0
+L 0 0
+z
+" style="fill: #fcfbf7"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 49.68 277.2
+L 198 277.2
+Q 208.08 277.2 208.08 267.12
+L 208.08 146.88
+Q 208.08 136.8 198 136.8
+L 49.68 136.8
+Q 39.6 136.8 39.6 146.88
+L 39.6 267.12
+Q 39.6 277.2 49.68 277.2
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #f8eee4; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 211.517227 203.76
+Q 218.880391 203.76 224.566505 203.76
+" clip-path="url(#pc9dd3e8646)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 219.766505 201.36
+L 224.566505 203.76
+L 219.766505 206.16
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 239.76 277.2
+L 388.08 277.2
+Q 398.16 277.2 398.16 267.12
+L 398.16 146.88
+Q 398.16 136.8 388.08 136.8
+L 239.76 136.8
+Q 229.68 136.8 229.68 146.88
+L 229.68 267.12
+Q 229.68 277.2 239.76 277.2
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #eaf3ee; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 401.597227 203.76
+Q 408.960391 203.76 414.646505 203.76
+" clip-path="url(#pc9dd3e8646)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 409.846505 201.36
+L 414.646505 203.76
+L 409.846505 206.16
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 429.84 277.2
+L 578.16 277.2
+Q 588.24 277.2 588.24 267.12
+L 588.24 146.88
+Q 588.24 136.8 578.16 136.8
+L 429.84 136.8
+Q 419.76 136.8 419.76 146.88
+L 419.76 267.12
+Q 419.76 277.2 429.84 277.2
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #eef2f5; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 591.677227 203.76
+Q 599.040391 203.76 604.726505 203.76
+" clip-path="url(#pc9dd3e8646)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 599.926505 201.36
+L 604.726505 203.76
+L 599.926505 206.16
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 619.92 277.2
+L 768.24 277.2
+Q 778.32 277.2 778.32 267.12
+L 778.32 146.88
+Q 778.32 136.8 768.24 136.8
+L 619.92 136.8
+Q 609.84 136.8 609.84 146.88
+L 609.84 267.12
+Q 609.84 277.2 619.92 277.2
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #eaf3ee; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 781.757227 203.76
+Q 789.120391 203.76 794.806505 203.76
+" clip-path="url(#pc9dd3e8646)" style="fill: none; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 790.006505 201.36
+L 794.806505 203.76
+L 790.006505 206.16
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #25837b; stroke: #25837b; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 810 277.2
+L 958.32 277.2
+Q 968.4 277.2 968.4 267.12
+L 968.4 146.88
+Q 968.4 136.8 958.32 136.8
+L 810 136.8
+Q 799.92 136.8 799.92 146.88
+L 799.92 267.12
+Q 799.92 277.2 810 277.2
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #f8eee4; stroke: #d8e1e0; stroke-width: 1.05; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 880.063989 282.741654
+Q 596.881049 355.869275 315.321894 283.16151
+" clip-path="url(#pc9dd3e8646)" style="fill: none; stroke-dasharray: 5.55,2.4; stroke-dashoffset: 0; stroke: #5d6f77; stroke-width: 1.5; stroke-linecap: round"/>
+    <path d="M 319.369362 286.685428
+L 315.321894 283.16151
+L 320.569509 282.037886
+z
+" clip-path="url(#pc9dd3e8646)" style="fill: #5d6f77; stroke-dasharray: 5.55,2.4; stroke-dashoffset: 0; stroke: #5d6f77; stroke-width: 1.5; stroke-linecap: round"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 39.6 370.8
+L 968.4 370.8
+" clip-path="url(#pc9dd3e8646)" style="fill: none; stroke: #d8e1e0; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="39.6" y="32.999375" transform="rotate(-0 39.6 32.999375)">THE ARCHITECTURE</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 25px; font-family: 'DejaVu Serif'; text-anchor: start; fill: #203d4d" x="39.6" y="76.738437" transform="rotate(-0 39.6 76.738437)">From a sourced claim to a checked answer</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="39.6" y="105.995312" transform="rotate(-0 39.6 105.995312)">The graph keeps the relationships. The solver reasons over the complete accepted snapshot.</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="54" y="161.159375" transform="rotate(-0 54 161.159375)">01</text>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="54" y="192.227187" transform="rotate(-0 54 192.227187)">Sourced input</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(54 224.302266)">Explicit formula</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(54 238.919375)">+ evidence</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(54 253.536484)">Operator acceptance</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="244.08" y="161.159375" transform="rotate(-0 244.08 161.159375)">02</text>
+   </g>
+   <g id="text_8">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="244.08" y="192.176406" transform="rotate(-0 244.08 192.176406)">Revision graph</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(244.08 224.302266)">FalkorDB</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(244.08 238.919375)">Assertions · sources</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(244.08 253.536484)">Dependencies · history</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="434.16" y="161.159375" transform="rotate(-0 434.16 161.159375)">03</text>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="434.16" y="192.176406" transform="rotate(-0 434.16 192.176406)">Logical query</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(434.16 224.302266)">Z3</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(434.16 238.919375)">Consistency first</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(434.16 253.536484)">Then test the question</text>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="624.24" y="161.159375" transform="rotate(-0 624.24 161.159375)">04</text>
+   </g>
+   <g id="text_14">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="624.24" y="192.227187" transform="rotate(-0 624.24 192.227187)">Proof check</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(624.24 224.302266)">Bounded certificate</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(624.24 238.919375)">Separate checker</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(624.24 253.536484)">Verify context + steps</text>
+   </g>
+   <g id="text_16">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #25837b" x="814.32" y="161.159375" transform="rotate(-0 814.32 161.159375)">05</text>
+   </g>
+   <g id="text_17">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #203d4d" x="814.32" y="192.227187" transform="rotate(-0 814.32 192.227187)">Saved answer</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(814.32 224.302266)">Result + revision</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(814.32 238.919375)">Premise references</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; fill: #5d6f77" transform="translate(814.32 253.536484)">Certificate status</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #5d6f77" x="597.6" y="339.719375" transform="rotate(-0 597.6 339.719375)">Result and premise dependencies are recorded in the graph</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5d6f77" x="39.6" y="388.985469" transform="rotate(-0 39.6 388.985469)">Certificate mode shown. The solver also has an explicit solver-only mode; proof budgets can be exceeded.</text>
+   </g>
+   <g id="text_21">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #25837b" x="968.4" y="389.123437" transform="rotate(-0 968.4 389.123437)">memopops</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pc9dd3e8646">
+   <rect x="0" y="0" width="1008" height="403.2"/>
+  </clipPath>
+ </defs>
+</svg>
